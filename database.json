@@ -1,0 +1,46 @@
+{
+  "categories": [
+    {
+      "name": "maher",
+      "description": "maher",
+      "id": "1775169818669"
+    }
+  ],
+  "menuItems": [
+    {
+      "name": "maher",
+      "description": "eee",
+      "price": 10,
+      "category": "maher",
+      "image": "https://picsum.photos/seed/food/800/600",
+      "featured": false,
+      "ingredients": [],
+      "allergens": [],
+      "id": "1775169835386"
+    }
+  ],
+  "orders": [
+    {
+      "id": "MRE9HVMCY",
+      "items": [
+        {
+          "name": "maher",
+          "description": "eee",
+          "price": 10,
+          "category": "maher",
+          "image": "https://picsum.photos/seed/food/800/600",
+          "featured": false,
+          "ingredients": [],
+          "allergens": [],
+          "id": "1775169835386",
+          "quantity": 1
+        }
+      ],
+      "total": 10,
+      "status": "Delivered",
+      "createdAt": "2026-04-02T22:44:08.492Z"
+    }
+  ],
+  "reservations": [],
+  "reviews": []
+}
