@@ -1,6 +1,19 @@
-# Menu QR — Restaurant QR Code App
+# Menu QR — Restaurant QR Code System
 
-A full-stack restaurant app with a customer-facing QR menu and an admin dashboard.
+A full-stack restaurant platform. Customers scan a QR code at their table to browse the menu, order food, make reservations, and leave reviews. Owners manage everything through two separate dashboards.
+
+---
+
+## Architecture
+
+```
+menu_qr/
+├── src/              → Customer QR app     (port 3000)
+├── admin/            → Restaurant admin    (port 3001)
+├── owner/            → App owner panel     (port 3002)
+├── server/           → Express API         (port 3000)
+└── public/uploads/   → Uploaded images
+```
 
 ---
 
@@ -14,13 +27,17 @@ A full-stack restaurant app with a customer-facing QR menu and an admin dashboar
 | Auth | JWT + bcrypt |
 | Validation | Zod |
 | Real-time | Socket.io |
+| File upload | Multer |
 
 ---
 
-## Prerequisites
+## User Accounts — 3 Types
 
-- Node.js 18+
-- A MongoDB database — local or [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (free tier)
+| Type | Logs into | Created by | Stored in |
+|------|-----------|------------|-----------|
+| **Customer** | Main app `localhost:3000` | Self-register or Owner panel | `customers` collection |
+| **Restaurant Admin** | Admin dashboard `localhost:3001` | Owner panel → Restaurant Admins tab | `users` collection |
+| **App Owner** | Owner panel `localhost:3002` | `npm run seed` | `users` collection |
 
 ---
 
@@ -34,8 +51,6 @@ npm install
 
 ### 2. Configure environment variables
 
-Copy the example file and fill in your values:
-
 ```bash
 cp .env.example .env
 ```
@@ -43,79 +58,90 @@ cp .env.example .env
 Edit `.env`:
 
 ```env
-MONGODB_URI="mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/menu_qr"
-JWT_SECRET="change_this_to_a_long_random_secret"
+MONGODB_URI="mongodb+srv://<user>:<password>@cluster.mongodb.net/menu_qr"
+JWT_SECRET="your-long-random-secret"
 JWT_EXPIRES_IN="7d"
 PORT=3000
 ```
 
-### 3. Seed the admin user
-
-Creates the default admin account in the database:
+### 3. Create the App Owner account
 
 ```bash
 npm run seed
 ```
 
-Default credentials:
-- **Email:** `admin@restaurant.com`
-- **Password:** `admin123`
-
-> Change the password after first login.
+Credentials:
+- **Email:** `superadmin@app.com`
+- **Password:** `superadmin123`
 
 ---
 
-## Running the App
+## Running
 
-### Development
+Requires **3 terminals**:
 
 ```bash
+# Terminal 1 — Backend API + Customer app
 npm run dev
+
+# Terminal 2 — Restaurant Admin Dashboard
+npm run admin
+
+# Terminal 3 — App Owner Panel
+npm run owner
 ```
 
-Starts the Express server (port 3000) with Vite middleware for hot module reload.
-Open [http://localhost:3000](http://localhost:3000)
-
-### Production
-
-```bash
-npm run build   # Build the React frontend
-npm start       # Serve the built app via Express
-```
+| App | URL | Login |
+|-----|-----|-------|
+| Customer QR app | http://localhost:3000 | Register in-app |
+| Restaurant Admin | http://localhost:3001 | Created via Owner panel |
+| App Owner Panel | http://localhost:3002 | `superadmin@app.com` |
 
 ---
 
 ## Project Structure
 
 ```
-├── backend/
-│   ├── config/
-│   │   ├── db.ts           # MongoDB connection
-│   │   └── env.ts          # Environment variable validation
-│   ├── controllers/        # Route handlers
-│   ├── middleware/
-│   │   ├── auth.ts         # JWT verification
-│   │   ├── validate.ts     # Zod request validation
-│   │   └── errorHandler.ts # Global error handler
-│   ├── models/             # Mongoose models
-│   │   ├── User.ts
-│   │   ├── MenuItem.ts
-│   │   ├── Category.ts
-│   │   ├── Order.ts
-│   │   ├── Reservation.ts
-│   │   └── Review.ts
-│   ├── routes/
-│   │   ├── api.ts          # All resource routes
-│   │   └── auth.ts         # Login / logout
-│   ├── schemas/            # Zod validation schemas
-│   ├── scripts/
-│   │   └── seed.ts         # Admin user seeder
-│   ├── services/           # Business logic / DB queries
-│   ├── socket/
-│   │   └── index.ts        # Socket.io setup
-│   └── server.ts           # Express + Vite + Socket.io entry point
-├── dashboard/              # Admin dashboard (React)
-└── src/                    # Customer app (React)
+server/
+├── config/
+│   ├── db.ts               # MongoDB connection
+│   └── env.ts              # Environment variable validation
+├── controllers/            # Route handlers
+│   ├── authController.ts
+│   ├── customerController.ts
+│   ├── ownerController.ts
+│   ├── menuController.ts
+│   ├── ordersController.ts
+│   ├── reservationsController.ts
+│   ├── reviewsController.ts
+│   ├── categoriesController.ts
+│   ├── statsController.ts
+│   ├── analyticsController.ts
+│   └── uploadController.ts
+├── middleware/
+│   ├── auth.ts             # JWT verify (admin + owner)
+│   ├── customerAuth.ts     # JWT verify (customers)
+│   ├── validate.ts         # Zod validation
+│   └── errorHandler.ts     # Global error handler
+├── models/
+│   ├── User.ts             # Admin / staff / owner
+│   ├── Customer.ts         # App customers
+│   ├── MenuItem.ts
+│   ├── Category.ts
+│   ├── Order.ts
+│   ├── Reservation.ts
+│   └── Review.ts
+├── routes/
+│   ├── api.ts              # All resource routes
+│   ├── auth.ts             # Admin login / profile
+│   ├── customer.ts         # Customer register / login
+│   └── owner.ts            # Owner-only routes
+├── schemas/                # Zod validation schemas
+├── scripts/
+│   └── seed.ts             # Create initial owner account
+├── socket/
+│   └── index.ts            # Socket.io setup
+└── server.ts               # Entry point
 ```
 
 ---
@@ -126,8 +152,19 @@ npm start       # Serve the built app via Express
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| POST | `/api/auth/login` | — | Login, returns JWT |
-| POST | `/api/auth/logout` | — | Logout (stateless) |
+| POST | `/api/auth/login` | — | Admin login, returns JWT |
+| POST | `/api/auth/logout` | — | Logout |
+| GET | `/api/auth/me` | Admin | Get current admin profile |
+| PATCH | `/api/auth/me` | Admin | Update profile / password |
+
+### Customer Auth
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/customer/register` | — | Customer registration |
+| POST | `/api/customer/login` | — | Customer login |
+| GET | `/api/customer/me` | Customer | Get profile |
+| PATCH | `/api/customer/me` | Customer | Update profile |
 
 ### Menu
 
@@ -153,7 +190,7 @@ npm start       # Serve the built app via Express
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | POST | `/api/orders` | — | Place an order |
-| GET | `/api/orders/:id` | — | Get order (for status tracking) |
+| GET | `/api/orders/:id` | — | Get order (status tracking) |
 | GET | `/api/orders` | Admin | List all orders |
 | PATCH | `/api/orders/:id/status` | Admin | Update order status |
 | DELETE | `/api/orders/:id` | Admin | Delete order |
@@ -175,11 +212,31 @@ npm start       # Serve the built app via Express
 | POST | `/api/reviews` | — | Submit a review |
 | DELETE | `/api/reviews/:id` | Admin | Delete review |
 
-### Stats
+### Stats & Analytics
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/api/stats` | Admin | Dashboard statistics |
+| GET | `/api/analytics?days=7` | Admin | Detailed analytics |
+
+### Upload
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/upload` | Admin | Upload menu item image |
+
+### Owner Panel
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/api/owner/customers` | Owner | List all customers |
+| POST | `/api/owner/customers` | Owner | Create customer |
+| PATCH | `/api/owner/customers/:id/status` | Owner | Lock / unlock customer |
+| DELETE | `/api/owner/customers/:id` | Owner | Delete customer |
+| GET | `/api/owner/admins` | Owner | List restaurant admins |
+| POST | `/api/owner/admins` | Owner | Create admin account |
+| DELETE | `/api/owner/admins/:id` | Owner | Delete admin account |
+| GET | `/api/owner/analytics` | Owner | Platform-wide analytics |
 
 ---
 
@@ -189,8 +246,8 @@ npm start       # Serve the built app via Express
 
 | Event | Payload | Description |
 |-------|---------|-------------|
-| `admin:join` | — | Join the admin room (dashboard) |
-| `order:join` | `orderId: string` | Join an order room (status tracking) |
+| `admin:join` | — | Join admin room (dashboard) |
+| `order:join` | `orderId: string` | Join order room (status tracking) |
 
 ### Server → Client
 
@@ -203,14 +260,40 @@ npm start       # Serve the built app via Express
 
 ---
 
-## Admin Dashboard
+## Customer App (`localhost:3000`)
 
-Access the dashboard by tapping **Admin Access** at the bottom of the home screen and logging in with your admin credentials.
+Screens accessible via the QR code:
 
-The dashboard is desktop-only and includes:
-- Overview stats
-- Order management with Kitchen Display System (KDS)
-- Menu & category management
-- Reservation management
-- Review moderation
-- Analytics
+- **Home** — featured dishes, book a table CTA
+- **Menu** — browse by category, search, item details modal
+- **Cart** — manage items, add tip
+- **Payment** — confirm and place order
+- **Order Status** — real-time status tracker + order history
+- **Reviews** — read and write guest reviews
+- **Reservation** — book a table with date / time / guests
+- **Account** — register, login, view profile and order history
+
+---
+
+## Restaurant Admin Dashboard (`localhost:3001`)
+
+| Tab | Features |
+|-----|---------|
+| Overview | KPI cards, revenue chart (7 days), top items, recent reviews |
+| Orders | Live order feed, Kitchen Display System (KDS), status updates |
+| Menu | Add / edit / delete dishes, image upload, dietary tags, categories |
+| Reservations | Confirm / cancel bookings, table map |
+| Reviews | Moderate reviews, sentiment breakdown |
+| Analytics | Revenue trends, category breakdown, popular dining times |
+| Settings | Edit profile, change password |
+
+---
+
+## App Owner Panel (`localhost:3002`)
+
+| Tab | Features |
+|-----|---------|
+| Overview | Total customers, active / locked, new signups, revenue, orders |
+| Customers | Add / delete customers, lock / unlock accounts |
+| Restaurant Admins | Create / delete admin accounts for the dashboard |
+| Analytics | Customer registration chart (7 days), platform metrics |

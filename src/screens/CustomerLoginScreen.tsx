@@ -7,9 +7,10 @@ interface Props {
   onSuccess: () => void;
   onBack: () => void;
   onRegisterClick: () => void;
+  restaurantId: string;
 }
 
-export const CustomerLoginScreen = ({ onSuccess, onBack, onRegisterClick }: Props) => {
+export const CustomerLoginScreen = ({ onSuccess, onBack, onRegisterClick, restaurantId }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +25,7 @@ export const CustomerLoginScreen = ({ onSuccess, onBack, onRegisterClick }: Prop
       const res = await fetch('/api/customer/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, restaurantId }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.message ?? 'Login failed'); return; }

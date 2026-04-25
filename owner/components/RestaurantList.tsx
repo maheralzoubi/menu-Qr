@@ -1,0 +1,264 @@
+import React, { useState, useEffect, useCallback, FormEvent } from 'react';
+import { Plus, X, Eye, EyeOff, Loader, ToggleLeft, ToggleRight, Trash2, Search, Building2, CheckCircle, XCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ownerFetch as authFetch } from '../../src/lib/ownerAuth';
+
+interface Restaurant {
+  _id: string;
+  name: string;
+  logo?: string;
+  contactEmail?: string;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  totalOrders: number;
+  totalRevenue: number;
+  totalCustomers: number;
+}
+
+interface Props { onSelect: (r: Restaurant) => void; }
+
+const emptyForm = () => ({
+  name: '', logo: '', contactEmail: '', contactPhone: '', address: '',
+  adminName: '', adminEmail: '', adminPassword: '',
+});
+
+export const RestaurantList = ({ onSelect }: Props) => {
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showPanel, setShowPanel] = useState(false);
+  const [form, setForm] = useState(emptyForm());
+  const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [formLoading, setFormLoading] = useState(false);
+
+  const fetchRestaurants = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/owner/restaurants');
+      if (res.ok) setRestaurants(await res.json());
+    } catch (e) { console.error(e); }
+    finally { setIsLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchRestaurants(); }, [fetchRestaurants]);
+
+  const handleCreate = async (e: FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+    setFormLoading(true);
+    try {
+      const res = await authFetch('/api/owner/restaurants', { method: 'POST', body: JSON.stringify(form) });
+      const data = await res.json();
+      if (!res.ok) { setFormError(data.message ?? 'Failed to create restaurant'); return; }
+      setRestaurants(prev => [{ ...data.restaurant, totalOrders: 0, totalRevenue: 0, totalCustomers: 0 }, ...prev]);
+      setShowPanel(false);
+      setForm(emptyForm());
+    } catch { setFormError('Network error.'); }
+    finally { setFormLoading(false); }
+  };
+
+  const handleToggleStatus = async (id: string, current: 'active' | 'inactive') => {
+    const newStatus = current === 'active' ? 'inactive' : 'active';
+    try {
+      const res = await authFetch(`/api/owner/restaurants/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
+      if (res.ok) setRestaurants(prev => prev.map(r => r._id === id ? { ...r, status: newStatus } : r));
+    } catch (e) { console.error(e); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this restaurant and ALL its data? This cannot be undone.')) return;
+    try {
+      const res = await authFetch(`/api/owner/restaurants/${id}`, { method: 'DELETE' });
+      if (res.ok) setRestaurants(prev => prev.filter(r => r._id !== id));
+    } catch (e) { console.error(e); }
+  };
+
+  const filtered = restaurants.filter(r =>
+    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (r.contactEmail || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h2 className="text-4xl font-headline font-extrabold tracking-tight">Restaurants</h2>
+          <p className="text-on-surface-variant font-medium">Manage all restaurant clients on the platform.</p>
+        </div>
+        <div className="flex gap-3">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
+            <input type="text" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              className="bg-surface-container-high border-none rounded-xl py-3 pl-12 pr-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none" />
+          </div>
+          <button onClick={() => { setShowPanel(true); setFormError(''); setForm(emptyForm()); }}
+            className="flex items-center gap-2 btn-gradient text-white px-6 py-3 rounded-xl font-bold text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
+            <Plus className="w-4 h-4" /> Add Restaurant
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-6">
+        {[
+          { label: 'Total', value: restaurants.length },
+          { label: 'Active', value: restaurants.filter(r => r.status === 'active').length },
+          { label: 'Inactive', value: restaurants.filter(r => r.status === 'inactive').length },
+        ].map(s => (
+          <div key={s.label} className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{s.label}</p>
+            <h4 className="text-3xl font-headline font-extrabold">{s.value}</h4>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="space-y-3 animate-pulse">{[1,2,3].map(i => <div key={i} className="h-16 bg-surface-container-low rounded-2xl" />)}</div>
+      ) : (
+        <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-outline-variant/10">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-outline-variant/10">
+                {['Restaurant', 'Status', 'Customers', 'Orders', 'Revenue', 'Created', 'Actions'].map(h => (
+                  <th key={h} className="text-left p-5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {filtered.map((r, i) => (
+                  <motion.tr key={r._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
+                    className="border-b border-outline-variant/5 hover:bg-surface-container-lowest transition-colors">
+                    <td className="p-5">
+                      <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelect(r)}>
+                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shrink-0">
+                          {r.logo ? <img src={r.logo} className="w-full h-full object-cover" /> : r.name.slice(0, 1).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm hover:text-primary transition-colors">{r.name}</p>
+                          <p className="text-xs text-on-surface-variant">{r.contactEmail}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-5">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${r.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="p-5 text-sm font-bold">{r.totalCustomers}</td>
+                    <td className="p-5 text-sm font-bold">{r.totalOrders}</td>
+                    <td className="p-5 text-sm font-bold text-primary">${r.totalRevenue.toFixed(2)}</td>
+                    <td className="p-5 text-sm text-on-surface-variant">{new Date(r.createdAt).toLocaleDateString()}</td>
+                    <td className="p-5">
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => onSelect(r)} className="p-2 rounded-xl hover:bg-primary/10 text-primary transition-colors" title="View details">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleToggleStatus(r._id, r.status)}
+                          className={`p-2 rounded-xl transition-colors ${r.status === 'active' ? 'hover:bg-rose-50 text-rose-500' : 'hover:bg-emerald-50 text-emerald-600'}`}
+                          title={r.status === 'active' ? 'Deactivate' : 'Activate'}>
+                          {r.status === 'active' ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                        </button>
+                        <button onClick={() => handleDelete(r._id)} className="p-2 rounded-xl hover:bg-rose-50 text-rose-500 transition-colors" title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+            </tbody>
+          </table>
+          {filtered.length === 0 && (
+            <div className="text-center py-16 text-on-surface-variant/40">
+              <Building2 className="w-12 h-12 mx-auto mb-3 opacity-20" />
+              <p className="font-bold">{restaurants.length === 0 ? 'No restaurants yet' : 'No results'}</p>
+              {restaurants.length === 0 && (
+                <button onClick={() => setShowPanel(true)} className="mt-4 text-primary font-bold text-sm hover:underline">Add first restaurant</button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Add Restaurant slide-in panel */}
+      <AnimatePresence>
+        {showPanel && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={() => setShowPanel(false)} />
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-surface shadow-2xl z-50 flex flex-col">
+              <div className="flex items-center justify-between px-8 py-6 border-b border-surface-container">
+                <h3 className="text-xl font-headline font-extrabold">Add Restaurant</h3>
+                <button onClick={() => setShowPanel(false)} className="p-2 hover:bg-surface-container rounded-full transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreate} className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-primary mb-4">Restaurant Info</p>
+                  {[
+                    { label: 'Restaurant Name', key: 'name', type: 'text', required: true, placeholder: 'The Artisan Kitchen' },
+                    { label: 'Contact Email', key: 'contactEmail', type: 'email', required: false, placeholder: 'contact@restaurant.com' },
+                    { label: 'Phone', key: 'contactPhone', type: 'tel', required: false, placeholder: '+1 555 000 0000' },
+                    { label: 'Address', key: 'address', type: 'text', required: false, placeholder: '123 Main St, City' },
+                    { label: 'Logo URL (optional)', key: 'logo', type: 'url', required: false, placeholder: 'https://...' },
+                  ].map(({ label, key, type, required, placeholder }) => (
+                    <div key={key} className="space-y-1.5 mb-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{label}</label>
+                      <input type={type} required={required} value={(form as any)[key]}
+                        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
+                        className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                    </div>
+                  ))}
+                </div>
+
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-primary mb-4">Admin Account</p>
+                  <p className="text-xs text-on-surface-variant mb-4">This person will log into the restaurant admin dashboard at localhost:3001</p>
+                  {[
+                    { label: 'Admin Full Name', key: 'adminName', type: 'text', required: true, placeholder: 'John Smith' },
+                    { label: 'Admin Email', key: 'adminEmail', type: 'email', required: true, placeholder: 'admin@restaurant.com' },
+                  ].map(({ label, key, type, required, placeholder }) => (
+                    <div key={key} className="space-y-1.5 mb-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{label}</label>
+                      <input type={type} required={required} value={(form as any)[key]}
+                        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
+                        className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                    </div>
+                  ))}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Admin Password</label>
+                    <div className="relative">
+                      <input type={showPassword ? 'text' : 'password'} required value={form.adminPassword}
+                        onChange={e => setForm(f => ({ ...f, adminPassword: e.target.value }))} placeholder="Min 6 characters"
+                        className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                      <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40">
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {formError && <p className="text-sm text-rose-500 font-medium">{formError}</p>}
+              </form>
+
+              <div className="px-8 py-6 border-t border-surface-container flex gap-3">
+                <button type="button" onClick={() => setShowPanel(false)}
+                  className="flex-1 py-4 rounded-2xl bg-surface-container-high font-bold text-sm hover:bg-surface-variant transition-all">Cancel</button>
+                <button onClick={handleCreate as any} disabled={formLoading}
+                  className="flex-1 py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+                  {formLoading ? <><Loader className="w-4 h-4 animate-spin" /> Creating...</> : 'Create Restaurant'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};

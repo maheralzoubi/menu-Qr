@@ -9,13 +9,15 @@ import { motion, AnimatePresence } from 'motion/react';
 
 import { Screen } from './types';
 import { useCart } from './hooks/useCart';
+import { useRestaurant } from './hooks/useRestaurant';
 import { getCustomerToken, clearCustomerToken } from './lib/customerAuth';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
+import { RestaurantListScreen } from './screens/RestaurantListScreen';
+import { ScanTableQRScreen } from './screens/ScanTableQRScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { MenuScreen } from './screens/MenuScreen';
 import { CartScreen } from './screens/CartScreen';
-import { PaymentScreen } from './screens/PaymentScreen';
 import { StatusScreen } from './screens/StatusScreen';
 import { ReviewsScreen } from './screens/ReviewsScreen';
 import { WriteReviewScreen } from './screens/WriteReviewScreen';
@@ -25,23 +27,52 @@ import { CustomerRegisterScreen } from './screens/CustomerRegisterScreen';
 import { CustomerProfileScreen } from './screens/CustomerProfileScreen';
 
 type AccountView = 'login' | 'register' | 'profile';
+interface SelectedRestaurant { _id: string; name: string; logo?: string; }
 
 export default function App() {
+  const { context, loading } = useRestaurant();
   const [screen, setScreen] = useState<Screen>('home');
   const [accountView, setAccountView] = useState<AccountView>('login');
   const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(!!getCustomerToken());
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [tipAmount, setTipAmount] = useState<number>(0);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<SelectedRestaurant | null>(null);
   const { cart, addToCart, updateQuantity, removeFromCart, cartCount, subtotal, clearCart } = useCart();
 
   const totalWithTaxAndTip = subtotal + tipAmount;
+  const restaurantId = context?.restaurantId ?? '';
+  const tableName = context?.tableName ?? '';
+
+  // Detecting URL/localStorage context
+  if (loading) return null;
+
+  // ── Flow 1: No context → restaurant discovery ─────────────────────────────
+  if (!context) {
+    if (!selectedRestaurant) {
+      return <RestaurantListScreen onSelect={setSelectedRestaurant} />;
+    }
+    // Restaurant selected from list → show "scan QR at table" instruction
+    return (
+      <ScanTableQRScreen
+        restaurant={selectedRestaurant}
+        onBack={() => setSelectedRestaurant(null)}
+      />
+    );
+  }
+
+  // ── Flow 2: Context loaded (from QR scan) → full restaurant app ───────────
 
   const handlePlaceOrder = async () => {
     try {
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: cart, total: totalWithTaxAndTip }),
+        body: JSON.stringify({
+          items: cart,
+          total: totalWithTaxAndTip,
+          restaurantId,
+          tableNumber: tableName || undefined,
+        }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -60,10 +91,11 @@ export default function App() {
   };
 
   const getHeaderTitle = () => {
+    const base = context.restaurantName;
+    const tableLabel = tableName ? ` • ${tableName}` : '';
     switch (screen) {
-      case 'menu': return 'The Artisan Kitchen • Table 12';
+      case 'menu': return `${base}${tableLabel}`;
       case 'cart': return 'Your Selection';
-      case 'payment': return 'Payment';
       case 'reviews': return 'Guest Notes';
       case 'write-review': return 'Write a Review';
       case 'status': return 'Order Status';
@@ -77,11 +109,7 @@ export default function App() {
     if (isCustomerLoggedIn) {
       return (
         <CustomerProfileScreen
-          onLogout={() => {
-            clearCustomerToken();
-            setIsCustomerLoggedIn(false);
-            setScreen('home');
-          }}
+          onLogout={() => { clearCustomerToken(); setIsCustomerLoggedIn(false); setScreen('home'); }}
         />
       );
     }
@@ -91,6 +119,7 @@ export default function App() {
           onSuccess={() => { setIsCustomerLoggedIn(true); setAccountView('profile'); }}
           onBack={() => setScreen('home')}
           onLoginClick={() => setAccountView('login')}
+          restaurantId={restaurantId}
         />
       );
     }
@@ -99,6 +128,7 @@ export default function App() {
         onSuccess={() => { setIsCustomerLoggedIn(true); setAccountView('profile'); }}
         onBack={() => setScreen('home')}
         onRegisterClick={() => setAccountView('register')}
+        restaurantId={restaurantId}
       />
     );
   };
@@ -121,15 +151,14 @@ export default function App() {
               {screen === 'home' && (
                 <HomeScreen onStart={() => setScreen('menu')} onReserve={() => setScreen('reservation')} />
               )}
-              {screen === 'menu' && <MenuScreen addToCart={addToCart} />}
+              {screen === 'menu' && <MenuScreen addToCart={addToCart} restaurantId={restaurantId} />}
               {screen === 'cart' && (
                 <CartScreen cart={cart} updateQuantity={updateQuantity} removeFromCart={removeFromCart} tipAmount={tipAmount} setTipAmount={setTipAmount} />
               )}
-              {screen === 'payment' && <PaymentScreen total={totalWithTaxAndTip} onComplete={handlePlaceOrder} />}
-              {screen === 'status' && <StatusScreen orderId={currentOrderId} />}
-              {screen === 'reviews' && <ReviewsScreen onWriteReview={() => setScreen('write-review')} />}
-              {screen === 'write-review' && <WriteReviewScreen onSubmit={() => setScreen('reviews')} />}
-              {screen === 'reservation' && <ReservationScreen onComplete={() => setScreen('home')} />}
+{screen === 'status' && <StatusScreen orderId={currentOrderId} />}
+              {screen === 'reviews' && <ReviewsScreen onWriteReview={() => setScreen('write-review')} restaurantId={restaurantId} />}
+              {screen === 'write-review' && <WriteReviewScreen onSubmit={() => setScreen('reviews')} restaurantId={restaurantId} />}
+              {screen === 'reservation' && <ReservationScreen onComplete={() => setScreen('home')} restaurantId={restaurantId} />}
               {screen === 'account' && renderAccountScreen()}
             </motion.div>
           </AnimatePresence>
@@ -139,13 +168,13 @@ export default function App() {
           <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 px-4 pb-8 flex flex-col gap-4">
             {screen === 'cart' && cart.length > 0 && (
               <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-primary rounded-[2rem] p-1 shadow-2xl shadow-primary/20">
-                <button onClick={() => setScreen('payment')} className="w-full h-[64px] bg-primary active:scale-[0.98] transition-all duration-300 rounded-[1.75rem] flex items-center justify-between px-8 text-white">
+                <button onClick={handlePlaceOrder} className="w-full h-[64px] bg-primary active:scale-[0.98] transition-all duration-300 rounded-[1.75rem] flex items-center justify-between px-8 text-white">
                   <div className="flex flex-col items-start">
                     <span className="font-headline font-bold text-lg leading-tight">Place Order</span>
                     <span className="text-[10px] font-medium opacity-80 uppercase tracking-widest">Instant Table Service</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-px bg-white/20"></div>
+                    <div className="h-8 w-px bg-white/20" />
                     <span className="font-headline font-extrabold text-xl">${totalWithTaxAndTip.toFixed(2)}</span>
                     <ChevronRight className="w-5 h-5" />
                   </div>
@@ -154,10 +183,7 @@ export default function App() {
             )}
             <BottomNav
               activeScreen={screen}
-              setScreen={(s) => {
-                if (s === 'account') { handleAccountNav(); return; }
-                setScreen(s);
-              }}
+              setScreen={(s) => { if (s === 'account') { handleAccountNav(); return; } setScreen(s); }}
               cartCount={cartCount}
               isLoggedIn={isCustomerLoggedIn}
             />

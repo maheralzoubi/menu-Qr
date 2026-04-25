@@ -36,7 +36,7 @@ export interface Review {
   image?: string;
 }
 
-export type Screen = 'home' | 'menu' | 'cart' | 'payment' | 'status' | 'reviews' | 'write-review' | 'reservation' | 'account';
+export type Screen = 'home' | 'menu' | 'cart' | 'status' | 'reviews' | 'write-review' | 'reservation' | 'account';
 
 export interface Reservation {
   id: string;

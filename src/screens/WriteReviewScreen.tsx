@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { Star, Camera, Send } from 'lucide-react';
 
-export const WriteReviewScreen = ({ onSubmit }: { onSubmit: () => void }) => {
+export const WriteReviewScreen = ({ onSubmit, restaurantId }: { onSubmit: () => void; restaurantId: string }) => {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [userName, setUserName] = useState('');
@@ -24,7 +24,8 @@ export const WriteReviewScreen = ({ onSubmit }: { onSubmit: () => void }) => {
           userName: userName.trim(),
           userInitials: userName.trim().split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
           rating,
-          comment
+          comment,
+          restaurantId,
         })
       });
       if (response.ok) {

@@ -10,7 +10,7 @@ import { Category, MenuItem } from '../types';
 import { Skeleton } from '../components/Skeleton';
 import { ItemDetailsModal } from '../components/ItemDetailsModal';
 
-export const MenuScreen = ({ addToCart }: { addToCart: (item: MenuItem) => void }) => {
+export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: MenuItem) => void; restaurantId: string }) => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -22,8 +22,8 @@ export const MenuScreen = ({ addToCart }: { addToCart: (item: MenuItem) => void 
     const fetchData = async () => {
       try {
         const [menuRes, catRes] = await Promise.all([
-          fetch('/api/menu'),
-          fetch('/api/categories')
+          fetch(`/api/menu?restaurantId=${restaurantId}`),
+          fetch(`/api/categories?restaurantId=${restaurantId}`)
         ]);
         const menuData = await menuRes.json();
         const catData = await catRes.json();

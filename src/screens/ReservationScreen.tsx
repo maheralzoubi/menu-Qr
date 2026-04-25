@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Calendar, Users, Clock, CheckCircle2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-export const ReservationScreen = ({ onComplete }: { onComplete: () => void }) => {
+export const ReservationScreen = ({ onComplete, restaurantId }: { onComplete: () => void; restaurantId: string }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,7 +25,7 @@ export const ReservationScreen = ({ onComplete }: { onComplete: () => void }) =>
       const response = await fetch('/api/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ ...formData, restaurantId })
       });
       if (response.ok) {
         setIsSuccess(true);

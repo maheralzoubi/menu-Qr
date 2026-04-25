@@ -8,14 +8,14 @@ import { Star } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
 import { Review } from '../types';
 
-export const ReviewsScreen = ({ onWriteReview }: { onWriteReview: () => void }) => {
+export const ReviewsScreen = ({ onWriteReview, restaurantId }: { onWriteReview: () => void; restaurantId: string }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await fetch('/api/reviews');
+        const response = await fetch(`/api/reviews?restaurantId=${restaurantId}`);
         const data = await response.json();
         setReviews(data);
       } catch (error) {
