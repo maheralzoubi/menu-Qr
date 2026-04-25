@@ -74,8 +74,7 @@ export const AdminTable = () => {
         <div>
           <h2 className="text-4xl font-headline font-extrabold tracking-tight">Restaurant Admins</h2>
           <p className="text-on-surface-variant font-medium">
-            Manage accounts that can log into the restaurant dashboard at{' '}
-            <span className="font-bold text-primary">localhost:3001</span>
+            Manage accounts that can log into the restaurant dashboard.
           </p>
         </div>
         <div className="flex gap-3">
@@ -100,8 +99,7 @@ export const AdminTable = () => {
         <div>
           <p className="font-bold text-sm text-primary">Dashboard Access</p>
           <p className="text-xs text-on-surface-variant mt-0.5">
-            Admin accounts created here can log in to the restaurant management dashboard at <strong>localhost:3001</strong> with their email and password.
-            Customers (from the Customers tab) log in to the main app at <strong>localhost:3000</strong>.
+            Admin accounts created here can log in to the restaurant management dashboard with their email and password.
           </p>
         </div>
       </div>
@@ -202,7 +200,7 @@ export const AdminTable = () => {
 
               <form onSubmit={handleCreate} className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
                 <p className="text-xs text-on-surface-variant bg-surface-container-low p-4 rounded-2xl">
-                  This account will be able to log in to the restaurant admin dashboard at <strong>localhost:3001</strong>
+                  This account will be able to log in to the restaurant admin dashboard
                 </p>
 
                 {[

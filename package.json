@@ -9,6 +9,7 @@
     "owner": "vite --config vite.owner.config.ts",
     "seed": "tsx server/scripts/seed.ts",
     "build": "vite build",
+    "build:owner": "vite build --config vite.owner.config.ts --base /owner/",
     "preview": "vite preview",
     "clean": "rm -rf dist dist-admin dist-owner",
     "lint": "tsc --noEmit"

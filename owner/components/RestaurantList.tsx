@@ -219,7 +219,7 @@ export const RestaurantList = ({ onSelect }: Props) => {
 
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-primary mb-4">Admin Account</p>
-                  <p className="text-xs text-on-surface-variant mb-4">This person will log into the restaurant admin dashboard at localhost:3001</p>
+                  <p className="text-xs text-on-surface-variant mb-4">This person will log into the restaurant admin dashboard</p>
                   {[
                     { label: 'Admin Full Name', key: 'adminName', type: 'text', required: true, placeholder: 'John Smith' },
                     { label: 'Admin Email', key: 'adminEmail', type: 'email', required: true, placeholder: 'admin@restaurant.com' },
