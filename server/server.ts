@@ -44,11 +44,17 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    const distAdminPath = path.join(process.cwd(), 'dist-admin');
     const distOwnerPath = path.join(process.cwd(), 'dist-owner');
 
     app.use('/owner', express.static(distOwnerPath));
     app.get(['/owner', '/owner/*'], (_req, res) => {
       res.sendFile(path.join(distOwnerPath, 'owner.html'));
+    });
+
+    app.use('/admin', express.static(distAdminPath));
+    app.get(['/admin', '/admin/*'], (_req, res) => {
+      res.sendFile(path.join(distAdminPath, 'admin.html'));
     });
 
     app.use(express.static(distPath));
