@@ -2,7 +2,7 @@ services:
   - type: web
     name: menu-qr
     runtime: node
-    buildCommand: npm install && npm run build:owner
+    buildCommand: npm install --include=dev && npm run build:owner
     startCommand: npm run seed && npx tsx server/server.ts
     envVars:
       - key: NODE_ENV
