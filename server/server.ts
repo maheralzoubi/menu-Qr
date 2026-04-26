@@ -19,15 +19,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
-  await connectDb();
-  await runSeed().catch(e => console.warn('Seed skipped:', e.message));
-
   const app = express();
   const httpServer = createServer(app);
   initSocket(httpServer);
 
   app.use(cors());
   app.use(express.json());
+
+  app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
   // Serve uploaded images
   app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -60,9 +59,15 @@ async function startServer() {
 
   app.use(errorHandler);
 
+  // Bind port first so Render health check passes immediately
   httpServer.listen(env.PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${env.PORT}`);
+    console.log(`Server running on port ${env.PORT}`);
   });
+
+  // Connect DB after port is bound
+  connectDb()
+    .then(() => runSeed().catch(e => console.warn('Seed skipped:', e.message)))
+    .catch(e => console.error('MongoDB connection failed:', e.message));
 }
 
 startServer();
