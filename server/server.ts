@@ -26,7 +26,11 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+  app.get('/health', async (_req, res) => {
+    const mongoose = await import('mongoose').then(m => m.default).catch(() => null);
+    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+    res.json({ status: 'ok', db: states[mongoose?.connection.readyState ?? 0] ?? 'unknown' });
+  });
 
   // Serve uploaded images
   app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
