@@ -41,6 +41,51 @@ menu_qr/
 
 ---
 
+## Production Deployment
+
+The app is deployed on [Render.com](https://render.com) as a single service serving all three apps.
+
+| App | URL |
+|-----|-----|
+| Customer QR app | https://menu-qr-igcz.onrender.com |
+| Restaurant Admin | https://menu-qr-igcz.onrender.com/admin |
+| App Owner Panel | https://menu-qr-igcz.onrender.com/owner |
+
+### How to deploy an update
+
+```bash
+git add .
+git commit -m "your message"
+git push origin main
+```
+
+Render detects the push and redeploys automatically (~3–4 min build time).
+
+### Render service settings
+
+| Field | Value |
+|-------|-------|
+| Build command | `npm install --include=dev && npm run build:all` |
+| Start command | `npm start` |
+| Branch | `main` |
+
+### Required environment variables (set in Render dashboard)
+
+| Key | Description |
+|-----|-------------|
+| `NODE_ENV` | `production` |
+| `MONGODB_URI` | MongoDB Atlas connection string |
+| `JWT_SECRET` | Long random secret for signing JWTs |
+| `JWT_EXPIRES_IN` | Token lifetime (e.g. `7d`) |
+
+### Notes
+
+- Free tier sleeps after 15 min of inactivity — first request takes ~30s to wake up
+- Uploaded images (multer) are stored locally and **will reset on redeploy** — switch to Cloudinary for persistent image storage
+- MongoDB Atlas must have `0.0.0.0/0` in Network Access to allow Render connections
+
+---
+
 ## Setup
 
 ### 1. Install dependencies
