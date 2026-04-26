@@ -13,12 +13,14 @@ import authRouter from './routes/auth';
 import customerRouter from './routes/customer';
 import ownerRouter from './routes/owner';
 import { errorHandler } from './middleware/errorHandler';
+import { runSeed } from './scripts/seed';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
   await connectDb();
+  await runSeed().catch(e => console.warn('Seed skipped:', e.message));
 
   const app = express();
   const httpServer = createServer(app);

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "npm run seed && npx tsx server/server.ts",
+    "start": "npx tsx server/server.ts",
     "dev": "tsx server/server.ts",
     "admin": "vite --config vite.admin.config.ts",
     "owner": "vite --config vite.owner.config.ts",

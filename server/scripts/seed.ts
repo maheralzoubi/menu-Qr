@@ -1,17 +1,11 @@
 import '../config/env';
-import mongoose from 'mongoose';
-import { env } from '../config/env';
 import { User } from '../models/User';
 import { Restaurant } from '../models/Restaurant';
 
-async function seed() {
-  await mongoose.connect(env.MONGODB_URI);
-
+export async function runSeed() {
   // Create superadmin (app owner)
   const existingOwner = await User.findOne({ email: 'superadmin@app.com' });
-  if (existingOwner) {
-    console.log('Already exists: superadmin@app.com');
-  } else {
+  if (!existingOwner) {
     await User.create({ email: 'superadmin@app.com', password: 'superadmin123', role: 'superadmin', name: 'App Owner' });
     console.log('Created: superadmin@app.com / superadmin123');
   }
@@ -36,13 +30,16 @@ async function seed() {
       });
       restaurant.adminId = admin._id as any;
       await restaurant.save();
-      console.log('Demo restaurant created with admin: admin@restaurant.com / admin123');
+      console.log('Demo restaurant created: admin@restaurant.com / admin123');
     }
-  } else {
-    console.log('Restaurants already exist, skipping demo restaurant');
   }
-
-  await mongoose.disconnect();
 }
 
-seed().catch(console.error);
+// Allow running directly: tsx server/scripts/seed.ts
+if (process.argv[1]?.endsWith('seed.ts')) {
+  import('mongoose').then(({ default: mongoose }) =>
+    import('../config/env').then(({ env }) =>
+      mongoose.connect(env.MONGODB_URI).then(runSeed).then(() => mongoose.disconnect())
+    )
+  ).catch(console.error);
+}
