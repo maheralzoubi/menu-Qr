@@ -4,7 +4,7 @@
  */
 
 import { ReactNode } from 'react';
-import { BookOpen, Star, ReceiptText, ShoppingBag, User } from 'lucide-react';
+import { BookOpen, Star, ReceiptText, ShoppingBag } from 'lucide-react';
 import { Screen } from '../types';
 
 export const NavButton = ({ active, icon, label, onClick, badge }: { active: boolean, icon: ReactNode, label: string, onClick: () => void, badge?: number }) => (
@@ -26,7 +26,6 @@ export const BottomNav = ({
   activeScreen,
   setScreen,
   cartCount,
-  isLoggedIn,
 }: {
   activeScreen: Screen;
   setScreen: (s: Screen) => void;
@@ -44,12 +43,6 @@ export const BottomNav = ({
         label="Cart"
         onClick={() => setScreen('cart')}
         badge={cartCount > 0 ? cartCount : undefined}
-      />
-      <NavButton
-        active={activeScreen === 'account' as any}
-        icon={<User className={`w-5 h-5 ${isLoggedIn ? 'fill-primary text-primary' : ''}`} />}
-        label={isLoggedIn ? 'Me' : 'Account'}
-        onClick={() => setScreen('account' as any)}
       />
     </div>
   </nav>
