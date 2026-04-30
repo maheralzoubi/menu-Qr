@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -11,6 +11,7 @@ import { Screen } from './types';
 import { useCart } from './hooks/useCart';
 import { useRestaurant } from './hooks/useRestaurant';
 import { getCustomerToken, clearCustomerToken } from './lib/customerAuth';
+import { requestFCMToken, onMessage, messaging } from './lib/firebase';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { RestaurantListScreen } from './screens/RestaurantListScreen';
@@ -35,6 +36,7 @@ export default function App() {
   const [accountView, setAccountView] = useState<AccountView>('login');
   const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(!!getCustomerToken());
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [tipAmount, setTipAmount] = useState<number>(0);
   const [selectedRestaurant, setSelectedRestaurant] = useState<SelectedRestaurant | null>(null);
   const { cart, addToCart, updateQuantity, removeFromCart, cartCount, subtotal, clearCart } = useCart();
@@ -42,6 +44,43 @@ export default function App() {
   const totalWithTaxAndTip = subtotal + tipAmount;
   const restaurantId = context?.restaurantId ?? '';
   const tableName = context?.tableName ?? '';
+
+  // Restore a pending order from localStorage when restaurant context loads
+  useEffect(() => {
+    if (!restaurantId) return;
+    const raw = localStorage.getItem('pending_order');
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw) as { orderId: string; restaurantId: string; savedAt: number };
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      if (saved.restaurantId === restaurantId && Date.now() - saved.savedAt < oneDayMs) {
+        setCurrentOrderId(saved.orderId);
+        setScreen('status');
+      } else {
+        localStorage.removeItem('pending_order');
+      }
+    } catch {
+      localStorage.removeItem('pending_order');
+    }
+  }, [restaurantId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Request FCM token once when restaurant context is available
+  useEffect(() => {
+    if (!restaurantId) return;
+    requestFCMToken().then(token => { if (token) setFcmToken(token); });
+  }, [restaurantId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle foreground FCM messages (app is open) via browser Notification API
+  useEffect(() => {
+    const unsubscribe = onMessage(messaging, (payload) => {
+      const title = payload.notification?.title ?? 'Order Update';
+      const body = payload.notification?.body ?? '';
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/favicon.ico' });
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   // Detecting URL/localStorage context
   if (loading) return null;
@@ -72,11 +111,17 @@ export default function App() {
           total: totalWithTaxAndTip,
           restaurantId,
           tableNumber: tableName || undefined,
+          fcmToken: fcmToken || undefined,
         }),
       });
       const data = await response.json();
       if (response.ok) {
         setCurrentOrderId(data._id);
+        localStorage.setItem('pending_order', JSON.stringify({
+          orderId: data._id,
+          restaurantId,
+          savedAt: Date.now(),
+        }));
         clearCart();
         setScreen('status');
       }

@@ -62,6 +62,9 @@ export const StatusScreen = ({ orderId }: { orderId: string | null }) => {
         setOrder(data);
         const idx = statuses.findIndex(s => s.title === data.status);
         setStatusIndex(idx >= 0 ? idx : 0);
+        if (data.status === 'Delivered') {
+          localStorage.removeItem('pending_order');
+        }
 
         // Persist to localStorage so history tab shows customer's own orders
         setHistory(prev => {
@@ -91,6 +94,9 @@ export const StatusScreen = ({ orderId }: { orderId: string | null }) => {
       if (idx >= 0) {
         setStatusIndex(idx);
         pushNotification(`Your order is now: ${status}`);
+        if (status === 'Delivered') {
+          localStorage.removeItem('pending_order');
+        }
         // Sync status update into localStorage history
         setHistory(prev => {
           const updated = prev.map(o => (o._id ?? o.id) === id ? { ...o, status } : o);

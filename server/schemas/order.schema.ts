@@ -19,6 +19,7 @@ export const createOrderSchema = z.object({
   restaurantId: z.string().min(1),
   tableNumber: z.string().optional(),
   customerName: z.string().optional(),
+  fcmToken: z.string().optional(),
 });
 
 export const updateOrderStatusSchema = z.object({

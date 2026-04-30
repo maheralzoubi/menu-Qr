@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as ordersService from '../services/ordersService';
 import { AuthRequest } from '../middleware/auth';
 import { getIO } from '../socket/index';
+import { sendOrderStatusNotification } from '../services/notificationService';
 
 export const getOrders = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -32,6 +33,9 @@ export const updateStatus = async (req: AuthRequest, res: Response, next: NextFu
     const order = await ordersService.updateOrderStatus(req.params.id, restaurantId, req.body.status);
     if (!order) { res.status(404).json({ message: 'Order not found' }); return; }
     getIO().to(`order:${order._id}`).to('admin').emit('order:status', { id: order._id, status: order.status });
+    if (order.fcmToken) {
+      sendOrderStatusNotification(order.fcmToken, order.status, order._id.toString());
+    }
     res.json(order);
   } catch (e) { next(e); }
 };

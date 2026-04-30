@@ -20,6 +20,7 @@ export interface IOrder extends Document {
   tableNumber?: string;
   customerName?: string;
   address?: string;
+  fcmToken?: string;
   restaurantId: mongoose.Types.ObjectId;
   createdAt: Date;
 }
@@ -48,6 +49,7 @@ const OrderSchema = new Schema<IOrder>(
     tableNumber: { type: String },
     customerName: { type: String },
     address: { type: String, default: '' },
+    fcmToken: { type: String },
     restaurantId: { type: Schema.Types.ObjectId, ref: 'Restaurant', required: true },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
