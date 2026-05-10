@@ -89,7 +89,7 @@ export default function App() {
 
   // Handle foreground FCM messages (app is open) via browser Notification API
   useEffect(() => {
-    const unsubscribe = onMessage(messaging, (payload) => {
+    const unsubscribe = onMessage(null, (payload) => {
       const title = payload.notification?.title ?? 'Order Update';
       const body = payload.notification?.body ?? '';
       if ('Notification' in window && Notification.permission === 'granted') {
