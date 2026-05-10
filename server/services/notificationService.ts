@@ -1,14 +1,27 @@
 import admin from 'firebase-admin';
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
-}
+const firebaseReady = (() => {
+  if (!admin.apps.length) {
+    const { FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY } = process.env;
+    if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) {
+      console.warn('Firebase env vars not set — push notifications disabled');
+      return false;
+    }
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: FIREBASE_PROJECT_ID,
+          clientEmail: FIREBASE_CLIENT_EMAIL,
+          privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        }),
+      });
+    } catch (e) {
+      console.warn('Firebase init failed — push notifications disabled:', (e as Error).message);
+      return false;
+    }
+  }
+  return true;
+})();
 
 const STATUS_MESSAGES: Record<string, string> = {
   Preparing: 'Your order is being prepared by our chefs!',
@@ -21,27 +34,19 @@ export async function sendOrderStatusNotification(
   status: string,
   orderId: string,
 ): Promise<void> {
+  if (!firebaseReady) return;
+
   const body = STATUS_MESSAGES[status];
-  if (!body) return; // No notification for 'Pending'
+  if (!body) return;
 
   try {
     await admin.messaging().send({
       token: fcmToken,
-      notification: {
-        title: 'Order Update',
-        body,
-      },
+      notification: { title: 'Order Update', body },
       data: { orderId, status },
-      webpush: {
-        notification: {
-          title: 'Order Update',
-          body,
-          icon: '/favicon.ico',
-        },
-      },
+      webpush: { notification: { title: 'Order Update', body, icon: '/favicon.ico' } },
     });
   } catch (error) {
-    // Log but don't throw — a failed notification must not break the status update
     console.error('FCM notification failed:', error);
   }
 }
