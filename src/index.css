@@ -44,7 +44,7 @@
 
 @layer utilities {
   .btn-gradient {
-    background: linear-gradient(135deg, #9b3f25 0%, #bb563b 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
   }
   .glass-card {
     background: rgba(255, 255, 255, 0.7);
@@ -61,7 +61,7 @@
 }
 
 .bg-signature-gradient {
-  background: linear-gradient(135deg, #9b3f25 0%, #bb563b 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
 }
 
 .bg-editorial-hero {

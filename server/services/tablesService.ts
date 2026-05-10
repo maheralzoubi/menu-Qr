@@ -24,4 +24,4 @@ export const deleteTable = (id: string, restaurantId: string) =>
   Table.findOneAndDelete({ _id: id, restaurantId });
 
 export const setManualStatus = (id: string, restaurantId: string, manualStatus: string | null) =>
-  Table.findOneAndUpdate({ _id: id, restaurantId }, { manualStatus }, { new: true });
+  Table.findOneAndUpdate({ _id: id, restaurantId }, { manualStatus }, { returnDocument: 'after' });

@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Package, CheckCircle2, Clock, User, ChevronRight, Search,
-  ChefHat, Timer
+  ChefHat, Timer, Archive, AlertTriangle, Bell, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { io } from 'socket.io-client';
 import { authFetch } from '../../src/lib/auth';
+import { OrderArchive } from './OrderArchive';
 
 interface CartItem {
   id: string;
@@ -31,10 +32,22 @@ interface Order {
   createdAt: string;
 }
 
-type OrderView = 'feed' | 'kds';
+type OrderView = 'feed' | 'kds' | 'archive';
+
+interface Toast {
+  id: number;
+  type: 'new' | 'preparing' | 'delivered';
+  orderRef: string;
+  table?: string;
+}
 
 export const OrderManager = () => {
   const [view, setView] = useState<OrderView>('feed');
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastId = useRef(0);
+  const [archiving, setArchiving] = useState(false);
+  const [archiveConfirm, setArchiveConfirm] = useState(false);
+  const [archiveMsg, setArchiveMsg] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -42,6 +55,12 @@ export const OrderManager = () => {
   const [tableFilter, setTableFilter] = useState<string>('all');
 
   const tableNames = ['all', ...Array.from(new Set(orders.map(o => o.tableNumber).filter(Boolean) as string[]))].sort();
+
+  const pushToast = useCallback((type: Toast['type'], orderRef: string, table?: string) => {
+    const id = ++toastId.current;
+    setToasts(prev => [...prev, { id, type, orderRef, table }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  }, []);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -62,6 +81,7 @@ export const OrderManager = () => {
 
     socket.on('order:new', (order: Order) => {
       setOrders(prev => [order, ...prev]);
+      pushToast('new', order._id.slice(-4).toUpperCase(), order.tableNumber);
     });
 
     socket.on('order:status', ({ id, status }: { id: string; status: string }) => {
@@ -78,8 +98,30 @@ export const OrderManager = () => {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       });
+      const order = orders.find(o => o._id === id);
+      if (status === 'Preparing') pushToast('preparing', id.slice(-4).toUpperCase(), order?.tableNumber);
+      if (status === 'Delivered') pushToast('delivered', id.slice(-4).toUpperCase(), order?.tableNumber);
     } catch (error) {
       console.error('Failed to update status:', error);
+    }
+  };
+
+  const handleArchiveToday = async () => {
+    setArchiving(true);
+    setArchiveMsg('');
+    try {
+      const res = await authFetch('/api/orders/archive-today', { method: 'POST' });
+      if (res.ok) {
+        const { archived } = await res.json();
+        setArchiveMsg(`${archived} order${archived !== 1 ? 's' : ''} archived.`);
+        await fetchOrders();
+      }
+    } catch {
+      setArchiveMsg('Failed to archive. Try again.');
+    } finally {
+      setArchiving(false);
+      setArchiveConfirm(false);
+      setTimeout(() => setArchiveMsg(''), 4000);
     }
   };
 
@@ -95,8 +137,15 @@ export const OrderManager = () => {
   const preparingOrders = orders.filter(o => o.status === 'Preparing');
   const pendingOrders = orders.filter(o => o.status === 'Pending');
 
+  if (view === 'archive') {
+    return <OrderArchive onBack={() => setView('feed')} />;
+  }
+
+  const dismissToast = (id: number) => setToasts(prev => prev.filter(t => t.id !== id));
+
   if (view === 'kds') {
     return (
+      <>
       <div className="h-full flex flex-col space-y-8">
         <div className="flex justify-between items-center">
           <div>
@@ -171,6 +220,8 @@ export const OrderManager = () => {
           )}
         </div>
       </div>
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
+      </>
     );
   }
 
@@ -209,8 +260,64 @@ export const OrderManager = () => {
               <ChefHat className="w-4 h-4" />
               KDS View
             </button>
+            <button
+              onClick={() => setView('archive')}
+              className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all"
+            >
+              <Archive className="w-4 h-4" />
+              Archive
+            </button>
+            <button
+              onClick={() => setArchiveConfirm(true)}
+              disabled={orders.length === 0}
+              className="flex items-center gap-2 px-6 py-3 bg-amber-500/10 text-amber-700 rounded-xl font-bold text-sm hover:bg-amber-500/20 disabled:opacity-30 transition-all"
+            >
+              <Archive className="w-4 h-4" />
+              Archive Day
+            </button>
           </div>
         </div>
+
+        {/* Archive confirmation dialog */}
+        <AnimatePresence>
+          {archiveConfirm && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4"
+            >
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+              <p className="flex-1 text-sm font-medium text-amber-800">
+                Archive all <strong>{orders.length}</strong> of today's orders? They will move to the archive and leave the live feed.
+              </p>
+              <button
+                onClick={handleArchiveToday}
+                disabled={archiving}
+                className="px-5 py-2 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 disabled:opacity-50 transition-colors"
+              >
+                {archiving ? 'Archiving…' : 'Confirm'}
+              </button>
+              <button
+                onClick={() => setArchiveConfirm(false)}
+                className="px-5 py-2 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-colors"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          )}
+          {archiveMsg && !archiveConfirm && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-3 text-emerald-700 font-medium text-sm"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {archiveMsg}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="grid grid-cols-3 gap-6">
           {[
@@ -373,6 +480,7 @@ export const OrderManager = () => {
           )}
         </AnimatePresence>
       </div>
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };
@@ -381,4 +489,65 @@ const XIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
   </svg>
+);
+
+const TOAST_CONFIG = {
+  new: {
+    icon: <Bell className="w-5 h-5" />,
+    bg: 'bg-amber-500',
+    label: (ref: string, table?: string) =>
+      `New order #${ref}${table ? ` — Table ${table}` : ''} just came in!`,
+  },
+  preparing: {
+    icon: <ChefHat className="w-5 h-5" />,
+    bg: 'bg-primary',
+    label: (ref: string, table?: string) =>
+      `Order #${ref}${table ? ` (Table ${table})` : ''} is now being prepared.`,
+  },
+  delivered: {
+    icon: <CheckCircle2 className="w-5 h-5" />,
+    bg: 'bg-emerald-500',
+    label: (ref: string, table?: string) =>
+      `Order #${ref}${table ? ` (Table ${table})` : ''} marked as delivered.`,
+  },
+} as const;
+
+export const ToastStack = ({
+  toasts,
+  onDismiss,
+}: {
+  toasts: Toast[];
+  onDismiss: (id: number) => void;
+}) => (
+  <div className="fixed bottom-8 right-8 z-[9999] flex flex-col gap-3 items-end pointer-events-none">
+    <AnimatePresence>
+      {toasts.map(toast => {
+        const cfg = TOAST_CONFIG[toast.type];
+        return (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, x: 60, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 60, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="pointer-events-auto flex items-center gap-3 pr-4 pl-4 py-3.5 rounded-2xl shadow-2xl text-white min-w-[280px] max-w-sm"
+            style={{ background: 'rgba(30,30,40,0.97)', backdropFilter: 'blur(12px)' }}
+          >
+            <div className={`w-9 h-9 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0`}>
+              {cfg.icon}
+            </div>
+            <p className="flex-1 text-sm font-semibold leading-snug">
+              {cfg.label(toast.orderRef, toast.table)}
+            </p>
+            <button
+              onClick={() => onDismiss(toast.id)}
+              className="text-white/40 hover:text-white transition-colors ml-1 shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        );
+      })}
+    </AnimatePresence>
+  </div>
 );

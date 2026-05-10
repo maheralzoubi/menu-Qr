@@ -16,12 +16,15 @@ export interface ICartItem {
 export interface IOrder extends Document {
   items: ICartItem[];
   total: number;
+  discount: number;
+  promoCode?: string;
   status: 'Pending' | 'Preparing' | 'Ready' | 'Delivered';
   tableNumber?: string;
   customerName?: string;
   address?: string;
   fcmToken?: string;
   restaurantId: mongoose.Types.ObjectId;
+  archivedAt?: Date;
   createdAt: Date;
 }
 
@@ -45,12 +48,15 @@ const OrderSchema = new Schema<IOrder>(
   {
     items: { type: [CartItemSchema], required: true },
     total: { type: Number, required: true, min: 0 },
+    discount: { type: Number, default: 0, min: 0 },
+    promoCode: { type: String },
     status: { type: String, enum: ['Pending', 'Preparing', 'Ready', 'Delivered'], default: 'Pending' },
     tableNumber: { type: String },
     customerName: { type: String },
     address: { type: String, default: '' },
     fcmToken: { type: String },
     restaurantId: { type: Schema.Types.ObjectId, ref: 'Restaurant', required: true },
+    archivedAt: { type: Date },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

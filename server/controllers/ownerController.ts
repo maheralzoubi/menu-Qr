@@ -88,7 +88,7 @@ export const updateRestaurantStatus = async (req: Request, res: Response, next: 
     if (!['active', 'inactive'].includes(status)) {
       res.status(400).json({ message: 'status must be active or inactive' }); return;
     }
-    const restaurant = await Restaurant.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    const restaurant = await Restaurant.findByIdAndUpdate(req.params.id, { status }, { returnDocument: 'after' });
     if (!restaurant) { res.status(404).json({ message: 'Restaurant not found' }); return; }
     res.json(restaurant);
   } catch (e) { next(e); }
@@ -177,7 +177,7 @@ export const updateCustomerStatus = async (req: Request, res: Response, next: Ne
     if (!['active', 'locked'].includes(status)) {
       res.status(400).json({ message: 'Status must be active or locked' }); return;
     }
-    const customer = await Customer.findByIdAndUpdate(req.params.id, { status }, { new: true }).select('-password');
+    const customer = await Customer.findByIdAndUpdate(req.params.id, { status }, { returnDocument: 'after' }).select('-password');
     if (!customer) { res.status(404).json({ message: 'Customer not found' }); return; }
     res.json(customer);
   } catch (e) { next(e); }

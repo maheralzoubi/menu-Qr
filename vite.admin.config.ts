@@ -26,8 +26,9 @@ export default defineConfig({
   server: {
     port: 3001,
     proxy: {
-      '/api': 'http://localhost:3000',
-      '/socket.io': { target: 'http://localhost:3000', ws: true },
+      '/api': 'http://127.0.0.1:3000',
+      '/uploads': 'http://127.0.0.1:3000',
+      '/socket.io': { target: 'http://127.0.0.1:3000', ws: true },
     },
   },
 });

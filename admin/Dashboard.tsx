@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Utensils, ShoppingBag, Calendar,
-  Star, LogOut, TrendingUp, Settings as SettingsIcon, QrCode
+  Star, LogOut, TrendingUp, Settings as SettingsIcon, QrCode, Tag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { authFetch } from '../src/lib/auth';
@@ -18,8 +18,9 @@ import { ReviewManager } from './components/ReviewManager';
 import { Analytics } from './components/Analytics';
 import { Settings } from './components/Settings';
 import { QRManager } from './components/QRManager';
+import { PromoManager } from './components/PromoManager';
 
-export type DashboardTab = 'overview' | 'orders' | 'menu' | 'reservations' | 'reviews' | 'analytics' | 'qr' | 'settings';
+export type DashboardTab = 'overview' | 'orders' | 'menu' | 'reservations' | 'reviews' | 'analytics' | 'qr' | 'promos' | 'settings';
 
 interface UserProfile { email: string; role: string; name?: string; title?: string; avatar?: string; restaurantId?: string; }
 
@@ -60,6 +61,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     { id: 'reviews',      label: 'Reviews',        icon: <Star className="w-5 h-5" /> },
     { id: 'analytics',    label: 'Analytics',      icon: <TrendingUp className="w-5 h-5" /> },
     { id: 'qr',           label: 'QR for Table',   icon: <QrCode className="w-5 h-5" /> },
+    { id: 'promos',       label: 'Promo Codes',    icon: <Tag className="w-5 h-5" /> },
     { id: 'settings',     label: 'Settings',       icon: <SettingsIcon className="w-5 h-5" /> },
   ];
 
@@ -163,6 +165,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
               {activeTab === 'reviews'      && <ReviewManager />}
               {activeTab === 'analytics'    && <Analytics />}
               {activeTab === 'qr'           && <QRManager restaurantId={restaurantId} />}
+              {activeTab === 'promos'       && <PromoManager />}
               {activeTab === 'settings'     && <Settings />}
             </motion.div>
           </AnimatePresence>

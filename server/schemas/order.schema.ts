@@ -16,6 +16,8 @@ const cartItemSchema = z.object({
 export const createOrderSchema = z.object({
   items: z.array(cartItemSchema).min(1),
   total: z.number().min(0),
+  discount: z.number().min(0).optional(),
+  promoCode: z.string().optional(),
   restaurantId: z.string().min(1),
   tableNumber: z.string().optional(),
   customerName: z.string().optional(),

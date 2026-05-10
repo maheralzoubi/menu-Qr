@@ -7,6 +7,7 @@ export interface RestaurantContext {
   tableName: string;
   restaurantName: string;
   logo: string;
+  primaryColor: string;
 }
 
 function readFromStorage(): RestaurantContext | null {
@@ -42,6 +43,7 @@ export function useRestaurant() {
               tableName,
               restaurantName: data.name,
               logo: data.logo ?? '',
+              primaryColor: data.primaryColor ?? '#9b3f25',
             };
             saveToStorage(ctx);
             setContext(ctx);

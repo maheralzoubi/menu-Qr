@@ -48,3 +48,24 @@ export const deleteOrder = async (req: AuthRequest, res: Response, next: NextFun
     res.status(204).send();
   } catch (e) { next(e); }
 };
+
+export const archiveToday = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const restaurantId = req.user!.restaurantId!;
+    const result = await ordersService.archiveTodayOrders(restaurantId);
+    res.json({ archived: result.modifiedCount });
+  } catch (e) { next(e); }
+};
+
+export const getArchivedOrders = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const restaurantId = req.user!.restaurantId!;
+    const { search, status, dateFrom, dateTo, tableNumber, page, limit } = req.query as Record<string, string>;
+    const result = await ordersService.getArchivedOrders(restaurantId, {
+      search, status, dateFrom, dateTo, tableNumber,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 50,
+    });
+    res.json(result);
+  } catch (e) { next(e); }
+};

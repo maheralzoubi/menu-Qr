@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IRestaurant extends Document {
   name: string;
   logo?: string;
+  primaryColor: string;
   contactEmail?: string;
   contactPhone?: string;
   address?: string;
@@ -14,6 +15,7 @@ const RestaurantSchema = new Schema<IRestaurant>(
   {
     name: { type: String, required: true, trim: true },
     logo: { type: String },
+    primaryColor: { type: String, default: '#9b3f25' },
     contactEmail: { type: String, trim: true, lowercase: true },
     contactPhone: { type: String, trim: true },
     address: { type: String, trim: true },

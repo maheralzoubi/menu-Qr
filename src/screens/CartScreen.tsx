@@ -4,29 +4,51 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X, Minus, Plus, ReceiptText, Edit3 } from 'lucide-react';
+import { X, Minus, Plus, ReceiptText, Edit3, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CartItem } from '../types';
 import { Skeleton } from '../components/Skeleton';
 
-export const CartScreen = ({ cart, updateQuantity, removeFromCart, tipAmount, setTipAmount }: { 
-  cart: CartItem[], 
-  updateQuantity: (id: string, delta: number) => void,
-  removeFromCart: (id: string) => void,
-  tipAmount: number,
-  setTipAmount: (amount: number) => void
+export const CartScreen = ({
+  cart,
+  updateQuantity,
+  removeFromCart,
+  tipAmount,
+  setTipAmount,
+  restaurantId,
+  discount,
+  promoCode,
+  onPromoApplied,
+}: {
+  cart: CartItem[];
+  updateQuantity: (id: string, delta: number) => void;
+  removeFromCart: (id: string) => void;
+  tipAmount: number;
+  setTipAmount: (amount: number) => void;
+  restaurantId: string;
+  discount: number;
+  promoCode: string;
+  onPromoApplied: (code: string, discountAmount: number) => void;
 }) => {
   const [customTip, setCustomTip] = useState<string>('');
   const [activeTipPreset, setActiveTipPreset] = useState<number | 'custom' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [promoInput, setPromoInput] = useState('');
+  const [promoStatus, setPromoStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [promoMessage, setPromoMessage] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
 
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  
+  // Sync input with applied code
+  useEffect(() => {
+    if (promoCode) setPromoInput(promoCode);
+  }, [promoCode]);
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   const handlePresetTip = (percent: number) => {
     const amount = subtotal * (percent / 100);
     setTipAmount(amount);
@@ -46,8 +68,43 @@ export const CartScreen = ({ cart, updateQuantity, removeFromCart, tipAmount, se
     }
   };
 
-  const total = subtotal + tipAmount;
-  
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim();
+    if (!code) return;
+    setPromoStatus('loading');
+    setPromoMessage('');
+    try {
+      const res = await fetch('/api/promos/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, restaurantId, subtotal }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setPromoStatus('success');
+        setPromoMessage(`${data.discountType === 'percentage' ? data.discountValue + '%' : '$' + data.discountValue.toFixed(2)} discount applied!`);
+        onPromoApplied(code.toUpperCase(), data.discountAmount);
+      } else {
+        setPromoStatus('error');
+        setPromoMessage(data.message || 'Invalid promo code');
+        onPromoApplied('', 0);
+      }
+    } catch {
+      setPromoStatus('error');
+      setPromoMessage('Could not validate code. Try again.');
+      onPromoApplied('', 0);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoInput('');
+    setPromoStatus('idle');
+    setPromoMessage('');
+    onPromoApplied('', 0);
+  };
+
+  const total = subtotal - discount + tipAmount;
+
   if (isLoading) {
     return (
       <div className="pt-24 pb-48 px-6 max-w-md mx-auto space-y-8">
@@ -82,12 +139,12 @@ export const CartScreen = ({ cart, updateQuantity, removeFromCart, tipAmount, se
       <section className="flex flex-col gap-6">
         <AnimatePresence mode="popLayout">
           {cart.map(item => (
-            <motion.div 
+            <motion.div
               layout
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              key={item.id} 
+              key={item.id}
               className="flex gap-4 items-center group"
             >
               <div className="w-24 h-24 rounded-xl overflow-hidden bg-surface-container shrink-0">
@@ -99,7 +156,7 @@ export const CartScreen = ({ cart, updateQuantity, removeFromCart, tipAmount, se
                     <h3 className="font-headline font-bold text-lg text-on-surface">{item.name}</h3>
                     <p className="text-xs text-on-surface-variant font-medium uppercase tracking-wider">{item.category}</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => removeFromCart(item.id)}
                     className="text-on-surface-variant/40 hover:text-error transition-colors"
                   >
@@ -109,14 +166,14 @@ export const CartScreen = ({ cart, updateQuantity, removeFromCart, tipAmount, se
                 <div className="flex justify-between items-end">
                   <span className="font-headline font-bold text-primary">${item.price.toFixed(2)}</span>
                   <div className="flex items-center bg-surface-container rounded-full px-1 py-1">
-                    <button 
+                    <button
                       onClick={() => updateQuantity(item.id, -1)}
                       className="w-7 h-7 flex items-center justify-center text-on-surface hover:bg-surface-container-highest rounded-full transition-colors"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
                     <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
-                    <button 
+                    <button
                       onClick={() => updateQuantity(item.id, 1)}
                       className="w-7 h-7 flex items-center justify-center text-on-surface hover:bg-surface-container-highest rounded-full transition-colors"
                     >
@@ -128,7 +185,7 @@ export const CartScreen = ({ cart, updateQuantity, removeFromCart, tipAmount, se
             </motion.div>
           ))}
         </AnimatePresence>
-        
+
         {cart.length === 0 && (
           <div className="text-center py-12 text-on-surface-variant">
             Your cart is empty
@@ -145,6 +202,12 @@ export const CartScreen = ({ cart, updateQuantity, removeFromCart, tipAmount, se
           <span className="text-on-surface-variant font-medium">Tax & Service</span>
           <span className="font-headline font-semibold text-tertiary-container">Included</span>
         </div>
+        {discount > 0 && (
+          <div className="flex justify-between items-center">
+            <span className="text-on-surface-variant font-medium">Promo ({promoCode})</span>
+            <span className="font-headline font-semibold text-green-600">-${discount.toFixed(2)}</span>
+          </div>
+        )}
         {tipAmount > 0 && (
           <div className="flex justify-between items-center">
             <span className="text-on-surface-variant font-medium">Gratuity</span>
@@ -165,8 +228,8 @@ export const CartScreen = ({ cart, updateQuantity, removeFromCart, tipAmount, se
               key={percent}
               onClick={() => handlePresetTip(percent)}
               className={`py-3 rounded-xl font-headline font-bold text-sm transition-all duration-300 ${
-                activeTipPreset === percent 
-                  ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+                activeTipPreset === percent
+                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
                   : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-highest'
               }`}
             >
@@ -187,15 +250,57 @@ export const CartScreen = ({ cart, updateQuantity, removeFromCart, tipAmount, se
         </div>
       </section>
 
-      <section className="space-y-4">
-        <div className="flex justify-between items-center px-2">
-          <label className="font-headline font-bold text-sm tracking-wide text-on-surface-variant uppercase">Promo Code</label>
-          <button className="text-primary text-xs font-bold uppercase tracking-widest">Apply</button>
-        </div>
-        <div className="w-full bg-surface-container-low rounded-xl px-4 py-3 text-on-surface-variant text-sm flex items-center gap-2 border border-transparent focus-within:bg-white focus-within:shadow-sm transition-all duration-300">
-          <ReceiptText className="w-4 h-4" />
-          <input type="text" className="bg-transparent border-none focus:ring-0 w-full p-0" placeholder="Enter code..." />
-        </div>
+      <section className="space-y-3">
+        <label className="font-headline font-bold text-sm tracking-wide text-on-surface-variant uppercase px-2">Promo Code</label>
+
+        {promoStatus === 'success' ? (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3"
+          >
+            <div className="flex items-center gap-2 text-green-700">
+              <CheckCircle className="w-4 h-4" />
+              <span className="font-bold text-sm">{promoCode}</span>
+              <span className="text-xs font-medium opacity-80">{promoMessage}</span>
+            </div>
+            <button onClick={handleRemovePromo} className="text-green-500 hover:text-green-700 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        ) : (
+          <div className="flex gap-2">
+            <div className="flex-1 bg-surface-container-low rounded-xl px-4 py-3 text-on-surface-variant text-sm flex items-center gap-2 border border-transparent focus-within:bg-white focus-within:shadow-sm transition-all duration-300">
+              <ReceiptText className="w-4 h-4 shrink-0" />
+              <input
+                type="text"
+                value={promoInput}
+                onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoStatus('idle'); setPromoMessage(''); }}
+                onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
+                className="bg-transparent border-none focus:ring-0 w-full p-0 uppercase placeholder:normal-case placeholder:text-on-surface-variant/60"
+                placeholder="Enter code..."
+              />
+            </div>
+            <button
+              onClick={handleApplyPromo}
+              disabled={promoStatus === 'loading' || !promoInput.trim()}
+              className="px-4 py-3 bg-primary text-white rounded-xl font-headline font-bold text-sm disabled:opacity-40 hover:bg-primary/90 transition-colors shrink-0"
+            >
+              {promoStatus === 'loading' ? '…' : 'Apply'}
+            </button>
+          </div>
+        )}
+
+        {promoStatus === 'error' && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 text-error text-xs font-medium px-1"
+          >
+            <AlertCircle className="w-3.5 h-3.5" />
+            {promoMessage}
+          </motion.div>
+        )}
       </section>
 
       <section className="space-y-3">

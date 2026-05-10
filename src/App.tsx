@@ -30,6 +30,16 @@ import { CustomerProfileScreen } from './screens/CustomerProfileScreen';
 type AccountView = 'login' | 'register' | 'profile';
 interface SelectedRestaurant { _id: string; name: string; logo?: string; }
 
+function lightenHex(hex: string, amount = 0.22): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const lr = Math.round(Math.min(255, r + (255 - r) * amount));
+  const lg = Math.round(Math.min(255, g + (255 - g) * amount));
+  const lb = Math.round(Math.min(255, b + (255 - b) * amount));
+  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
+}
+
 export default function App() {
   const { context, loading } = useRestaurant();
   const [screen, setScreen] = useState<Screen>('home');
@@ -38,10 +48,12 @@ export default function App() {
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [tipAmount, setTipAmount] = useState<number>(0);
+  const [promoCode, setPromoCode] = useState<string>('');
+  const [discount, setDiscount] = useState<number>(0);
   const [selectedRestaurant, setSelectedRestaurant] = useState<SelectedRestaurant | null>(null);
   const { cart, addToCart, updateQuantity, removeFromCart, cartCount, subtotal, clearCart } = useCart();
 
-  const totalWithTaxAndTip = subtotal + tipAmount;
+  const totalWithTaxAndTip = subtotal - discount + tipAmount;
   const restaurantId = context?.restaurantId ?? '';
   const tableName = context?.tableName ?? '';
 
@@ -82,6 +94,13 @@ export default function App() {
     return unsubscribe;
   }, []);
 
+  // Apply restaurant primary color as CSS variables
+  useEffect(() => {
+    const color = context?.primaryColor ?? '#9b3f25';
+    document.documentElement.style.setProperty('--color-primary', color);
+    document.documentElement.style.setProperty('--color-primary-container', lightenHex(color));
+  }, [context?.primaryColor]);
+
   // Detecting URL/localStorage context
   if (loading) return null;
 
@@ -109,6 +128,8 @@ export default function App() {
         body: JSON.stringify({
           items: cart,
           total: totalWithTaxAndTip,
+          discount: discount || undefined,
+          promoCode: promoCode || undefined,
           restaurantId,
           tableNumber: tableName || undefined,
           fcmToken: fcmToken || undefined,
@@ -123,6 +144,8 @@ export default function App() {
           savedAt: Date.now(),
         }));
         clearCart();
+        setPromoCode('');
+        setDiscount(0);
         setScreen('status');
       }
     } catch (error) {
@@ -198,7 +221,17 @@ export default function App() {
               )}
               {screen === 'menu' && <MenuScreen addToCart={addToCart} restaurantId={restaurantId} />}
               {screen === 'cart' && (
-                <CartScreen cart={cart} updateQuantity={updateQuantity} removeFromCart={removeFromCart} tipAmount={tipAmount} setTipAmount={setTipAmount} />
+                <CartScreen
+                  cart={cart}
+                  updateQuantity={updateQuantity}
+                  removeFromCart={removeFromCart}
+                  tipAmount={tipAmount}
+                  setTipAmount={setTipAmount}
+                  restaurantId={restaurantId}
+                  discount={discount}
+                  promoCode={promoCode}
+                  onPromoApplied={(code, amount) => { setPromoCode(code); setDiscount(amount); }}
+                />
               )}
 {screen === 'status' && <StatusScreen orderId={currentOrderId} />}
               {screen === 'reviews' && <ReviewsScreen onWriteReview={() => setScreen('write-review')} restaurantId={restaurantId} />}
