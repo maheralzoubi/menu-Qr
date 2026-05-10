@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { io as socketIO } from 'socket.io-client';
 import { ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -42,6 +43,8 @@ function lightenHex(hex: string, amount = 0.22): string {
 
 export default function App() {
   const { context, loading } = useRestaurant();
+  const [primaryColor, setPrimaryColor] = useState<string | null>(null);
+  const socketRef = useRef<ReturnType<typeof socketIO> | null>(null);
   const [screen, setScreen] = useState<Screen>('home');
   const [accountView, setAccountView] = useState<AccountView>('login');
   const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(!!getCustomerToken());
@@ -96,10 +99,22 @@ export default function App() {
 
   // Apply restaurant primary color as CSS variables
   useEffect(() => {
-    const color = context?.primaryColor ?? '#9b3f25';
+    const color = primaryColor ?? context?.primaryColor ?? '#9b3f25';
     document.documentElement.style.setProperty('--color-primary', color);
     document.documentElement.style.setProperty('--color-primary-container', lightenHex(color));
-  }, [context?.primaryColor]);
+  }, [primaryColor, context?.primaryColor]);
+
+  // Join restaurant socket room and listen for live branding updates
+  useEffect(() => {
+    if (!context?.restaurantId) return;
+    const socket = socketIO();
+    socketRef.current = socket;
+    socket.emit('restaurant:join', context.restaurantId);
+    socket.on('branding:updated', ({ primaryColor: color }: { primaryColor: string; logo?: string }) => {
+      setPrimaryColor(color);
+    });
+    return () => { socket.disconnect(); socketRef.current = null; };
+  }, [context?.restaurantId]);
 
   // Detecting URL/localStorage context
   if (loading) return null;

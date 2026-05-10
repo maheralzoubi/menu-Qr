@@ -19,6 +19,7 @@ import { createReviewSchema } from '../schemas/review.schema';
 import { createPromoCodeSchema, validatePromoCodeSchema } from '../schemas/promoCode.schema';
 import { Restaurant } from '../models/Restaurant';
 import { Review } from '../models/Review';
+import { getIO } from '../socket/index';
 
 const router = Router();
 
@@ -71,6 +72,12 @@ router.patch('/settings/restaurant', requireAuth, async (req: Request, res: Resp
     }
     const r = await Restaurant.findByIdAndUpdate(restaurantId, update, { returnDocument: 'after' });
     if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
+    if (update.primaryColor || update.logo) {
+      getIO().to(`restaurant:${restaurantId}`).emit('branding:updated', {
+        primaryColor: r.primaryColor,
+        logo: r.logo,
+      });
+    }
     res.json(r);
   } catch (e) { next(e); }
 });

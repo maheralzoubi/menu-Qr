@@ -16,6 +16,10 @@ export function initSocket(server: HttpServer) {
     socket.on('order:join', (orderId: string) => {
       socket.join(`order:${orderId}`);
     });
+
+    socket.on('restaurant:join', (restaurantId: string) => {
+      socket.join(`restaurant:${restaurantId}`);
+    });
   });
 
   return io;
