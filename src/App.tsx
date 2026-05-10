@@ -44,6 +44,7 @@ function lightenHex(hex: string, amount = 0.22): string {
 export default function App() {
   const { context, loading } = useRestaurant();
   const [primaryColor, setPrimaryColor] = useState<string | null>(null);
+  const [liveLogo, setLiveLogo] = useState<string | null>(null);
   const socketRef = useRef<ReturnType<typeof socketIO> | null>(null);
   const [screen, setScreen] = useState<Screen>('home');
   const [accountView, setAccountView] = useState<AccountView>('login');
@@ -59,6 +60,7 @@ export default function App() {
   const totalWithTaxAndTip = subtotal - discount + tipAmount;
   const restaurantId = context?.restaurantId ?? '';
   const tableName = context?.tableName ?? '';
+  const effectiveLogo = liveLogo ?? context?.logo ?? '';
 
   // Restore a pending order from localStorage when restaurant context loads
   useEffect(() => {
@@ -110,8 +112,9 @@ export default function App() {
     const socket = socketIO();
     socketRef.current = socket;
     socket.emit('restaurant:join', context.restaurantId);
-    socket.on('branding:updated', ({ primaryColor: color }: { primaryColor: string; logo?: string }) => {
+    socket.on('branding:updated', ({ primaryColor: color, logo }: { primaryColor: string; logo?: string }) => {
       setPrimaryColor(color);
+      if (logo !== undefined) setLiveLogo(logo);
     });
     return () => { socket.disconnect(); socketRef.current = null; };
   }, [context?.restaurantId]);
@@ -219,7 +222,13 @@ export default function App() {
   return (
     <div className="min-h-screen bg-surface-dim flex justify-center">
       <div className="w-full max-w-md bg-surface min-h-screen relative shadow-[0_0_100px_rgba(0,0,0,0.1)] overflow-x-hidden">
-        {screen !== 'home' && <Header title={getHeaderTitle()} />}
+        {screen !== 'home' && (
+          <Header
+            title={getHeaderTitle()}
+            logo={effectiveLogo || undefined}
+            restaurantName={context.restaurantName}
+          />
+        )}
 
         <main className="min-h-screen">
           <AnimatePresence mode="wait">
@@ -232,7 +241,12 @@ export default function App() {
               className="min-h-screen"
             >
               {screen === 'home' && (
-                <HomeScreen onStart={() => setScreen('menu')} onReserve={() => setScreen('reservation')} />
+                <HomeScreen
+                  onStart={() => setScreen('menu')}
+                  onReserve={() => setScreen('reservation')}
+                  restaurantName={context.restaurantName}
+                  logo={effectiveLogo || undefined}
+                />
               )}
               {screen === 'menu' && <MenuScreen addToCart={addToCart} restaurantId={restaurantId} />}
               {screen === 'cart' && (

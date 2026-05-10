@@ -9,7 +9,14 @@ import { motion } from 'motion/react';
 import { MenuItem } from '../types';
 import { Skeleton } from '../components/Skeleton';
 
-export const HomeScreen = ({ onStart, onReserve }: { onStart: () => void, onReserve: () => void }) => {
+interface HomeScreenProps {
+  onStart: () => void;
+  onReserve: () => void;
+  restaurantName?: string;
+  logo?: string;
+}
+
+export const HomeScreen = ({ onStart, onReserve, restaurantName, logo }: HomeScreenProps) => {
   const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,14 +41,26 @@ export const HomeScreen = ({ onStart, onReserve }: { onStart: () => void, onRese
         <div className="absolute inset-0 bg-editorial-hero" />
         <div className="absolute inset-0 bg-gradient-to-t from-on-surface/80 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 p-8 w-full pb-12">
-          <motion.span 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-white/80 font-headline uppercase tracking-[0.3em] text-xs mb-4 block"
-          >
-            Est. 2014
-          </motion.span>
-          <motion.h2 
+          {/* Logo + restaurant name badge */}
+          {(logo || restaurantName) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 mb-5"
+            >
+              {logo && (
+                <div className="w-12 h-12 rounded-2xl overflow-hidden ring-2 ring-white/30 shadow-lg shrink-0">
+                  <img src={logo} alt={restaurantName} className="w-full h-full object-cover" />
+                </div>
+              )}
+              {restaurantName && (
+                <span className="text-white font-headline font-bold text-lg tracking-tight drop-shadow-md">
+                  {restaurantName}
+                </span>
+              )}
+            </motion.div>
+          )}
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
