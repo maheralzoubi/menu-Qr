@@ -1,75 +1,30 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Plus, Trash2, Edit2, Search, ChevronRight, CheckCircle,
-  Image as ImageIcon, Camera, PlusCircle, GripVertical, X, Upload, Loader
+  Plus, Trash2, Search, CheckCircle,
+  Image as ImageIcon, Camera, PlusCircle, X, Upload, Loader,
+  Edit2, Tag, ChevronRight, FolderOpen, Check,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MenuItem, Category } from '../../src/types';
 import { authFetch, getToken } from '../../src/lib/auth';
 
-type View = 'list' | 'add' | 'categories';
+// ── Types ──────────────────────────────────────────────────────────────────────
+type View  = 'list' | 'add';
+type Panel = 'none' | 'categories' | 'edit';
 
 const DIETARY_TAGS = ['Vegan', 'Gluten-Free', 'Spicy', 'Dairy-Free', 'Pescatarian', 'Nut-Free', 'Halal'];
 
 const emptyItem = (): Partial<MenuItem> => ({
   name: '', description: '', price: 0, category: '',
-  image: '', featured: false, ingredients: [], allergens: [],
+  image: '', featured: false, allergens: [],
 });
 
-export const MenuManager = () => {
-  const [view, setView] = useState<View>('list');
-  const [items, setItems] = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All Items');
-  const [newItem, setNewItem] = useState<Partial<MenuItem>>(emptyItem());
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [customTag, setCustomTag] = useState('');
-  const [showCustomTag, setShowCustomTag] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const fetchItems = async () => {
-    try {
-      const [res, catRes] = await Promise.all([
-        authFetch('/api/menu'),
-        authFetch('/api/categories'),
-      ]);
-      setItems(await res.json());
-      setCategories(await catRes.json());
-    } catch (error) {
-      console.error('Failed to fetch menu:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchItems(); }, []);
-
-  // Toggle a dietary tag in allergens array
-  const toggleTag = (tag: string) => {
-    const current = newItem.allergens ?? [];
-    const has = current.includes(tag);
-    setNewItem({ ...newItem, allergens: has ? current.filter(t => t !== tag) : [...current, tag] });
-  };
-
-  const addCustomTag = () => {
-    const tag = customTag.trim();
-    if (!tag) return;
-    const current = newItem.allergens ?? [];
-    if (!current.includes(tag)) setNewItem({ ...newItem, allergens: [...current, tag] });
-    setCustomTag('');
-    setShowCustomTag(false);
-  };
-
-  // Upload image to /api/upload
-  const handleImageFile = async (file: File) => {
-    setUploadingImage(true);
+// ── Shared image-upload hook ───────────────────────────────────────────────────
+function useImageUpload(setter: (url: string) => void) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const upload = async (file: File) => {
+    setUploading(true);
     try {
       const form = new FormData();
       form.append('image', file);
@@ -78,102 +33,272 @@ export const MenuManager = () => {
         headers: { Authorization: `Bearer ${getToken()}` },
         body: form,
       });
-      if (res.ok) {
-        const { url } = await res.json();
-        setNewItem(prev => ({ ...prev, image: url }));
-      }
-    } catch (e) {
-      console.error('Upload failed:', e);
-    } finally {
-      setUploadingImage(false);
-    }
+      if (res.ok) { const { url } = await res.json(); setter(url); }
+    } catch (e) { console.error('Upload failed:', e); }
+    finally { setUploading(false); }
+  };
+  return { ref, uploading, upload };
+}
+
+// ── Tag selector (used in both Add and Edit forms) ─────────────────────────────
+const TagSelector = ({
+  selected, onChange,
+}: { selected: string[]; onChange: (tags: string[]) => void }) => {
+  const [customTag, setCustomTag] = useState('');
+  const [showInput, setShowInput] = useState(false);
+  const toggle = (tag: string) =>
+    onChange(selected.includes(tag) ? selected.filter(t => t !== tag) : [...selected, tag]);
+  const addCustom = () => {
+    const t = customTag.trim();
+    if (t && !selected.includes(t)) onChange([...selected, t]);
+    setCustomTag(''); setShowInput(false);
+  };
+  return (
+    <div className="flex flex-wrap gap-2">
+      {DIETARY_TAGS.map(tag => {
+        const active = selected.includes(tag);
+        return (
+          <button key={tag} type="button" onClick={() => toggle(tag)}
+            className={`px-3 py-1.5 rounded-full font-bold text-xs transition-all ${active ? 'bg-primary text-on-primary shadow-sm' : 'bg-surface-container-highest text-on-surface-variant hover:bg-primary/10'}`}>
+            {active && '✓ '}{tag}
+          </button>
+        );
+      })}
+      {selected.filter(t => !DIETARY_TAGS.includes(t)).map(tag => (
+        <button key={tag} type="button" onClick={() => toggle(tag)}
+          className="px-3 py-1.5 rounded-full font-bold text-xs bg-primary text-on-primary shadow-sm">
+          ✓ {tag}
+        </button>
+      ))}
+      {showInput ? (
+        <div className="flex items-center gap-2">
+          <input autoFocus type="text" value={customTag}
+            onChange={e => setCustomTag(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } if (e.key === 'Escape') setShowInput(false); }}
+            placeholder="Tag name"
+            className="px-3 py-1.5 rounded-full bg-surface-container-lowest border border-primary/30 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 w-24" />
+          <button type="button" onClick={addCustom} className="text-primary font-bold text-xs hover:underline">Add</button>
+          <button type="button" onClick={() => setShowInput(false)} className="text-on-surface-variant/40 text-xs">✕</button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setShowInput(true)}
+          className="px-3 py-1.5 rounded-full border border-dashed border-outline-variant/50 text-on-surface-variant/50 font-bold text-xs flex items-center gap-1.5 hover:border-primary/50 transition-colors">
+          <Plus className="w-3 h-3" /> Custom
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ── Image upload zone ──────────────────────────────────────────────────────────
+const ImageUploadZone = ({
+  image, uploading, fileRef, onFile, onClear,
+}: {
+  image: string; uploading: boolean;
+  fileRef: React.RefObject<HTMLInputElement>;
+  onFile: (f: File) => void; onClear: () => void;
+}) => (
+  <div
+    className="relative aspect-video bg-surface-container-high border-2 border-dashed border-outline-variant/30 rounded-3xl flex flex-col items-center justify-center text-on-surface-variant/50 hover:bg-surface-container cursor-pointer group overflow-hidden transition-all"
+    onClick={() => !uploading && fileRef.current?.click()}
+    onDragOver={e => e.preventDefault()}
+    onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) onFile(f); }}>
+    {uploading ? (
+      <div className="flex flex-col items-center gap-2">
+        <Loader className="w-7 h-7 text-primary animate-spin" />
+        <p className="text-xs font-medium text-on-surface">Uploading…</p>
+      </div>
+    ) : image ? (
+      <>
+        <img src={image} className="absolute inset-0 w-full h-full object-cover" alt="" />
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div className="flex flex-col items-center gap-1.5 text-white"><Upload className="w-6 h-6" /><span className="text-xs font-bold">Change</span></div>
+        </div>
+        <button type="button" onClick={e => { e.stopPropagation(); onClear(); }}
+          className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10">
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </>
+    ) : (
+      <>
+        <div className="w-12 h-12 rounded-full bg-surface-container-lowest flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <Camera className="w-6 h-6 text-primary" />
+        </div>
+        <p className="text-sm font-semibold text-on-surface">Click or drag to upload</p>
+        <p className="text-xs mt-1">JPG, PNG, WEBP — max 5 MB</p>
+      </>
+    )}
+    <input ref={fileRef} type="file" accept="image/*" className="hidden"
+      onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+  </div>
+);
+
+// ── Main component ─────────────────────────────────────────────────────────────
+export const MenuManager = () => {
+  const [view, setView]           = useState<View>('list');
+  const [panel, setPanel]         = useState<Panel>('none');
+  const [items, setItems]         = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All Items');
+
+  // Add form state
+  const [newItem, setNewItem] = useState<Partial<MenuItem>>(emptyItem());
+  const addImg = useImageUpload(url => setNewItem(p => ({ ...p, image: url })));
+
+  // Edit panel state
+  const [editItem, setEditItem] = useState<Partial<MenuItem> & { id?: string }>(emptyItem());
+  const editImg = useImageUpload(url => setEditItem(p => ({ ...p, image: url })));
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  // Categories panel state
+  const [catName, setCatName]       = useState('');
+  const [catDesc, setCatDesc]       = useState('');
+  const [catAdding, setCatAdding]   = useState(false);
+
+  // Inline category edit state
+  const [editingCatId,   setEditingCatId]   = useState<string | null>(null);
+  const [editCatName,    setEditCatName]    = useState('');
+  const [editCatDesc,    setEditCatDesc]    = useState('');
+  const [editCatSaving,  setEditCatSaving]  = useState(false);
+
+  const fetchItems = async () => {
+    try {
+      const [res, catRes] = await Promise.all([authFetch('/api/menu'), authFetch('/api/categories')]);
+      if (res.ok) setItems(await res.json());
+      if (catRes.ok) setCategories(await catRes.json());
+    } catch (e) { console.error(e); }
+    finally { setIsLoading(false); }
   };
 
+  useEffect(() => { fetchItems(); }, []);
+
+  const openPanel = (p: Panel) => setPanel(prev => prev === p ? 'none' : p);
+
+  const openEdit = (item: MenuItem) => {
+    setEditItem({ ...item });
+    setEditError('');
+    setPanel('edit');
+  };
+
+  // ── API actions ────────────────────────────────────────────────────────────
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await authFetch('/api/menu', { method: 'POST', body: JSON.stringify(newItem) });
-      if (res.ok) {
-        setView('list');
-        fetchItems();
-        setNewItem(emptyItem());
-      }
-    } catch (error) {
-      console.error('Failed to save item:', error);
-    }
+      if (res.ok) { setView('list'); fetchItems(); setNewItem(emptyItem()); }
+    } catch (e) { console.error(e); }
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editItem.id) return;
+    setEditError(''); setEditSaving(true);
+    try {
+      const res = await authFetch(`/api/menu/${editItem.id}`, { method: 'PATCH', body: JSON.stringify(editItem) });
+      if (!res.ok) { const d = await res.json(); setEditError(d.message ?? 'Failed to save.'); return; }
+      await fetchItems();
+      setPanel('none');
+    } catch { setEditError('Network error. Try again.'); }
+    finally { setEditSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+    if (!confirm('Delete this dish?')) return;
     try {
       const res = await authFetch(`/api/menu/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchItems();
-    } catch (error) {
-      console.error('Failed to delete item:', error);
-    }
+      if (res.ok) { fetchItems(); if (panel === 'edit' && editItem.id === id) setPanel('none'); }
+    } catch (e) { console.error(e); }
+  };
+
+  const handleAddCategory = async () => {
+    if (!catName.trim()) return;
+    setCatAdding(true);
+    try {
+      await authFetch('/api/categories', { method: 'POST', body: JSON.stringify({ name: catName.trim(), description: catDesc.trim() }) });
+      setCatName(''); setCatDesc('');
+      fetchItems();
+    } catch (e) { console.error(e); }
+    finally { setCatAdding(false); }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Delete this category?')) return;
+    try { await authFetch(`/api/categories/${id}`, { method: 'DELETE' }); fetchItems(); }
+    catch (e) { console.error(e); }
+  };
+
+  const startEditCat = (cat: Category) => {
+    setEditingCatId(cat.id);
+    setEditCatName(cat.name);
+    setEditCatDesc(cat.description ?? '');
+  };
+
+  const cancelEditCat = () => {
+    setEditingCatId(null);
+    setEditCatName('');
+    setEditCatDesc('');
+  };
+
+  const handleEditCategory = async (id: string) => {
+    if (!editCatName.trim()) return;
+    setEditCatSaving(true);
+    try {
+      const res = await authFetch(`/api/categories/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: editCatName.trim(), description: editCatDesc.trim() }),
+      });
+      if (res.ok) { await fetchItems(); cancelEditCat(); }
+    } catch (e) { console.error(e); }
+    finally { setEditCatSaving(false); }
   };
 
   const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'All Items' || item.category === activeCategory;
-    return matchesSearch && matchesCategory;
+    const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCat = activeCategory === 'All Items' || item.category === activeCategory;
+    return matchSearch && matchCat;
   });
 
-  // ── ADD DISH VIEW ──────────────────────────────────────────────────────────
+  // ── ADD VIEW (full page — unchanged) ──────────────────────────────────────
   if (view === 'add') {
-    const selectedTags = newItem.allergens ?? [];
-
     return (
       <div className="space-y-10">
         <div className="flex justify-between items-end mb-12">
           <div>
             <nav className="flex items-center gap-2 text-xs font-medium text-on-surface-variant/60 mb-2 uppercase tracking-widest">
-              <button onClick={() => { setView('list'); setNewItem(emptyItem()); }} className="hover:text-primary transition-colors">
-                Menu Management
-              </button>
-              <ChevronRight className="w-3 h-3" />
-              <span className="text-primary">New Dish</span>
+              <button onClick={() => { setView('list'); setNewItem(emptyItem()); }} className="hover:text-primary transition-colors">Menu</button>
+              <ChevronRight className="w-3 h-3" /><span className="text-primary">New Dish</span>
             </nav>
             <h2 className="text-4xl font-headline font-extrabold tracking-tight">Add New Dish</h2>
           </div>
           <div className="flex gap-4">
-            <button
-              onClick={() => { setView('list'); setNewItem(emptyItem()); }}
-              className="px-8 py-3 rounded-xl font-semibold text-on-surface bg-surface-container-high hover:bg-surface-variant transition-all"
-            >
+            <button onClick={() => { setView('list'); setNewItem(emptyItem()); }}
+              className="px-8 py-3 rounded-xl font-semibold bg-surface-container-high hover:bg-surface-container-highest transition-all">
               Cancel
             </button>
-            <button
-              onClick={handleSave}
-              className="px-8 py-3 rounded-xl font-semibold text-on-primary btn-gradient shadow-lg shadow-primary/20 active:scale-95 transition-all"
-            >
+            <button onClick={handleSave}
+              className="px-8 py-3 rounded-xl font-semibold text-on-primary btn-gradient shadow-lg shadow-primary/20 active:scale-95 transition-all">
               Save Dish
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-12 gap-10">
-          {/* Left column — main fields */}
-          <div className="col-span-8 space-y-10">
-            <section className="bg-surface-container-low p-8 rounded-4xl space-y-8">
-              <div className="grid grid-cols-2 gap-8">
-                <div className="col-span-2 space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Dish Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Truffle-Infused Wild Mushroom Risotto"
-                    className="w-full bg-surface-container-lowest border-none rounded-xl py-4 px-6 text-lg font-medium focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/30 shadow-sm"
-                    value={newItem.name}
-                    onChange={e => setNewItem({ ...newItem, name: e.target.value })}
-                  />
-                </div>
+          <div className="col-span-8 space-y-8">
+            <section className="bg-surface-container-low p-8 rounded-4xl space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Dish Name</label>
+                <input type="text" placeholder="e.g., Truffle Wild Mushroom Risotto"
+                  className="w-full bg-surface-container-lowest border-none rounded-xl py-4 px-6 text-lg font-medium focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/30"
+                  value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Category</label>
-                  <select
-                    className="w-full bg-surface-container-lowest border-none rounded-xl py-4 px-6 font-medium focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none"
-                    value={newItem.category}
-                    onChange={e => setNewItem({ ...newItem, category: e.target.value })}
-                  >
+                  <select className="w-full bg-surface-container-lowest border-none rounded-xl py-4 px-6 font-medium focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
+                    value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })}>
                     <option value="">Select Category</option>
                     {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                   </select>
@@ -182,241 +307,42 @@ export const MenuManager = () => {
                   <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Price</label>
                   <div className="relative">
                     <span className="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant">$</span>
-                    <input
-                      type="number" step="0.01" min="0"
-                      className="w-full bg-surface-container-lowest border-none rounded-xl py-4 pl-10 pr-6 font-bold text-lg focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
-                      value={newItem.price}
-                      onChange={e => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
-                    />
+                    <input type="number" step="0.01" min="0"
+                      className="w-full bg-surface-container-lowest border-none rounded-xl py-4 pl-10 pr-6 font-bold text-lg focus:ring-2 focus:ring-primary/20 transition-all"
+                      value={newItem.price} onChange={e => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })} />
                   </div>
                 </div>
-                <div className="col-span-2 space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Description</label>
-                  <textarea
-                    rows={4}
-                    placeholder="Describe the flavors, ingredients, and presentation..."
-                    className="w-full bg-surface-container-lowest border-none rounded-xl py-4 px-6 font-body leading-relaxed focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/30 shadow-sm"
-                    value={newItem.description}
-                    onChange={e => setNewItem({ ...newItem, description: e.target.value })}
-                  />
-                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Description</label>
+                <textarea rows={3} placeholder="Describe the flavors, ingredients, and presentation…"
+                  className="w-full bg-surface-container-lowest border-none rounded-xl py-4 px-6 leading-relaxed focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/30"
+                  value={newItem.description} onChange={e => setNewItem({ ...newItem, description: e.target.value })} />
               </div>
             </section>
 
-            {/* Image upload */}
-            <section className="space-y-4">
-              <h3 className="text-lg font-headline font-bold px-1">Dish Photo</h3>
-              <div className="grid grid-cols-3 gap-6">
-                <div
-                  className="col-span-2 aspect-video bg-surface-container-high border-2 border-dashed border-outline-variant/30 rounded-4xl flex flex-col items-center justify-center text-on-surface-variant/50 hover:bg-surface-variant transition-all cursor-pointer group relative overflow-hidden"
-                  onClick={() => !uploadingImage && fileInputRef.current?.click()}
-                  onDragOver={e => e.preventDefault()}
-                  onDrop={e => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.files[0];
-                    if (file) handleImageFile(file);
-                  }}
-                >
-                  {uploadingImage ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <Loader className="w-8 h-8 text-primary animate-spin" />
-                      <p className="text-sm font-medium text-on-surface">Uploading...</p>
-                    </div>
-                  ) : newItem.image ? (
-                    <>
-                      <img src={newItem.image} className="absolute inset-0 w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="flex flex-col items-center gap-2 text-white">
-                          <Upload className="w-8 h-8" />
-                          <span className="text-sm font-bold">Change Photo</span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-16 h-16 rounded-full bg-surface-container-lowest flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <Camera className="w-8 h-8 text-primary" />
-                      </div>
-                      <p className="font-semibold text-on-surface">Click or drag to upload</p>
-                      <p className="text-sm mt-1">JPG, PNG, WEBP — max 5 MB</p>
-                    </>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f); }}
-                  />
-                </div>
-
-                {/* Preview */}
-                <div className="bg-surface-container-high rounded-4xl relative overflow-hidden flex items-center justify-center">
-                  {newItem.image ? (
-                    <>
-                      <img src={newItem.image} className="absolute inset-0 w-full h-full object-cover" />
-                      <button
-                        className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-                        onClick={() => setNewItem({ ...newItem, image: '' })}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <ImageIcon className="w-10 h-10 text-on-surface-variant/20" />
-                  )}
-                </div>
-              </div>
+            <section className="space-y-3">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-on-surface-variant px-1">Dish Photo</h3>
+              <ImageUploadZone image={newItem.image ?? ''} uploading={addImg.uploading} fileRef={addImg.ref}
+                onFile={addImg.upload} onClear={() => setNewItem(p => ({ ...p, image: '' }))} />
             </section>
           </div>
 
-          {/* Right column */}
-          <div className="col-span-4 space-y-8">
-            {/* Featured toggle */}
-            <div className="bg-surface-container-low p-8 rounded-4xl space-y-6">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Live Status</h3>
-              <div className="flex items-center justify-between p-4 bg-surface-container-lowest rounded-2xl shadow-sm">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary fill-current" />
-                  <span className="font-bold">Featured Dish</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setNewItem({ ...newItem, featured: !newItem.featured })}
-                  className={`w-12 h-6 rounded-full relative transition-colors ${newItem.featured ? 'bg-primary' : 'bg-surface-variant'}`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${newItem.featured ? 'right-1' : 'left-1'}`} />
+          <div className="col-span-4 space-y-6">
+            <div className="bg-surface-container-low p-6 rounded-4xl space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Status</h3>
+              <div className="flex items-center justify-between p-4 bg-surface-container-lowest rounded-2xl">
+                <div className="flex items-center gap-3"><CheckCircle className="w-5 h-5 text-primary fill-current" /><span className="font-bold text-sm">Featured</span></div>
+                <button type="button" onClick={() => setNewItem({ ...newItem, featured: !newItem.featured })}
+                  className={`w-11 h-6 rounded-full relative transition-colors ${newItem.featured ? 'bg-primary' : 'bg-surface-container-highest'}`}>
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow ${newItem.featured ? 'right-1' : 'left-1'}`} />
                 </button>
               </div>
             </div>
-
-            {/* Dietary Identity — fully functional */}
-            <div className="bg-surface-container-low p-8 rounded-4xl space-y-6">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Dietary Identity</h3>
-              {selectedTags.length > 0 && (
-                <p className="text-[10px] text-primary font-bold uppercase tracking-widest">
-                  {selectedTags.length} tag{selectedTags.length > 1 ? 's' : ''} selected
-                </p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {DIETARY_TAGS.map(tag => {
-                  const active = selectedTags.includes(tag);
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className={`px-4 py-2 rounded-full font-bold text-xs transition-all ${
-                        active
-                          ? 'bg-primary text-on-primary shadow-md'
-                          : 'bg-surface-container-highest text-on-surface-variant hover:bg-primary/10'
-                      }`}
-                    >
-                      {active && <span className="mr-1">✓</span>}{tag}
-                    </button>
-                  );
-                })}
-
-                {/* Custom tags added by the user */}
-                {selectedTags.filter(t => !DIETARY_TAGS.includes(t)).map(tag => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className="px-4 py-2 rounded-full font-bold text-xs bg-primary text-on-primary shadow-md transition-all"
-                  >
-                    ✓ {tag}
-                  </button>
-                ))}
-
-                {showCustomTag ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      autoFocus
-                      type="text"
-                      value={customTag}
-                      onChange={e => setCustomTag(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); } if (e.key === 'Escape') setShowCustomTag(false); }}
-                      placeholder="Tag name"
-                      className="px-3 py-1.5 rounded-full bg-surface-container-lowest border border-primary/30 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 w-24"
-                    />
-                    <button type="button" onClick={addCustomTag} className="text-primary font-bold text-xs hover:underline">Add</button>
-                    <button type="button" onClick={() => setShowCustomTag(false)} className="text-on-surface-variant/40 text-xs">✕</button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomTag(true)}
-                    className="px-3 py-2 rounded-full border border-dashed border-outline-variant/50 text-on-surface-variant/50 font-bold text-xs flex items-center gap-1.5 hover:border-primary/50 transition-colors"
-                  >
-                    <Plus className="w-3 h-3" /> Custom Tag
-                  </button>
-                )}
-              </div>
+            <div className="bg-surface-container-low p-6 rounded-4xl space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Dietary Tags</h3>
+              <TagSelector selected={newItem.allergens ?? []} onChange={tags => setNewItem({ ...newItem, allergens: tags })} />
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── CATEGORIES VIEW ────────────────────────────────────────────────────────
-  if (view === 'categories') {
-    const handleAddCategory = async () => {
-      const name = prompt('Enter new category name:');
-      const desc = prompt('Enter description:');
-      if (!name) return;
-      try {
-        await authFetch('/api/categories', { method: 'POST', body: JSON.stringify({ name, description: desc || '' }) });
-        fetchItems();
-      } catch (err) { console.error(err); }
-    };
-
-    const handleDeleteCategory = async (id: string) => {
-      if (!confirm('Delete this category?')) return;
-      try {
-        await authFetch(`/api/categories/${id}`, { method: 'DELETE' });
-        fetchItems();
-      } catch (err) { console.error(err); }
-    };
-
-    return (
-      <div className="space-y-10">
-        <div className="flex items-end justify-between mb-12">
-          <div>
-            <h3 className="text-4xl font-headline font-extrabold tracking-tight mb-2">Category Management</h3>
-            <p className="text-on-surface-variant font-medium">Organize your menu structure and dish groupings.</p>
-          </div>
-          <button onClick={handleAddCategory} className="flex items-center gap-2 btn-gradient text-white px-8 py-4 rounded-xl font-bold shadow-xl hover:opacity-90 active:scale-95 transition-all">
-            <PlusCircle className="w-5 h-5" /> Add New Category
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {categories.map(cat => (
-            <div key={cat.id} className="bg-surface-container-low rounded-3xl p-6 flex flex-col group hover:bg-surface-container-lowest transition-all duration-300">
-              <div className="flex justify-between items-start mb-6">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
-                  {cat.name.charAt(0)}
-                </div>
-                <GripVertical className="w-5 h-5 text-stone-300 group-hover:text-primary cursor-grab" />
-              </div>
-              <h4 className="text-xl font-headline font-bold mb-1">{cat.name}</h4>
-              <p className="text-on-surface-variant text-xs mb-6 h-8 line-clamp-2">{cat.description}</p>
-              <div className="mt-auto flex items-center justify-between border-t border-stone-200/40 pt-4">
-                <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{items.filter(i => i.category === cat.name).length} Items</span>
-                <button onClick={() => handleDeleteCategory(cat.id)} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-rose-50 text-rose-500 transition-colors">
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <div onClick={handleAddCategory} className="border-2 border-dashed border-stone-200 rounded-3xl flex flex-col items-center justify-center p-8 group hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
-            <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-all">
-              <Plus className="w-6 h-6" />
-            </div>
-            <p className="font-bold text-stone-500 group-hover:text-primary transition-all">Create New Category</p>
           </div>
         </div>
       </div>
@@ -425,134 +351,336 @@ export const MenuManager = () => {
 
   // ── LIST VIEW ──────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h2 className="text-4xl font-extrabold tracking-tight font-headline">Menu Catalog</h2>
-          <p className="text-on-surface-variant mt-2 max-w-lg">Manage your seasonal offerings and curate the ultimate dining experience.</p>
+    <div className="relative">
+      {/* Main content — shifts right when a panel is open */}
+      <div className={`transition-all duration-300 ease-in-out space-y-8 ${panel !== 'none' ? 'pr-[440px]' : ''}`}>
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h2 className="text-4xl font-extrabold tracking-tight font-headline">Menu Catalog</h2>
+            <p className="text-on-surface-variant mt-1">Manage your seasonal offerings.</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
+              <input type="text" placeholder="Search dishes…" value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="bg-surface-container-high border-none rounded-xl py-2.5 pl-11 pr-5 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none w-52" />
+            </div>
+            <button onClick={() => openPanel('categories')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${panel === 'categories' ? 'bg-primary text-white shadow-md' : 'bg-surface-container-high hover:bg-surface-container-highest'}`}>
+              <FolderOpen className="w-4 h-4" /> Categories
+            </button>
+            <button onClick={() => setView('add')}
+              className="flex items-center gap-2 btn-gradient text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:opacity-90 transition-all">
+              <Plus className="w-4 h-4" /> Add Dish
+            </button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+
+        {/* Category filter pills */}
+        <div className="flex items-center gap-2 flex-wrap">
           {['All Items', ...categories.map(c => c.name)].map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all ${
-                activeCategory === cat ? 'bg-primary text-on-primary shadow-md' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest'
-              }`}
-            >
+            <button key={cat} onClick={() => setActiveCategory(cat)}
+              className={`px-4 py-2 rounded-full font-semibold text-sm transition-all ${activeCategory === cat ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest'}`}>
               {cat}
             </button>
           ))}
-          <button onClick={() => setView('categories')} className="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface font-semibold text-sm hover:bg-surface-container-highest transition-all">
-            Manage Categories
-          </button>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {isLoading
+            ? [1, 2, 3].map(i => <div key={i} className="h-72 bg-surface-container-low rounded-3xl animate-pulse" />)
+            : filteredItems.map((item, i) => (
+              <motion.div key={item.id} layout
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
+                className={`group bg-surface-container-low rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col ${panel === 'edit' && editItem.id === item.id ? 'ring-2 ring-primary' : ''}`}>
+                <div className="relative h-48 overflow-hidden bg-surface-container-high">
+                  {item.image
+                    ? <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    : <div className="w-full h-full flex items-center justify-center text-on-surface-variant/20"><ImageIcon className="w-10 h-10" /></div>
+                  }
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-1 bg-surface-container-lowest/90 backdrop-blur-md rounded-full text-xs font-bold text-primary">{item.category}</span>
+                  </div>
+                  {/* Action buttons — visible on hover */}
+                  <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openEdit(item)}
+                      className="w-9 h-9 bg-surface-container-lowest rounded-full flex items-center justify-center text-primary hover:scale-110 transition-transform shadow-md">
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => handleDelete(item.id)}
+                      className="w-9 h-9 bg-surface-container-lowest rounded-full flex items-center justify-center text-rose-500 hover:scale-110 transition-transform shadow-md">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {item.allergens && item.allergens.length > 0 && (
+                    <div className="absolute bottom-2 left-2 flex gap-1 flex-wrap">
+                      {item.allergens.slice(0, 3).map(tag => (
+                        <span key={tag} className="px-2 py-0.5 bg-black/50 backdrop-blur-sm text-white text-[9px] font-bold rounded-full uppercase tracking-widest">{tag}</span>
+                      ))}
+                      {item.allergens.length > 3 && <span className="px-2 py-0.5 bg-black/50 text-white text-[9px] font-bold rounded-full">+{item.allergens.length - 3}</span>}
+                    </div>
+                  )}
+                </div>
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex justify-between items-start mb-1.5">
+                    <h3 className="font-bold font-headline leading-tight line-clamp-1">{item.name}</h3>
+                    <span className="font-bold text-primary ml-2 shrink-0">${item.price.toFixed(2)}</span>
+                  </div>
+                  <p className="text-xs text-on-surface-variant line-clamp-2 flex-1">{item.description}</p>
+                  <div className="mt-3 pt-3 border-t border-outline-variant/20 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-xs font-semibold text-on-surface-variant">Available</span>
+                    {item.featured && <span className="ml-auto px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">Featured</span>}
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          }
+
+          {/* Add card */}
+          <div onClick={() => setView('add')}
+            className="group border-2 border-dashed border-outline-variant/50 rounded-3xl flex flex-col items-center justify-center p-10 cursor-pointer hover:border-primary/50 hover:bg-surface-container-low/50 transition-all min-h-[200px]">
+            <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <PlusCircle className="w-7 h-7 text-primary" />
+            </div>
+            <h3 className="font-bold font-headline text-sm">Add New Dish</h3>
+            <p className="text-xs text-on-surface-variant mt-1 text-center">Expand your menu</p>
+          </div>
+        </div>
+
+        {/* Summary bar */}
+        <div className="bg-surface-container-high rounded-3xl p-6 flex items-center justify-around">
+          {[
+            { label: 'Total Dishes', value: items.length },
+            { label: 'Categories', value: categories.length },
+            { label: 'Featured', value: items.filter(i => i.featured).length },
+          ].map(s => (
+            <div key={s.label} className="text-center">
+              <h4 className="text-3xl font-extrabold text-primary font-headline">{s.value}</h4>
+              <p className="text-xs font-bold text-on-surface-variant mt-0.5">{s.label}</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
-        <input
-          type="text"
-          placeholder="Search dishes..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          className="w-full bg-surface-container-high border-none rounded-xl py-3 pl-12 pr-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {isLoading
-          ? [1, 2, 3].map(i => <div key={i} className="h-80 bg-surface-container-low rounded-3xl animate-pulse" />)
-          : filteredItems.map((item, i) => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
-              className="group bg-surface-container-low rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col"
-            >
-              <div className="relative h-56 overflow-hidden bg-surface-container-high">
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-on-surface-variant/20">
-                    <ImageIcon className="w-12 h-12" />
+      {/* ── RIGHT PANELS ──────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {panel !== 'none' && (
+          <motion.div
+            key={panel}
+            initial={{ x: 440 }} animate={{ x: 0 }} exit={{ x: 440 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed top-0 right-0 h-screen w-[420px] bg-surface border-l border-surface-container shadow-2xl z-30 flex flex-col"
+          >
+            {/* ── CATEGORIES PANEL ──────────────────────────────────────────── */}
+            {panel === 'categories' && (
+              <>
+                <div className="flex items-center justify-between px-7 py-5 border-b border-surface-container">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                      <Tag className="w-4 h-4" />
+                    </div>
+                    <h3 className="font-extrabold text-lg font-headline">Categories</h3>
                   </div>
-                )}
-                <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 bg-surface-container-lowest/90 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider text-primary">
-                    {item.category}
-                  </span>
-                </div>
-                <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="w-10 h-10 bg-surface-container-lowest rounded-full flex items-center justify-center text-rose-500 hover:scale-110 transition-transform shadow-lg"
-                  >
-                    <Trash2 className="w-4 h-4" />
+                  <button onClick={() => setPanel('none')} className="p-2 hover:bg-surface-container rounded-xl transition-colors">
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
-                {/* Show dietary tags */}
-                {item.allergens && item.allergens.length > 0 && (
-                  <div className="absolute bottom-3 left-3 flex gap-1 flex-wrap">
-                    {item.allergens.slice(0, 3).map(tag => (
-                      <span key={tag} className="px-2 py-0.5 bg-black/50 backdrop-blur-sm text-white text-[9px] font-bold rounded-full uppercase tracking-widest">
-                        {tag}
-                      </span>
+
+                <div className="flex-1 overflow-y-auto no-scrollbar px-7 py-6 space-y-3">
+                  {categories.length === 0 && (
+                    <p className="text-sm text-on-surface-variant/50 text-center py-8">No categories yet</p>
+                  )}
+                  <AnimatePresence>
+                    {categories.map(cat => (
+                      <motion.div key={cat.id}
+                        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 20 }}
+                        className="bg-surface-container-low rounded-2xl overflow-hidden group">
+
+                        {editingCatId === cat.id ? (
+                          /* ── Inline edit mode ── */
+                          <div className="p-4 space-y-2.5">
+                            <input
+                              autoFocus
+                              type="text"
+                              value={editCatName}
+                              onChange={e => setEditCatName(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') handleEditCategory(cat.id); if (e.key === 'Escape') cancelEditCat(); }}
+                              className="w-full bg-surface-container border border-primary/30 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Description (optional)"
+                              value={editCatDesc}
+                              onChange={e => setEditCatDesc(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') handleEditCategory(cat.id); if (e.key === 'Escape') cancelEditCat(); }}
+                              className="w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all"
+                            />
+                            <div className="flex gap-2 pt-1">
+                              <button onClick={() => handleEditCategory(cat.id)} disabled={!editCatName.trim() || editCatSaving}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl btn-gradient text-white text-xs font-bold disabled:opacity-50 transition-all">
+                                {editCatSaving ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                Save
+                              </button>
+                              <button onClick={cancelEditCat}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-outline-variant text-xs font-semibold hover:bg-surface-container transition-all">
+                                <X className="w-3.5 h-3.5" /> Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* ── Normal view mode ── */
+                          <div className="flex items-center justify-between p-4 hover:bg-surface-container transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                                {cat.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="font-bold text-sm leading-none">{cat.name}</p>
+                                <p className="text-xs text-on-surface-variant mt-0.5">
+                                  {items.filter(i => i.category === cat.name).length} dish{items.filter(i => i.category === cat.name).length !== 1 ? 'es' : ''}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => startEditCat(cat)}
+                                className="p-2 hover:bg-primary/10 text-primary rounded-xl transition-colors">
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => handleDeleteCategory(cat.id)}
+                                className="p-2 hover:bg-rose-50 text-rose-500 rounded-xl transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
                     ))}
-                    {item.allergens.length > 3 && (
-                      <span className="px-2 py-0.5 bg-black/50 backdrop-blur-sm text-white text-[9px] font-bold rounded-full">+{item.allergens.length - 3}</span>
+                  </AnimatePresence>
+                </div>
+
+                {/* Add category form */}
+                <div className="px-7 py-5 border-t border-surface-container space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">New Category</p>
+                  <input type="text" placeholder="Category name" value={catName}
+                    onChange={e => setCatName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleAddCategory(); }}
+                    className="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
+                  <input type="text" placeholder="Description (optional)" value={catDesc}
+                    onChange={e => setCatDesc(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleAddCategory(); }}
+                    className="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
+                  <button onClick={handleAddCategory} disabled={!catName.trim() || catAdding}
+                    className="w-full btn-gradient text-white py-3 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
+                    {catAdding ? <Loader className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    Add Category
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* ── EDIT PANEL ────────────────────────────────────────────────── */}
+            {panel === 'edit' && (
+              <>
+                <div className="flex items-center justify-between px-7 py-5 border-b border-surface-container">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                      <Edit2 className="w-4 h-4" />
+                    </div>
+                    <h3 className="font-extrabold text-lg font-headline">Edit Dish</h3>
+                  </div>
+                  <button onClick={() => setPanel('none')} className="p-2 hover:bg-surface-container rounded-xl transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleEditSave} className="flex-1 overflow-y-auto no-scrollbar px-7 py-6 space-y-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Dish Name</label>
+                    <input type="text" placeholder="Dish name" value={editItem.name ?? ''}
+                      onChange={e => setEditItem(p => ({ ...p, name: e.target.value }))}
+                      className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Category</label>
+                      <select value={editItem.category ?? ''}
+                        onChange={e => setEditItem(p => ({ ...p, category: e.target.value }))}
+                        className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all appearance-none">
+                        <option value="">Select…</option>
+                        {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Price</label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant text-sm">$</span>
+                        <input type="number" step="0.01" min="0" value={editItem.price ?? 0}
+                          onChange={e => setEditItem(p => ({ ...p, price: parseFloat(e.target.value) || 0 }))}
+                          className="w-full bg-surface-container border border-outline-variant rounded-2xl py-3 pl-8 pr-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Description</label>
+                    <textarea rows={3} placeholder="Describe the dish…" value={editItem.description ?? ''}
+                      onChange={e => setEditItem(p => ({ ...p, description: e.target.value }))}
+                      className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all resize-none" />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Photo</label>
+                    <ImageUploadZone image={editItem.image ?? ''} uploading={editImg.uploading} fileRef={editImg.ref}
+                      onFile={editImg.upload} onClear={() => setEditItem(p => ({ ...p, image: '' }))} />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-surface-container rounded-2xl">
+                    <div className="flex items-center gap-2.5">
+                      <CheckCircle className="w-4 h-4 text-primary fill-current" />
+                      <span className="font-bold text-sm">Featured Dish</span>
+                    </div>
+                    <button type="button" onClick={() => setEditItem(p => ({ ...p, featured: !p.featured }))}
+                      className={`w-11 h-6 rounded-full relative transition-colors ${editItem.featured ? 'bg-primary' : 'bg-surface-container-highest'}`}>
+                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow ${editItem.featured ? 'right-1' : 'left-1'}`} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Dietary Tags</label>
+                    <TagSelector selected={editItem.allergens ?? []} onChange={tags => setEditItem(p => ({ ...p, allergens: tags }))} />
+                  </div>
+
+                  <AnimatePresence>
+                    {editError && (
+                      <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        className="text-sm text-error bg-error/5 border border-error/20 rounded-xl px-4 py-3">
+                        {editError}
+                      </motion.p>
                     )}
-                  </div>
-                )}
-              </div>
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-bold font-headline leading-tight">{item.name}</h3>
-                    <span className="text-lg font-bold text-primary">${item.price.toFixed(2)}</span>
-                  </div>
-                  <p className="text-sm text-on-surface-variant line-clamp-2">{item.description}</p>
-                </div>
-                <div className="mt-4 pt-4 border-t border-outline-variant/20 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                  <span className="text-xs font-semibold text-on-surface-variant">Available</span>
-                  {item.featured && <span className="ml-auto px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase tracking-widest">Featured</span>}
-                </div>
-              </div>
-            </motion.div>
-          ))
-        }
+                  </AnimatePresence>
+                </form>
 
-        <div
-          onClick={() => setView('add')}
-          className="group border-2 border-dashed border-outline-variant/50 rounded-3xl flex flex-col items-center justify-center p-12 text-center cursor-pointer hover:border-primary/50 hover:bg-surface-container-low/50 transition-all"
-        >
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <PlusCircle className="w-8 h-8 text-primary" />
-          </div>
-          <h3 className="text-lg font-bold font-headline">Expand the Menu</h3>
-          <p className="text-sm text-on-surface-variant mt-2">Add a new dish to your collection.</p>
-        </div>
-      </div>
-
-      {/* Summary row */}
-      <div className="bg-surface-container-high rounded-4xl p-8 flex items-center justify-between">
-        <div>
-          <h4 className="text-4xl font-extrabold text-primary font-headline">{items.length}</h4>
-          <p className="text-sm font-bold">Total Menu Items</p>
-        </div>
-        <div>
-          <h4 className="text-4xl font-extrabold text-primary font-headline">{categories.length}</h4>
-          <p className="text-sm font-bold">Categories</p>
-        </div>
-        <div>
-          <h4 className="text-4xl font-extrabold text-primary font-headline">{items.filter(i => i.featured).length}</h4>
-          <p className="text-sm font-bold">Featured Dishes</p>
-        </div>
-      </div>
+                <div className="px-7 py-5 border-t border-surface-container flex gap-3">
+                  <button type="button" onClick={() => setPanel('none')}
+                    className="flex-1 py-3 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-all">
+                    Cancel
+                  </button>
+                  <button type="button" onClick={handleEditSave} disabled={editSaving}
+                    className="flex-1 btn-gradient text-white py-3 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2 transition-all">
+                    {editSaving ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</> : 'Save Changes'}
+                  </button>
+                </div>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

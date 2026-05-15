@@ -1,90 +1,190 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Lock, Unlock, Trash2, Users, UserCheck, UserX } from 'lucide-react';
+import { Search, Lock, Unlock, Trash2, Users, UserCheck, UserX, Zap, Star, Building2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ownerFetch as authFetch } from '../../src/lib/ownerAuth';
 
-interface Customer {
+// ── Types ──────────────────────────────────────────────────────────────────────
+type PlanId = 'starter' | 'pro' | 'enterprise';
+type Billing = 'monthly' | 'annual';
+
+interface Subscriber {
   _id: string;
   name: string;
   email: string;
-  phone?: string;
+  restaurantName?: string;
+  plan?: PlanId;
+  planBilling?: Billing;
+  planActivatedAt?: string;
   status: 'active' | 'locked';
-  restaurantId?: { _id: string; name: string } | string;
   createdAt: string;
 }
 
-export const CustomerTable = () => {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+interface Props { isSuperAdmin: boolean; }
+
+// ── Plan meta ──────────────────────────────────────────────────────────────────
+const PLAN_META: Record<PlanId, { label: string; icon: React.ReactNode; cls: string; price: number }> = {
+  starter:    { label: 'Starter',    icon: <Zap className="w-3 h-3" />,      cls: 'bg-tertiary/10 text-tertiary border-tertiary/20',          price: 29 },
+  pro:        { label: 'Pro',        icon: <Star className="w-3 h-3" />,     cls: 'bg-primary/10 text-primary border-primary/20',             price: 79 },
+  enterprise: { label: 'Enterprise', icon: <Building2 className="w-3 h-3" />, cls: 'bg-on-surface/10 text-on-surface border-outline-variant', price: 199 },
+};
+
+const PLANS: PlanId[] = ['starter', 'pro', 'enterprise'];
+
+// ── Change Plan Modal ──────────────────────────────────────────────────────────
+const ChangePlanModal = ({
+  subscriber, onClose, onUpdated,
+}: { subscriber: Subscriber; onClose: () => void; onUpdated: (s: Subscriber) => void }) => {
+  const [plan, setPlan] = useState<PlanId>(subscriber.plan ?? 'starter');
+  const [billing, setBilling] = useState<Billing>(subscriber.planBilling ?? 'monthly');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await authFetch(`/api/owner/customers/${subscriber._id}/plan`, {
+        method: 'PATCH',
+        body: JSON.stringify({ plan, billing }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.message ?? 'Failed to update plan.'); return; }
+      onUpdated(data);
+      onClose();
+    } catch { setError('Network error. Please try again.'); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <motion.div initial={{ opacity: 0, scale: 0.96, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
+        className="bg-surface rounded-3xl p-7 w-full max-w-md shadow-2xl border border-outline-variant">
+
+        <h3 className="text-xl font-extrabold font-headline mb-1">Change Plan</h3>
+        <p className="text-sm text-on-surface-variant mb-6">
+          Update subscription for <strong>{subscriber.name}</strong>
+        </p>
+
+        {/* Plan selector */}
+        <div className="space-y-2 mb-5">
+          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">Select Plan</p>
+          {PLANS.map(p => {
+            const meta = PLAN_META[p];
+            return (
+              <button key={p} onClick={() => setPlan(p)}
+                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border transition-all ${plan === p ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-outline-variant hover:border-outline hover:bg-surface-container-low'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${meta.cls}`}>
+                    {meta.icon}
+                  </div>
+                  <span className="font-semibold text-sm">{meta.label}</span>
+                </div>
+                <span className="text-sm font-bold text-on-surface-variant">${meta.price}/mo</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Billing toggle */}
+        <div className="flex items-center gap-2 mb-6">
+          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Billing:</p>
+          <div className="flex bg-surface-container-low border border-outline-variant p-0.5 rounded-xl gap-0.5">
+            {(['monthly', 'annual'] as Billing[]).map(b => (
+              <button key={b} onClick={() => setBilling(b)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize ${billing === b ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}>
+                {b}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {error && <p className="text-sm text-error bg-error/5 border border-error/20 rounded-xl px-4 py-3 mb-4">{error}</p>}
+
+        <div className="flex gap-3">
+          <button onClick={onClose}
+            className="flex-1 py-3 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-all">
+            Cancel
+          </button>
+          <button onClick={handleSave} disabled={loading}
+            className="flex-1 btn-gradient text-white py-3 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2 transition-all">
+            {loading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</> : 'Save Changes'}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ── Main Component ─────────────────────────────────────────────────────────────
+export const CustomerTable = ({ isSuperAdmin }: Props) => {
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'locked'>('all');
+  const [changePlanTarget, setChangePlanTarget] = useState<Subscriber | null>(null);
 
-  const fetchCustomers = useCallback(async () => {
+  const fetchSubscribers = useCallback(async () => {
     try {
       const res = await authFetch('/api/owner/customers');
-      if (res.ok) setCustomers(await res.json());
+      if (res.ok) setSubscribers(await res.json());
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
+  useEffect(() => { fetchSubscribers(); }, [fetchSubscribers]);
 
   const handleStatusToggle = async (id: string, current: 'active' | 'locked') => {
     const newStatus = current === 'active' ? 'locked' : 'active';
     try {
-      const res = await authFetch(`/api/owner/customers/${id}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) setCustomers(prev => prev.map(c => c._id === id ? { ...c, status: newStatus } : c));
+      const res = await authFetch(`/api/owner/customers/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
+      if (res.ok) setSubscribers(prev => prev.map(s => s._id === id ? { ...s, status: newStatus } : s));
     } catch (e) { console.error(e); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this customer?')) return;
+    if (!confirm('Delete this subscriber? This cannot be undone.')) return;
     try {
       const res = await authFetch(`/api/owner/customers/${id}`, { method: 'DELETE' });
-      if (res.ok) setCustomers(prev => prev.filter(c => c._id !== id));
+      if (res.ok) setSubscribers(prev => prev.filter(s => s._id !== id));
     } catch (e) { console.error(e); }
   };
 
-  const getRestaurantName = (r: Customer['restaurantId']): string => {
-    if (!r) return '—';
-    if (typeof r === 'string') return r;
-    return (r as any).name ?? '—';
+  const handlePlanUpdated = (updated: Subscriber) => {
+    setSubscribers(prev => prev.map(s => s._id === updated._id ? { ...s, ...updated } : s));
   };
 
-  const filtered = customers.filter(c => {
-    const matchSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStatus = filterStatus === 'all' || c.status === filterStatus;
+  const filtered = subscribers.filter(s => {
+    const matchSearch =
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.restaurantName ?? '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchStatus = filterStatus === 'all' || s.status === filterStatus;
     return matchSearch && matchStatus;
   });
 
-  const active = customers.filter(c => c.status === 'active').length;
-  const locked = customers.filter(c => c.status === 'locked').length;
+  const active = subscribers.filter(s => s.status === 'active').length;
+  const locked = subscribers.filter(s => s.status === 'locked').length;
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-4xl font-headline font-extrabold tracking-tight">Customers</h2>
-          <p className="text-on-surface-variant font-medium">All registered customers across all restaurants.</p>
+          <h2 className="text-4xl font-headline font-extrabold tracking-tight">Subscribers</h2>
+          <p className="text-on-surface-variant font-medium">All MenuQR platform subscribers.</p>
         </div>
-        <div className="flex gap-3">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
-            <input type="text" placeholder="Search name or email..." value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="bg-surface-container-high border-none rounded-xl py-3 pl-12 pr-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none" />
-          </div>
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
+          <input type="text" placeholder="Search name, email, or restaurant…" value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="bg-surface-container-high border-none rounded-xl py-3 pl-12 pr-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none w-72" />
         </div>
       </div>
 
-      {/* Quick stats */}
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-6">
         {[
-          { label: 'Total', value: customers.length, icon: <Users className="w-6 h-6" />, color: 'text-primary', filter: 'all' },
+          { label: 'Total', value: subscribers.length, icon: <Users className="w-6 h-6" />, color: 'text-primary', filter: 'all' },
           { label: 'Active', value: active, icon: <UserCheck className="w-6 h-6" />, color: 'text-emerald-600', filter: 'active' },
           { label: 'Locked', value: locked, icon: <UserX className="w-6 h-6" />, color: 'text-rose-500', filter: 'locked' },
         ].map(s => (
@@ -109,61 +209,105 @@ export const CustomerTable = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-outline-variant/10">
-                {['Customer', 'Restaurant', 'Joined', 'Status', 'Actions'].map(h => (
+                {['Subscriber', 'Restaurant', 'Plan', 'Joined', 'Status', 'Actions'].map(h => (
                   <th key={h} className="text-left p-5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               <AnimatePresence>
-                {filtered.map((c, i) => (
-                  <motion.tr key={c._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                    className="border-b border-outline-variant/5 hover:bg-surface-container-lowest transition-colors">
-                    <td className="p-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                          {c.name.slice(0, 1).toUpperCase()}
+                {filtered.map((s, i) => {
+                  const planMeta = s.plan ? PLAN_META[s.plan] : null;
+                  return (
+                    <motion.tr key={s._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
+                      className="border-b border-outline-variant/5 hover:bg-surface-container-lowest transition-colors">
+
+                      {/* Subscriber */}
+                      <td className="p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                            {s.name.slice(0, 1).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm">{s.name}</p>
+                            <p className="text-xs text-on-surface-variant">{s.email}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-sm">{c.name}</p>
-                          <p className="text-xs text-on-surface-variant">{c.email}</p>
+                      </td>
+
+                      {/* Restaurant */}
+                      <td className="p-5 text-sm font-medium text-on-surface-variant">
+                        {s.restaurantName ?? '—'}
+                      </td>
+
+                      {/* Plan */}
+                      <td className="p-5">
+                        {planMeta ? (
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${planMeta.cls}`}>
+                            {planMeta.icon} {planMeta.label}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-on-surface-variant/40">—</span>
+                        )}
+                      </td>
+
+                      {/* Joined */}
+                      <td className="p-5 text-sm text-on-surface-variant">
+                        {new Date(s.createdAt).toLocaleDateString()}
+                      </td>
+
+                      {/* Status */}
+                      <td className="p-5">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${s.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+                          {s.status}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="p-5">
+                        <div className="flex items-center gap-1">
+                          {isSuperAdmin && (
+                            <button onClick={() => setChangePlanTarget(s)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-primary hover:bg-primary/10 transition-colors">
+                              <ChevronDown className="w-3 h-3" /> Plan
+                            </button>
+                          )}
+                          <button onClick={() => handleStatusToggle(s._id, s.status)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${s.status === 'active' ? 'hover:bg-rose-50 text-rose-500' : 'hover:bg-emerald-50 text-emerald-600'}`}>
+                            {s.status === 'active' ? <><Lock className="w-3 h-3" /> Lock</> : <><Unlock className="w-3 h-3" /> Unlock</>}
+                          </button>
+                          <button onClick={() => handleDelete(s._id)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-50 text-rose-500 transition-colors">
+                            <Trash2 className="w-3 h-3" /> Delete
+                          </button>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-5 text-sm font-medium text-on-surface-variant">
-                      {getRestaurantName(c.restaurantId)}
-                    </td>
-                    <td className="p-5 text-sm text-on-surface-variant">{new Date(c.createdAt).toLocaleDateString()}</td>
-                    <td className="p-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${c.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
-                        {c.status}
-                      </span>
-                    </td>
-                    <td className="p-5">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => handleStatusToggle(c._id, c.status)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${c.status === 'active' ? 'hover:bg-rose-50 text-rose-500' : 'hover:bg-emerald-50 text-emerald-600'}`}>
-                          {c.status === 'active' ? <><Lock className="w-3 h-3" /> Lock</> : <><Unlock className="w-3 h-3" /> Unlock</>}
-                        </button>
-                        <button onClick={() => handleDelete(c._id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-50 text-rose-500 transition-colors">
-                          <Trash2 className="w-3 h-3" /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
+                      </td>
+                    </motion.tr>
+                  );
+                })}
               </AnimatePresence>
             </tbody>
           </table>
+
           {filtered.length === 0 && (
             <div className="text-center py-16 text-on-surface-variant/40">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p className="font-bold">{customers.length === 0 ? 'No customers yet' : 'No results found'}</p>
+              <p className="font-bold">{subscribers.length === 0 ? 'No subscribers yet' : 'No results found'}</p>
             </div>
           )}
         </div>
       )}
+
+      {/* Change Plan Modal */}
+      <AnimatePresence>
+        {changePlanTarget && (
+          <ChangePlanModal
+            subscriber={changePlanTarget}
+            onClose={() => setChangePlanTarget(null)}
+            onUpdated={handlePlanUpdated}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

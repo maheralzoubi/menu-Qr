@@ -1,25 +1,29 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Building2, TrendingUp, LogOut, Shield, Users } from 'lucide-react';
+import { Building2, TrendingUp, LogOut, Shield, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RestaurantList } from './components/RestaurantList';
 import { RestaurantDetail } from './components/RestaurantDetail';
 import { PlatformAnalytics } from './components/PlatformAnalytics';
 import { CustomerTable } from './components/CustomerTable';
-import { clearOwnerToken as clearToken } from '../src/lib/ownerAuth';
+import { clearOwnerToken as clearToken, isSuperAdmin } from '../src/lib/ownerAuth';
 
 type Tab = 'restaurants' | 'analytics' | 'customers';
 
 interface SelectedRestaurant { _id: string; name: string; }
 
 const navItems: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'restaurants', label: 'Restaurants',  icon: <Building2 className="w-5 h-5" /> },
-  { id: 'analytics',   label: 'Analytics',    icon: <TrendingUp className="w-5 h-5" /> },
-  { id: 'customers',   label: 'Customers',    icon: <Users className="w-5 h-5" /> },
+  { id: 'restaurants', label: 'Restaurants', icon: <Building2 className="w-5 h-5" /> },
+  { id: 'analytics',   label: 'Analytics',   icon: <TrendingUp className="w-5 h-5" /> },
+  { id: 'customers',   label: 'Customers',   icon: <Users className="w-5 h-5" /> },
 ];
 
 export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [activeTab, setActiveTab] = useState<Tab>('restaurants');
   const [selectedRestaurant, setSelectedRestaurant] = useState<SelectedRestaurant | null>(null);
+  const superAdmin = isSuperAdmin();
+
+  // Customers tab is superAdmin-only
+  const visibleNavItems = navItems.filter(item => item.id !== 'customers' || superAdmin);
 
   const handleLogout = () => { clearToken(); onLogout(); };
 
@@ -40,7 +44,7 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
         </div>
 
         <nav className="flex-1 px-4 space-y-1">
-          {navItems.map(item => (
+          {visibleNavItems.map(item => (
             <button key={item.id} onClick={() => { setActiveTab(item.id); setSelectedRestaurant(null); }}
               className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-xl ${
                 activeTab === item.id ? 'text-on-surface font-semibold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant opacity-70 hover:bg-surface-container hover:opacity-100'
@@ -66,7 +70,9 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           </span>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full">
             <Shield className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-widest">App Owner</span>
+            <span className="text-xs font-bold uppercase tracking-widest">
+              {superAdmin ? 'Super Admin' : 'App Owner'}
+            </span>
           </div>
         </header>
 
@@ -85,8 +91,8 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                   onDeleted={() => setSelectedRestaurant(null)}
                 />
               )}
-              {activeTab === 'analytics'  && <PlatformAnalytics />}
-              {activeTab === 'customers'  && <CustomerTable />}
+              {activeTab === 'analytics' && <PlatformAnalytics />}
+              {activeTab === 'customers' && <CustomerTable isSuperAdmin={superAdmin} />}
             </motion.div>
           </AnimatePresence>
         </div>

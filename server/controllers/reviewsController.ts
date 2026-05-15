@@ -5,7 +5,11 @@ import { getIO } from '../socket/index';
 
 export const getReviews = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const restaurantId = (req.query.restaurantId as string) ?? '';
+    // Accept explicit query param (customer app) or fall back to the authenticated admin's restaurant
+    const restaurantId =
+      (req.query.restaurantId as string) ||
+      (req as AuthRequest).user?.restaurantId ||
+      '';
     if (!restaurantId) { res.status(400).json({ message: 'restaurantId is required' }); return; }
     res.json(await reviewsService.getReviews(restaurantId));
   } catch (e) { next(e); }

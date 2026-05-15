@@ -1,14 +1,16 @@
 import { Router } from 'express';
-import { requireSuperAdmin } from '../middleware/auth';
+import { requireOwnerAccess } from '../middleware/auth';
 import {
   getRestaurants, createRestaurant, getRestaurant,
   updateRestaurant, updateRestaurantStatus, deleteRestaurant,
   getOwnerAnalytics,
-  getCustomers, updateCustomerStatus, deleteCustomer,
+  getSubscribers, updateCustomerStatus, deleteCustomer,
+  updateCustomerPlan,
+  getSubscription, checkoutSubscription,
 } from '../controllers/ownerController';
 
 const router = Router();
-router.use(requireSuperAdmin);
+router.use(requireOwnerAccess);
 
 // Restaurant management
 router.get('/restaurants', getRestaurants);
@@ -21,9 +23,16 @@ router.delete('/restaurants/:id', deleteRestaurant);
 // Analytics
 router.get('/analytics', getOwnerAnalytics);
 
-// Customer management (platform-wide)
-router.get('/customers', getCustomers);
+// Platform subscriber management
+router.get('/customers', getSubscribers);
 router.patch('/customers/:id/status', updateCustomerStatus);
 router.delete('/customers/:id', deleteCustomer);
+
+// Plan management — superAdmin only (enforced in controller)
+router.patch('/customers/:id/plan', updateCustomerPlan);
+
+// Subscription (current user's plan)
+router.get('/subscription', getSubscription);
+router.post('/subscription/checkout', checkoutSubscription);
 
 export default router;

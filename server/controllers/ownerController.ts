@@ -3,16 +3,32 @@ import { Restaurant } from '../models/Restaurant';
 import { User } from '../models/User';
 import { Customer } from '../models/Customer';
 import { Order } from '../models/Order';
+import { AuthRequest } from '../middleware/auth';
 import { MenuItem } from '../models/MenuItem';
 import { Review } from '../models/Review';
 import { Reservation } from '../models/Reservation';
 import { Category } from '../models/Category';
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const isSuperAdmin = (req: Request) => (req as AuthRequest).user?.role === 'superadmin';
+const callerId = (req: Request) => (req as AuthRequest).user?.id;
+
+// Returns the Mongoose filter for "restaurants this caller may see"
+const ownerFilter = (req: Request) =>
+  isSuperAdmin(req) ? {} : { ownerId: callerId(req) };
+
+// Checks ownership; returns true if the caller may manage this restaurant
+const canManage = (req: Request, ownerId: any) =>
+  isSuperAdmin(req) || String(ownerId) === callerId(req);
+
+const PLAN_LIMITS: Record<string, number> = { starter: 1, pro: 5, enterprise: Infinity };
+
 // ── Restaurant management ──────────────────────────────────────────────────────
 
-export const getRestaurants = async (_req: Request, res: Response, next: NextFunction) => {
+export const getRestaurants = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const restaurants = await Restaurant.find().sort({ createdAt: -1 });
+    const restaurants = await Restaurant.find(ownerFilter(req)).sort({ createdAt: -1 });
     const results = await Promise.all(restaurants.map(async (r) => {
       const [orders, customers] = await Promise.all([
         Order.find({ restaurantId: r._id }),
@@ -32,13 +48,28 @@ export const createRestaurant = async (req: Request, res: Response, next: NextFu
       res.status(400).json({ message: 'name, adminName, adminEmail, adminPassword are required' });
       return;
     }
+
+    // Enforce plan limits for non-superadmin owners
+    if (!isSuperAdmin(req)) {
+      const owner = await User.findById(callerId(req));
+      const limit = PLAN_LIMITS[owner?.plan ?? 'starter'] ?? 1;
+      const count = await Restaurant.countDocuments({ ownerId: callerId(req) });
+      if (count >= limit) {
+        const limitLabel = limit === Infinity ? 'unlimited' : String(limit);
+        res.status(403).json({
+          message: `Your ${owner?.plan ?? 'Starter'} plan allows up to ${limitLabel} restaurant(s). Upgrade your plan to add more.`,
+        });
+        return;
+      }
+    }
+
     const existingUser = await User.findOne({ email: adminEmail });
     if (existingUser) { res.status(409).json({ message: 'Admin email already registered' }); return; }
 
-    // Create restaurant first with placeholder adminId
     const restaurant = await Restaurant.create({
       name, logo, contactEmail, contactPhone, address,
       adminId: '000000000000000000000000',
+      ownerId: isSuperAdmin(req) ? undefined : callerId(req),
     });
     const admin = await User.create({
       name: adminName, email: adminEmail, password: adminPassword,
@@ -55,6 +86,7 @@ export const getRestaurant = async (req: Request, res: Response, next: NextFunct
   try {
     const r = await Restaurant.findById(req.params.id);
     if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
+    if (!canManage(req, r.ownerId)) { res.status(403).json({ message: 'Access denied.' }); return; }
     const admin = await User.findById(r.adminId).select('-password');
     const [orders, customers, totalMenuItems, totalReviews, totalReservations] = await Promise.all([
       Order.find({ restaurantId: r._id }),
@@ -73,24 +105,28 @@ export const getRestaurant = async (req: Request, res: Response, next: NextFunct
 
 export const updateRestaurant = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const r = await Restaurant.findById(req.params.id);
+    if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
+    if (!canManage(req, r.ownerId)) { res.status(403).json({ message: 'Access denied.' }); return; }
     const { name, logo, contactEmail, contactPhone, address } = req.body;
-    const restaurant = await Restaurant.findByIdAndUpdate(
+    const updated = await Restaurant.findByIdAndUpdate(
       req.params.id, { name, logo, contactEmail, contactPhone, address }, { new: true, runValidators: true }
     );
-    if (!restaurant) { res.status(404).json({ message: 'Restaurant not found' }); return; }
-    res.json(restaurant);
+    res.json(updated);
   } catch (e) { next(e); }
 };
 
 export const updateRestaurantStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const r = await Restaurant.findById(req.params.id);
+    if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
+    if (!canManage(req, r.ownerId)) { res.status(403).json({ message: 'Access denied.' }); return; }
     const { status } = req.body;
     if (!['active', 'inactive'].includes(status)) {
       res.status(400).json({ message: 'status must be active or inactive' }); return;
     }
-    const restaurant = await Restaurant.findByIdAndUpdate(req.params.id, { status }, { returnDocument: 'after' });
-    if (!restaurant) { res.status(404).json({ message: 'Restaurant not found' }); return; }
-    res.json(restaurant);
+    const updated = await Restaurant.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    res.json(updated);
   } catch (e) { next(e); }
 };
 
@@ -98,6 +134,7 @@ export const deleteRestaurant = async (req: Request, res: Response, next: NextFu
   try {
     const r = await Restaurant.findById(req.params.id);
     if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
+    if (!canManage(req, r.ownerId)) { res.status(403).json({ message: 'Access denied.' }); return; }
     const rid = r._id;
     await Promise.all([
       User.deleteMany({ restaurantId: rid }),
@@ -115,17 +152,25 @@ export const deleteRestaurant = async (req: Request, res: Response, next: NextFu
 
 // ── Platform analytics ─────────────────────────────────────────────────────────
 
-export const getOwnerAnalytics = async (_req: Request, res: Response, next: NextFunction) => {
+export const getOwnerAnalytics = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const now = new Date();
     const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const [totalRestaurants, activeRestaurants, totalCustomers, totalOrders, orders, restaurants] = await Promise.all([
-      Restaurant.countDocuments(),
-      Restaurant.countDocuments({ status: 'active' }),
-      Customer.countDocuments(),
-      Order.countDocuments(),
-      Order.find(),
-      Restaurant.find().sort({ createdAt: -1 }),
+    const filter = ownerFilter(req);
+    const [totalRestaurants, activeRestaurants, restaurants] = await Promise.all([
+      Restaurant.countDocuments(filter),
+      Restaurant.countDocuments({ ...filter, status: 'active' }),
+      Restaurant.find(filter).sort({ createdAt: -1 }),
+    ]);
+    const restaurantIds = restaurants.map(r => r._id);
+    // For non-superAdmin with no restaurants yet, use $in:[] to guarantee 0 — never fall back to {}
+    const ridFilter = restaurantIds.length
+      ? { restaurantId: { $in: restaurantIds } }
+      : (isSuperAdmin(req) ? {} : { restaurantId: { $in: [] as any[] } });
+    const [totalCustomers, totalOrders, orders] = await Promise.all([
+      Customer.countDocuments(ridFilter),
+      Order.countDocuments(ridFilter),
+      Order.find(ridFilter),
     ]);
     const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
 
@@ -133,7 +178,7 @@ export const getOwnerAnalytics = async (_req: Request, res: Response, next: Next
       Array.from({ length: 6 }, async (_, i) => {
         const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
         const end = new Date(now.getFullYear(), now.getMonth() - (5 - i) + 1, 1);
-        const count = await Restaurant.countDocuments({ createdAt: { $gte: d, $lt: end } });
+        const count = await Restaurant.countDocuments({ ...filter, createdAt: { $gte: d, $lt: end } });
         return { name: monthNames[d.getMonth()], value: count };
       })
     );
@@ -159,15 +204,19 @@ export const getOwnerAnalytics = async (_req: Request, res: Response, next: Next
   } catch (e) { next(e); }
 };
 
-// ── Customer management ───────────────────────────────────────────────────────
+// ── Platform subscriber management ────────────────────────────────────────────
+// "customers" here means restaurant owners who subscribed via the landing page (role: 'owner')
 
-export const getCustomers = async (_req: Request, res: Response, next: NextFunction) => {
+export const getSubscribers = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const customers = await Customer.find()
+    if (!isSuperAdmin(req)) {
+      res.status(403).json({ message: 'Only the super admin can view subscribers.' });
+      return;
+    }
+    const subscribers = await User.find({ role: 'owner' })
       .select('-password')
-      .populate('restaurantId', 'name')
       .sort({ createdAt: -1 });
-    res.json(customers);
+    res.json(subscribers);
   } catch (e) { next(e); }
 };
 
@@ -177,16 +226,66 @@ export const updateCustomerStatus = async (req: Request, res: Response, next: Ne
     if (!['active', 'locked'].includes(status)) {
       res.status(400).json({ message: 'Status must be active or locked' }); return;
     }
-    const customer = await Customer.findByIdAndUpdate(req.params.id, { status }, { returnDocument: 'after' }).select('-password');
-    if (!customer) { res.status(404).json({ message: 'Customer not found' }); return; }
-    res.json(customer);
+    const user = await User.findByIdAndUpdate(req.params.id, { status }, { new: true }).select('-password');
+    if (!user) { res.status(404).json({ message: 'Subscriber not found' }); return; }
+    res.json(user);
   } catch (e) { next(e); }
 };
 
 export const deleteCustomer = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const deleted = await Customer.findByIdAndDelete(req.params.id);
-    if (!deleted) { res.status(404).json({ message: 'Customer not found' }); return; }
+    const deleted = await User.findByIdAndDelete(req.params.id);
+    if (!deleted) { res.status(404).json({ message: 'Subscriber not found' }); return; }
     res.status(204).send();
+  } catch (e) { next(e); }
+};
+
+// Only callable by superadmin role
+export const updateCustomerPlan = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if ((req as any).user?.role !== 'superadmin') {
+      res.status(403).json({ message: 'Only the super admin can update plans.' });
+      return;
+    }
+    const { plan, billing } = req.body;
+    const validPlans = ['starter', 'pro', 'enterprise'];
+    if (!validPlans.includes(plan)) {
+      res.status(400).json({ message: 'Invalid plan.' });
+      return;
+    }
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { plan, planBilling: billing ?? 'monthly', planActivatedAt: new Date() },
+      { new: true }
+    ).select('-password');
+    if (!user) { res.status(404).json({ message: 'Subscriber not found' }); return; }
+    res.json(user);
+  } catch (e) { next(e); }
+};
+
+// ── Subscription ───────────────────────────────────────────────────────────────
+// In-memory store — replace with a Subscription model + real payment provider (Stripe, etc.)
+const subscriptions = new Map<string, { plan: string; billing: string; activatedAt: string }>();
+
+export const getSubscription = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.id ?? 'owner';
+    const sub = subscriptions.get(userId);
+    res.json(sub ?? { plan: null });
+  } catch (e) { next(e); }
+};
+
+export const checkoutSubscription = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { plan, billing, method, last4, brand } = req.body;
+    const validPlans = ['starter', 'pro', 'enterprise'];
+    if (!validPlans.includes(plan)) {
+      res.status(400).json({ message: 'Invalid plan.' });
+      return;
+    }
+    // TODO: integrate payment provider (Stripe, etc.) here using method/last4/brand/apple_pay token
+    const userId = (req as any).user?.id ?? 'owner';
+    subscriptions.set(userId, { plan, billing: billing ?? 'monthly', activatedAt: new Date().toISOString() });
+    res.json({ success: true, plan, billing, method, last4, brand });
   } catch (e) { next(e); }
 };

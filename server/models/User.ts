@@ -4,12 +4,18 @@ import bcrypt from 'bcryptjs';
 export interface IUser extends Document {
   email: string;
   password: string;
-  role: 'admin' | 'staff' | 'superadmin';
+  role: 'admin' | 'staff' | 'superadmin' | 'owner';
+  status: 'active' | 'locked';
   restaurantId?: mongoose.Types.ObjectId;
   name?: string;
   phone?: string;
   title?: string;
   avatar?: string;
+  // Subscription fields (populated for 'owner' role accounts)
+  plan?: 'starter' | 'pro' | 'enterprise';
+  planBilling?: 'monthly' | 'annual';
+  planActivatedAt?: Date;
+  restaurantName?: string;
   comparePassword(candidate: string): Promise<boolean>;
 }
 
@@ -17,12 +23,17 @@ const UserSchema = new Schema<IUser>(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'staff', 'superadmin'], default: 'admin' },
+    role: { type: String, enum: ['admin', 'staff', 'superadmin', 'owner'], default: 'admin' },
+    status: { type: String, enum: ['active', 'locked'], default: 'active' },
     restaurantId: { type: Schema.Types.ObjectId, ref: 'Restaurant' },
     name: { type: String, trim: true },
     phone: { type: String, trim: true },
     title: { type: String, trim: true },
     avatar: { type: String },
+    plan: { type: String, enum: ['starter', 'pro', 'enterprise'] },
+    planBilling: { type: String, enum: ['monthly', 'annual'] },
+    planActivatedAt: { type: Date },
+    restaurantName: { type: String, trim: true },
   },
   { timestamps: true }
 );

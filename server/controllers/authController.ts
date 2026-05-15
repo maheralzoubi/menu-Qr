@@ -66,3 +66,35 @@ export const updateMe = async (req: AuthRequest, res: Response, next: NextFuncti
     res.json(safe);
   } catch (e) { next(e); }
 };
+
+// Public endpoint — called after mock payment to create a new owner account
+export const subscribe = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, email, password, restaurantName, plan, billing } = req.body;
+    if (!name?.trim() || !email?.trim() || !password || !restaurantName?.trim() || !plan) {
+      res.status(400).json({ message: 'All fields are required.' });
+      return;
+    }
+    const validPlans = ['starter', 'pro', 'enterprise'];
+    if (!validPlans.includes(plan)) {
+      res.status(400).json({ message: 'Invalid plan selected.' });
+      return;
+    }
+    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existing) {
+      res.status(409).json({ message: 'An account with this email already exists.' });
+      return;
+    }
+    await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password,
+      restaurantName: restaurantName.trim(),
+      role: 'owner',
+      plan,
+      planBilling: billing ?? 'monthly',
+      planActivatedAt: new Date(),
+    });
+    res.status(201).json({ message: 'Account created successfully. You can now log in.', email });
+  } catch (e) { next(e); }
+};

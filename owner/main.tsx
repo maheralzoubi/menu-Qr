@@ -2,19 +2,26 @@ import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../src/index.css';
 import { SuperAdminDashboard } from './SuperAdminDashboard';
+import { LandingPage } from './LandingPage';
 import { AdminLoginScreen } from '../src/screens/AdminLoginScreen';
 import { getOwnerToken, setOwnerToken, clearOwnerToken } from '../src/lib/ownerAuth';
 
+type View = 'landing' | 'login' | 'dashboard';
+
 function OwnerApp() {
-  const [authed, setAuthed] = useState(!!getOwnerToken());
+  const [view, setView] = useState<View>(getOwnerToken() ? 'dashboard' : 'landing');
 
-  const handleLogout = () => { clearOwnerToken(); setAuthed(false); };
+  const handleLogout = () => { clearOwnerToken(); setView('landing'); };
 
-  if (!authed) {
+  if (view === 'landing') {
+    return <LandingPage onLoginClick={() => setView('login')} />;
+  }
+
+  if (view === 'login') {
     return (
       <AdminLoginScreen
-        onLogin={() => setAuthed(true)}
-        onBack={() => {}}
+        onLogin={() => setView('dashboard')}
+        onBack={() => setView('landing')}
         onTokenSave={setOwnerToken}
         title="Owner Access"
         subtitle="Sign in to the App Owner Panel"
