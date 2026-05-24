@@ -5,6 +5,8 @@ import {
   BarChart3, ShoppingBag, Globe, ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type PlanId = 'starter' | 'pro' | 'enterprise';
@@ -15,48 +17,23 @@ interface SetupForm { fullName: string; email: string; password: string; confirm
 
 interface PlanDef {
   id: PlanId;
-  name: string;
   price: { monthly: number; annual: number };
-  description: string;
-  features: string[];
   popular?: boolean;
   icon: React.ReactNode;
 }
 
-// ── Plans ──────────────────────────────────────────────────────────────────────
+// ── Plans (icons & prices only — labels from i18n) ────────────────────────────
 const PLANS: PlanDef[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: { monthly: 29, annual: 23 },
-    description: 'Perfect for single-location restaurants.',
-    icon: <Zap className="w-5 h-5" />,
-    features: ['1 restaurant', '500 orders / month', 'QR code menus', 'Basic analytics', 'Email support'],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: { monthly: 79, annual: 63 },
-    description: 'For growing brands with multiple locations.',
-    icon: <Star className="w-5 h-5" />,
-    popular: true,
-    features: ['Up to 5 restaurants', 'Unlimited orders', 'Advanced analytics', 'Custom branding', 'Promo codes', 'Reservations module', 'Priority support'],
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: { monthly: 199, annual: 159 },
-    description: 'Unlimited scale for enterprise food groups.',
-    icon: <Building2 className="w-5 h-5" />,
-    features: ['Unlimited restaurants', 'Everything in Pro', 'White-label option', 'Custom integrations', 'Dedicated account manager', '99.9% SLA guarantee'],
-  },
+  { id: 'starter', price: { monthly: 29, annual: 23 }, icon: <Zap className="w-5 h-5" /> },
+  { id: 'pro',     price: { monthly: 79, annual: 63 }, icon: <Star className="w-5 h-5" />, popular: true },
+  { id: 'enterprise', price: { monthly: 199, annual: 159 }, icon: <Building2 className="w-5 h-5" /> },
 ];
 
-const FEATURES = [
-  { icon: <QrCode className="w-6 h-6" />, title: 'Smart QR Menus', desc: 'Beautiful digital menus with real-time updates. No printing required.' },
-  { icon: <ShoppingBag className="w-6 h-6" />, title: 'Live Order Management', desc: 'Orders appear instantly on your dashboard with sound alerts.' },
-  { icon: <BarChart3 className="w-6 h-6" />, title: 'Deep Analytics', desc: 'Revenue, top items, peak hours — everything to grow faster.' },
-  { icon: <Globe className="w-6 h-6" />, title: 'Multi-location Ready', desc: 'Manage all your branches from one unified dashboard.' },
+const FEATURE_KEYS = [
+  { key: 'qrMenus',         icon: <QrCode className="w-6 h-6" /> },
+  { key: 'orderManagement', icon: <ShoppingBag className="w-6 h-6" /> },
+  { key: 'analytics',       icon: <BarChart3 className="w-6 h-6" /> },
+  { key: 'multiLocation',   icon: <Globe className="w-6 h-6" /> },
 ];
 
 // ── Card Helpers ───────────────────────────────────────────────────────────────
@@ -84,6 +61,7 @@ const AppleLogo = () => (
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState<LandingStep>('home');
   const [billing, setBilling] = useState<Billing>('monthly');
   const [selected, setSelected] = useState<PlanDef | null>(null);
@@ -111,7 +89,6 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
   }, []);
 
   const planPrice = (p: PlanDef) => billing === 'annual' ? p.price.annual : p.price.monthly;
-
   const scrollToPlans = () => plansRef.current?.scrollIntoView({ behavior: 'smooth' });
 
   const openCheckout = (plan: PlanDef) => {
@@ -122,7 +99,6 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // ── Apple Pay ──
   const handleApplePay = async () => {
     if (!selected || !('PaymentRequest' in window)) return;
     setPayError('');
@@ -131,7 +107,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       const amount = planPrice(selected).toFixed(2);
       const req = new PaymentRequest(
         [{ supportedMethods: 'https://apple.com/apple-pay', data: { version: 3, merchantIdentifier: 'merchant.com.menuqr', merchantCapabilities: ['supports3DS'], supportedNetworks: ['visa', 'masterCard', 'amex'], countryCode: 'US' } }],
-        { total: { label: `MenuQR ${selected.name}`, amount: { currency: 'USD', value: amount } } }
+        { total: { label: `MenuQR ${t(`plans.${selected.id}.name`)}`, amount: { currency: 'USD', value: amount } } }
       );
       const payResponse = await req.show();
       await payResponse.complete('success');
@@ -142,7 +118,6 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     } finally { setPayLoading(false); }
   };
 
-  // ── Card Payment (mock) ──
   const handleCardPay = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selected) return;
@@ -153,14 +128,12 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     if (card.expiry.length < 5) { setPayError('Enter a valid expiry (MM/YY).'); return; }
     if (card.cvv.length < 3) { setPayError('Enter a valid CVV.'); return; }
     setPayLoading(true);
-    // Mock: simulate network delay
     await new Promise(r => setTimeout(r, 1200));
     setPayLoading(false);
     setStep('setup');
     setSetup({ fullName: '', email: '', password: '', confirmPassword: '', restaurantName: '' });
   };
 
-  // ── Account Setup ──
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selected) return;
@@ -205,10 +178,13 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
               </div>
               <span className="font-extrabold text-lg font-headline">MenuQR</span>
             </div>
-            <button onClick={onLoginClick}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-all">
-              Sign In <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-3">
+              <LanguageSwitcher />
+              <button onClick={onLoginClick}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-all">
+                {t('landing.signIn')} <ArrowRight className="w-3.5 h-3.5 rtl:scale-x-[-1]" />
+              </button>
+            </div>
           </div>
         </nav>
 
@@ -216,23 +192,23 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         <section className="pt-32 pb-24 px-6 text-center max-w-4xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-6">
-              <Sparkles className="w-3.5 h-3.5" /> The Restaurant Platform
+              <Sparkles className="w-3.5 h-3.5" /> {t('landing.heroTag')}
             </div>
             <h1 className="text-5xl md:text-6xl font-extrabold font-headline leading-[1.1] mb-6">
-              Run your restaurant<br />
-              <span className="text-primary">smarter with MenuQR</span>
+              {t('landing.heroHeading1')}<br />
+              <span className="text-primary">{t('landing.heroHeading2')}</span>
             </h1>
             <p className="text-on-surface-variant text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-              Digital menus, live order management, analytics, and multi-location support — all in one place.
+              {t('landing.heroSubtext')}
             </p>
             <div className="flex items-center justify-center gap-4">
               <button onClick={scrollToPlans}
                 className="btn-gradient text-white px-8 py-4 rounded-2xl font-bold text-base shadow-xl shadow-primary/20 hover:opacity-95 transition-all flex items-center gap-2">
-                Start Free Trial <ChevronRight className="w-5 h-5" />
+                {t('landing.startTrial')} <ChevronRight className="w-5 h-5 rtl:scale-x-[-1]" />
               </button>
               <button onClick={onLoginClick}
                 className="px-8 py-4 rounded-2xl border border-outline-variant font-semibold text-base hover:bg-surface-container transition-all">
-                Sign In
+                {t('landing.signIn')}
               </button>
             </div>
           </motion.div>
@@ -242,19 +218,19 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         <section className="py-20 px-6 bg-surface-container-low border-y border-outline-variant/20">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-extrabold font-headline mb-3">Everything you need to grow</h2>
-              <p className="text-on-surface-variant">Built for modern restaurant operations, from one table to a thousand.</p>
+              <h2 className="text-3xl font-extrabold font-headline mb-3">{t('landing.featuresHeading')}</h2>
+              <p className="text-on-surface-variant">{t('landing.featuresSubtext')}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {FEATURES.map((f, i) => (
-                <motion.div key={f.title}
+              {FEATURE_KEYS.map((f, i) => (
+                <motion.div key={f.key}
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                   className="bg-surface rounded-2xl p-6 border border-outline-variant/20 hover:shadow-lg transition-all">
                   <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
                     {f.icon}
                   </div>
-                  <h3 className="font-bold text-sm mb-2">{f.title}</h3>
-                  <p className="text-xs text-on-surface-variant leading-relaxed">{f.desc}</p>
+                  <h3 className="font-bold text-sm mb-2">{t(`landing.features.${f.key}.title`)}</h3>
+                  <p className="text-xs text-on-surface-variant leading-relaxed">{t(`landing.features.${f.key}.desc`)}</p>
                 </motion.div>
               ))}
             </div>
@@ -265,18 +241,18 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         <section ref={plansRef} className="py-24 px-6">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10">
-              <h2 className="text-4xl font-extrabold font-headline mb-3">Simple, transparent pricing</h2>
+              <h2 className="text-4xl font-extrabold font-headline mb-3">{t('landing.pricingHeading')}</h2>
               <p className="text-on-surface-variant text-base max-w-md mx-auto">
-                No hidden fees. No contracts. Upgrade or downgrade anytime.
+                {t('landing.pricingSubtext')}
               </p>
               <div className="inline-flex items-center mt-7 bg-surface-container-low border border-outline-variant p-1 rounded-2xl gap-1">
                 {(['monthly', 'annual'] as Billing[]).map(b => (
                   <button key={b} onClick={() => setBilling(b)}
                     className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${billing === b ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}>
-                    {b === 'monthly' ? 'Monthly' : 'Annual'}
+                    {b === 'monthly' ? t('common.monthly') : t('common.annual')}
                     {b === 'annual' && (
-                      <span className={`ml-2 text-[10px] font-extrabold ${billing === 'annual' ? 'text-white/80' : 'text-tertiary'}`}>
-                        SAVE 20%
+                      <span className={`ms-2 text-[10px] font-extrabold ${billing === 'annual' ? 'text-white/80' : 'text-tertiary'}`}>
+                        {t('landing.save20')}
                       </span>
                     )}
                   </button>
@@ -285,68 +261,73 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {PLANS.map((plan, i) => (
-                <motion.div key={plan.id}
-                  initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-                  className={`relative flex flex-col rounded-3xl p-7 border transition-all ${plan.popular
-                    ? 'bg-primary text-on-primary border-primary shadow-2xl shadow-primary/25 md:-translate-y-3'
-                    : 'bg-surface-container-low border-outline-variant hover:border-outline hover:shadow-xl hover:shadow-black/5'}`}>
+              {PLANS.map((plan, i) => {
+                const planFeatures = t(`plans.${plan.id}.features`, { returnObjects: true }) as string[];
+                return (
+                  <motion.div key={plan.id}
+                    initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+                    className={`relative flex flex-col rounded-3xl p-7 border transition-all ${plan.popular
+                      ? 'bg-primary text-on-primary border-primary shadow-2xl shadow-primary/25 md:-translate-y-3'
+                      : 'bg-surface-container-low border-outline-variant hover:border-outline hover:shadow-xl hover:shadow-black/5'}`}>
 
-                  {plan.popular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-white text-primary text-[11px] font-extrabold px-4 py-1 rounded-full shadow-md border border-primary/20 whitespace-nowrap">
-                      Most Popular
+                    {plan.popular && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-white text-primary text-[11px] font-extrabold px-4 py-1 rounded-full shadow-md border border-primary/20 whitespace-nowrap">
+                        {t('landing.mostPopular')}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${plan.popular ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
+                        {plan.icon}
+                      </div>
+                      <h3 className={`font-extrabold text-lg font-headline ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>
+                        {t(`plans.${plan.id}.name`)}
+                      </h3>
                     </div>
-                  )}
 
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${plan.popular ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
-                      {plan.icon}
+                    <div className="mb-1 flex items-end gap-1">
+                      <span className={`text-5xl font-extrabold font-headline leading-none ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>
+                        ${planPrice(plan)}
+                      </span>
+                      <span className={`text-sm pb-1 ${plan.popular ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>{t('landing.perMonth')}</span>
                     </div>
-                    <h3 className={`font-extrabold text-lg font-headline ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>{plan.name}</h3>
-                  </div>
-
-                  <div className="mb-1 flex items-end gap-1">
-                    <span className={`text-5xl font-extrabold font-headline leading-none ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>
-                      ${planPrice(plan)}
-                    </span>
-                    <span className={`text-sm pb-1 ${plan.popular ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>/mo</span>
-                  </div>
-                  {billing === 'annual' && (
-                    <p className={`text-xs mb-1 font-medium ${plan.popular ? 'text-on-primary/70' : 'text-tertiary'}`}>
-                      Billed ${planPrice(plan) * 12} / year
+                    {billing === 'annual' && (
+                      <p className={`text-xs mb-1 font-medium ${plan.popular ? 'text-on-primary/70' : 'text-tertiary'}`}>
+                        {t('landing.billedYearly', { amount: planPrice(plan) * 12 })}
+                      </p>
+                    )}
+                    <p className={`text-sm mb-6 leading-relaxed ${plan.popular ? 'text-on-primary/80' : 'text-on-surface-variant'}`}>
+                      {t(`plans.${plan.id}.description`)}
                     </p>
-                  )}
-                  <p className={`text-sm mb-6 leading-relaxed ${plan.popular ? 'text-on-primary/80' : 'text-on-surface-variant'}`}>
-                    {plan.description}
-                  </p>
 
-                  <ul className="space-y-2.5 flex-1 mb-7">
-                    {plan.features.map(f => (
-                      <li key={f} className={`flex items-center gap-2.5 text-sm ${plan.popular ? 'text-on-primary/90' : 'text-on-surface'}`}>
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${plan.popular ? 'bg-white/25' : 'bg-primary/10'}`}>
-                          <Check className={`w-2.5 h-2.5 ${plan.popular ? 'text-white' : 'text-primary'}`} />
-                        </div>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
+                    <ul className="space-y-2.5 flex-1 mb-7">
+                      {(Array.isArray(planFeatures) ? planFeatures : []).map((f, fi) => (
+                        <li key={fi} className={`flex items-center gap-2.5 text-sm ${plan.popular ? 'text-on-primary/90' : 'text-on-surface'}`}>
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${plan.popular ? 'bg-white/25' : 'bg-primary/10'}`}>
+                            <Check className={`w-2.5 h-2.5 ${plan.popular ? 'text-white' : 'text-primary'}`} />
+                          </div>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
 
-                  <button onClick={() => openCheckout(plan)}
-                    className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${plan.popular
-                      ? 'bg-white text-primary hover:bg-white/90 shadow-md'
-                      : 'btn-gradient text-white hover:opacity-90 shadow-md shadow-primary/15'}`}>
-                    Get Started <ChevronRight className="w-4 h-4" />
-                  </button>
-                </motion.div>
-              ))}
+                    <button onClick={() => openCheckout(plan)}
+                      className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${plan.popular
+                        ? 'bg-white text-primary hover:bg-white/90 shadow-md'
+                        : 'btn-gradient text-white hover:opacity-90 shadow-md shadow-primary/15'}`}>
+                      {t('landing.getStarted')} <ChevronRight className="w-4 h-4 rtl:scale-x-[-1]" />
+                    </button>
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* Trust row */}
-            <div className="flex items-center justify-center gap-8 mt-12">
+            <div className="flex items-center justify-center gap-8 mt-12 flex-wrap">
               {[
-                { icon: <Shield className="w-4 h-4" />, label: 'Secure payments' },
-                { icon: <Lock className="w-4 h-4" />, label: 'PCI compliant' },
-                { icon: <Check className="w-4 h-4" />, label: 'Cancel anytime' },
+                { icon: <Shield className="w-4 h-4" />, label: t('landing.securePayments') },
+                { icon: <Lock className="w-4 h-4" />,   label: t('landing.pciCompliant') },
+                { icon: <Check className="w-4 h-4" />,  label: t('landing.cancelAnytime') },
               ].map(({ icon, label }) => (
                 <div key={label} className="flex items-center gap-1.5 text-xs text-on-surface-variant">{icon} {label}</div>
               ))}
@@ -357,7 +338,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         {/* Footer */}
         <footer className="border-t border-surface-container py-8 px-6 text-center">
           <p className="text-xs text-on-surface-variant">
-            © {new Date().getFullYear()} MenuQR · All rights reserved
+            {t('landing.copyright', { year: new Date().getFullYear() })}
           </p>
         </footer>
       </div>
@@ -377,7 +358,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
               <span className="font-extrabold text-lg font-headline">MenuQR</span>
             </div>
             <button onClick={onLoginClick} className="text-sm text-on-surface-variant hover:text-on-surface transition-colors">
-              Already have an account? <span className="font-bold text-primary">Sign in</span>
+              {t('checkout.alreadyHaveAccount')} <span className="font-bold text-primary">{t('checkout.signIn')}</span>
             </button>
           </div>
         </nav>
@@ -385,7 +366,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         <div className="pt-28 pb-16 px-6 max-w-4xl mx-auto">
           <button onClick={() => setStep('home')}
             className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-on-surface mb-8 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to plans
+            <ArrowLeft className="w-4 h-4 rtl:scale-x-[-1]" /> {t('checkout.backToPlans')}
           </button>
 
           <AnimatePresence mode="wait">
@@ -395,36 +376,36 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
               {/* Order summary */}
               <div className="md:col-span-2">
                 <div className="bg-surface-container-low rounded-3xl p-6 border border-outline-variant sticky top-24">
-                  <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-5">Order Summary</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-5">{t('checkout.orderSummary')}</p>
                   <div className="flex items-center gap-3 mb-6 pb-5 border-b border-outline-variant">
-                    <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">{selected.icon}</div>
+                    <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">{selected.icon}</div>
                     <div>
-                      <p className="font-bold">MenuQR {selected.name}</p>
-                      <p className="text-xs text-on-surface-variant capitalize">{billing} billing</p>
+                      <p className="font-bold">MenuQR {t(`plans.${selected.id}.name`)}</p>
+                      <p className="text-xs text-on-surface-variant">{t(`checkout.${billing}Billing`)}</p>
                     </div>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-on-surface-variant">Subtotal</span>
-                      <span className="font-medium">${planPrice(selected)}/mo</span>
+                      <span className="text-on-surface-variant">{t('checkout.subtotal')}</span>
+                      <span className="font-medium">${planPrice(selected)}{t('landing.perMonth')}</span>
                     </div>
                     {billing === 'annual' && (
                       <div className="flex justify-between">
-                        <span className="text-tertiary">Annual discount</span>
+                        <span className="text-tertiary">{t('checkout.annualDiscount')}</span>
                         <span className="text-tertiary font-medium">−20%</span>
                       </div>
                     )}
                     <div className="flex justify-between font-bold text-base pt-3 border-t border-outline-variant mt-2">
-                      <span>Total due today</span>
+                      <span>{t('checkout.totalDueToday')}</span>
                       <span>${billing === 'annual' ? planPrice(selected) * 12 : planPrice(selected)}</span>
                     </div>
                     <p className="text-xs text-on-surface-variant pt-1">
-                      {billing === 'annual' ? 'Charged annually' : 'Charged monthly'} · renews automatically
+                      {billing === 'annual' ? t('checkout.chargedAnnually') : t('checkout.chargedMonthly')} {t('checkout.renewsAuto')}
                     </p>
                   </div>
                   <ul className="mt-5 space-y-1.5 pt-4 border-t border-outline-variant">
-                    {selected.features.slice(0, 4).map(f => (
-                      <li key={f} className="flex items-center gap-2 text-xs text-on-surface-variant">
+                    {(t(`plans.${selected.id}.features`, { returnObjects: true }) as string[]).slice(0, 4).map((f, i) => (
+                      <li key={i} className="flex items-center gap-2 text-xs text-on-surface-variant">
                         <Check className="w-3 h-3 text-primary shrink-0" /> {f}
                       </li>
                     ))}
@@ -434,7 +415,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
               {/* Payment form */}
               <div className="md:col-span-3">
-                <h2 className="text-2xl font-extrabold font-headline mb-7">Payment details</h2>
+                <h2 className="text-2xl font-extrabold font-headline mb-7">{t('checkout.paymentDetails')}</h2>
 
                 {canApplePay && (
                   <div className="mb-6">
@@ -444,27 +425,27 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                     </button>
                     <div className="flex items-center gap-3 my-5">
                       <div className="flex-1 h-px bg-outline-variant" />
-                      <span className="text-xs text-on-surface-variant font-medium">or pay with card</span>
+                      <span className="text-xs text-on-surface-variant font-medium">{t('checkout.orPayWithCard')}</span>
                       <div className="flex-1 h-px bg-outline-variant" />
                     </div>
                   </div>
                 )}
 
                 <div className="flex items-center gap-2 mb-5">
-                  <span className="text-xs text-on-surface-variant">Accepted:</span>
+                  <span className="text-xs text-on-surface-variant">{t('checkout.accepted')}</span>
                   <span className="text-xs font-extrabold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">VISA</span>
                   <span className="text-xs font-extrabold text-orange-600 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded">MC</span>
-                  <span className="text-xs text-on-surface-variant/60">· All major cards</span>
+                  <span className="text-xs text-on-surface-variant/60">{t('checkout.allMajorCards')}</span>
                 </div>
 
                 <form onSubmit={handleCardPay} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">Card Number</label>
+                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{t('checkout.cardNumber')}</label>
                     <div className="relative">
                       <input type="text" inputMode="numeric" placeholder="0000 0000 0000 0000"
                         value={card.number} onChange={e => setCard(p => ({ ...p, number: fmtNumber(e.target.value) }))}
-                        className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all pr-16" />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all pe-16" />
+                      <div className="absolute end-4 top-1/2 -translate-y-1/2">
                         {cardBrand(card.number) === 'visa' && <span className="text-xs font-extrabold text-blue-700 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">VISA</span>}
                         {cardBrand(card.number) === 'mastercard' && <span className="text-xs font-extrabold text-orange-600 bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded">MC</span>}
                         {!cardBrand(card.number) && <CreditCard className="w-5 h-5 text-on-surface-variant/40" />}
@@ -472,20 +453,20 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">Cardholder Name</label>
+                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{t('checkout.cardholderName')}</label>
                     <input type="text" placeholder="Jane Smith" value={card.name}
                       onChange={e => setCard(p => ({ ...p, name: e.target.value }))}
                       className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">Expiry</label>
+                      <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{t('checkout.expiry')}</label>
                       <input type="text" inputMode="numeric" placeholder="MM / YY" value={card.expiry}
                         onChange={e => setCard(p => ({ ...p, expiry: fmtExpiry(e.target.value) }))}
                         className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">CVV</label>
+                      <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{t('checkout.cvv')}</label>
                       <input type="password" inputMode="numeric" placeholder="•••" maxLength={4} value={card.cvv}
                         onChange={e => setCard(p => ({ ...p, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
                         className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
@@ -504,12 +485,12 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                   <button type="submit" disabled={payLoading}
                     className="w-full btn-gradient text-white py-4 rounded-2xl font-bold text-[15px] shadow-lg shadow-primary/20 hover:opacity-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2.5">
                     {payLoading
-                      ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Processing…</>
-                      : <><Lock className="w-4 h-4" /> Pay ${billing === 'annual' ? planPrice(selected) * 12 : planPrice(selected)}</>}
+                      ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('checkout.processing')}</>
+                      : <><Lock className="w-4 h-4" /> {t('checkout.pay', { amount: billing === 'annual' ? planPrice(selected) * 12 : planPrice(selected) })}</>}
                   </button>
 
                   <p className="text-center text-xs text-on-surface-variant flex items-center justify-center gap-1.5 pt-1">
-                    <Shield className="w-3 h-3" /> 256-bit SSL · We never store your card details
+                    <Shield className="w-3 h-3" /> {t('checkout.sslNote')}
                   </p>
                 </form>
               </div>
@@ -541,54 +522,54 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
               <div className="flex items-center gap-2 mb-8">
                 <div className="flex items-center gap-2 text-xs text-on-surface-variant">
                   <div className="w-6 h-6 rounded-full bg-tertiary text-white flex items-center justify-center font-bold text-[10px]">✓</div>
-                  Payment
+                  {t('setup.stepPayment')}
                 </div>
                 <div className="flex-1 h-px bg-primary" />
                 <div className="flex items-center gap-2 text-xs font-semibold text-primary">
                   <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[10px]">2</div>
-                  Setup Account
+                  {t('setup.stepSetup')}
                 </div>
               </div>
 
-              <h2 className="text-3xl font-extrabold font-headline mb-2">Set up your account</h2>
+              <h2 className="text-3xl font-extrabold font-headline mb-2">{t('setup.heading')}</h2>
               <p className="text-on-surface-variant text-sm mb-8">
-                Create your login credentials for the <strong>MenuQR {selected.name}</strong> owner panel.
+                {t('setup.subtext', { plan: t(`plans.${selected.id}.name`) })}
               </p>
 
               <form onSubmit={handleSetup} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">Full Name</label>
+                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{t('setup.fullName')}</label>
                   <input type="text" placeholder="Jane Smith" value={setup.fullName}
                     onChange={e => setSetup(p => ({ ...p, fullName: e.target.value }))}
                     className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">Email Address</label>
+                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{t('setup.emailAddress')}</label>
                   <input type="email" placeholder="you@example.com" value={setup.email}
                     onChange={e => setSetup(p => ({ ...p, email: e.target.value }))}
                     className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">Restaurant Name</label>
+                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{t('setup.restaurantName')}</label>
                   <input type="text" placeholder="e.g. Bella Cucina" value={setup.restaurantName}
                     onChange={e => setSetup(p => ({ ...p, restaurantName: e.target.value }))}
                     className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">Password</label>
+                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{t('setup.password')}</label>
                   <div className="relative">
-                    <input type={showPassword ? 'text' : 'password'} placeholder="Min. 8 characters" value={setup.password}
+                    <input type={showPassword ? 'text' : 'password'} placeholder={t('setup.passwordPlaceholder')} value={setup.password}
                       onChange={e => setSetup(p => ({ ...p, password: e.target.value }))}
-                      className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all pr-12" />
+                      className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all pe-12" />
                     <button type="button" onClick={() => setShowPassword(s => !s)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant transition-colors text-xs font-medium">
-                      {showPassword ? 'Hide' : 'Show'}
+                      className="absolute end-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant transition-colors text-xs font-medium">
+                      {showPassword ? t('setup.hide') : t('setup.show')}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">Confirm Password</label>
-                  <input type="password" placeholder="Repeat your password" value={setup.confirmPassword}
+                  <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{t('setup.confirmPassword')}</label>
+                  <input type="password" placeholder={t('setup.confirmPasswordPlaceholder')} value={setup.confirmPassword}
                     onChange={e => setSetup(p => ({ ...p, confirmPassword: e.target.value }))}
                     className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
                 </div>
@@ -605,8 +586,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                 <button type="submit" disabled={setupLoading}
                   className="w-full btn-gradient text-white py-4 rounded-2xl font-bold text-[15px] shadow-lg shadow-primary/20 hover:opacity-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2.5 mt-2">
                   {setupLoading
-                    ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account…</>
-                    : <><Sparkles className="w-4 h-4" /> Create My Account</>}
+                    ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('setup.creating')}</>
+                    : <><Sparkles className="w-4 h-4" /> {t('setup.createAccount')}</>}
                 </button>
               </form>
             </motion.div>
@@ -628,17 +609,17 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-tertiary/10 text-tertiary text-xs font-bold uppercase tracking-widest mb-5">
-            <Sparkles className="w-3.5 h-3.5" /> Account Created
+            <Sparkles className="w-3.5 h-3.5" /> {t('success.badge')}
           </div>
-          <h2 className="text-4xl font-extrabold font-headline mb-3">You're all set!</h2>
+          <h2 className="text-4xl font-extrabold font-headline mb-3">{t('success.heading')}</h2>
           <p className="text-on-surface-variant max-w-sm mx-auto mb-2">
-            Your <strong>MenuQR {selected.name}</strong> account is ready. Sign in to your owner panel to get started.
+            {t('success.description', { plan: t(`plans.${selected.id}.name`) })}
           </p>
-          <p className="text-sm text-on-surface-variant mb-10">A welcome email has been sent to your inbox.</p>
+          <p className="text-sm text-on-surface-variant mb-10">{t('success.emailSent')}</p>
 
           <button onClick={onLoginClick}
             className="btn-gradient text-white px-10 py-4 rounded-2xl font-bold text-base shadow-lg shadow-primary/20 hover:opacity-95 transition-all flex items-center gap-2 mx-auto">
-            Go to Sign In <ArrowRight className="w-4 h-4" />
+            {t('success.goToSignIn')} <ArrowRight className="w-4 h-4 rtl:scale-x-[-1]" />
           </button>
         </motion.div>
       </div>

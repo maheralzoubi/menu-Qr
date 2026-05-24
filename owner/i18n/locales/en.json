@@ -1,0 +1,316 @@
+{
+  "common": {
+    "search": "Search...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "active": "Active",
+    "inactive": "Inactive",
+    "locked": "Locked",
+    "admin": "Admin",
+    "staff": "Staff",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "creating": "Creating...",
+    "saving": "Saving…",
+    "noResults": "No results"
+  },
+  "nav": {
+    "restaurants": "Restaurants",
+    "analytics": "Analytics",
+    "customers": "Customers",
+    "logout": "Logout"
+  },
+  "sidebar": {
+    "ownerPanel": "Owner Panel",
+    "appManagement": "App Management"
+  },
+  "header": {
+    "ownerDashboard": "Owner Dashboard",
+    "superAdmin": "Super Admin",
+    "appOwner": "App Owner"
+  },
+  "login": {
+    "title": "Owner Access",
+    "subtitle": "Sign in to the App Owner Panel"
+  },
+  "landing": {
+    "signIn": "Sign In",
+    "heroTag": "The Restaurant Platform",
+    "heroHeading1": "Run your restaurant",
+    "heroHeading2": "smarter with MenuQR",
+    "heroSubtext": "Digital menus, live order management, analytics, and multi-location support — all in one place.",
+    "startTrial": "Start Free Trial",
+    "featuresHeading": "Everything you need to grow",
+    "featuresSubtext": "Built for modern restaurant operations, from one table to a thousand.",
+    "pricingHeading": "Simple, transparent pricing",
+    "pricingSubtext": "No hidden fees. No contracts. Upgrade or downgrade anytime.",
+    "save20": "SAVE 20%",
+    "mostPopular": "Most Popular",
+    "getStarted": "Get Started",
+    "perMonth": "/mo",
+    "billedYearly": "Billed ${{amount}} / year",
+    "securePayments": "Secure payments",
+    "pciCompliant": "PCI compliant",
+    "cancelAnytime": "Cancel anytime",
+    "alreadyHaveAccount": "Already have an account?",
+    "signInLink": "Sign in",
+    "copyright": "© {{year}} MenuQR · All rights reserved",
+    "features": {
+      "qrMenus": {
+        "title": "Smart QR Menus",
+        "desc": "Beautiful digital menus with real-time updates. No printing required."
+      },
+      "orderManagement": {
+        "title": "Live Order Management",
+        "desc": "Orders appear instantly on your dashboard with sound alerts."
+      },
+      "analytics": {
+        "title": "Deep Analytics",
+        "desc": "Revenue, top items, peak hours — everything to grow faster."
+      },
+      "multiLocation": {
+        "title": "Multi-location Ready",
+        "desc": "Manage all your branches from one unified dashboard."
+      }
+    }
+  },
+  "checkout": {
+    "backToPlans": "Back to plans",
+    "orderSummary": "Order Summary",
+    "monthlyBilling": "Monthly billing",
+    "annualBilling": "Annual billing",
+    "subtotal": "Subtotal",
+    "annualDiscount": "Annual discount",
+    "totalDueToday": "Total due today",
+    "chargedAnnually": "Charged annually",
+    "chargedMonthly": "Charged monthly",
+    "renewsAuto": "· renews automatically",
+    "paymentDetails": "Payment details",
+    "orPayWithCard": "or pay with card",
+    "accepted": "Accepted:",
+    "allMajorCards": "· All major cards",
+    "cardNumber": "Card Number",
+    "cardholderName": "Cardholder Name",
+    "expiry": "Expiry",
+    "cvv": "CVV",
+    "processing": "Processing…",
+    "pay": "Pay ${{amount}}",
+    "sslNote": "256-bit SSL · We never store your card details",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign in"
+  },
+  "setup": {
+    "stepPayment": "Payment",
+    "stepSetup": "Setup Account",
+    "heading": "Set up your account",
+    "subtext": "Create your login credentials for the MenuQR {{plan}} owner panel.",
+    "fullName": "Full Name",
+    "emailAddress": "Email Address",
+    "restaurantName": "Restaurant Name",
+    "password": "Password",
+    "passwordPlaceholder": "Min. 8 characters",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Repeat your password",
+    "show": "Show",
+    "hide": "Hide",
+    "creating": "Creating account…",
+    "createAccount": "Create My Account"
+  },
+  "success": {
+    "badge": "Account Created",
+    "heading": "You're all set!",
+    "description": "Your MenuQR {{plan}} account is ready. Sign in to your owner panel to get started.",
+    "emailSent": "A welcome email has been sent to your inbox.",
+    "goToSignIn": "Go to Sign In"
+  },
+  "plans": {
+    "starter": {
+      "name": "Starter",
+      "description": "Perfect for single-location restaurants.",
+      "features": [
+        "1 restaurant",
+        "500 orders / month",
+        "QR code menus",
+        "Basic analytics",
+        "Email support"
+      ]
+    },
+    "pro": {
+      "name": "Pro",
+      "description": "For growing brands with multiple locations.",
+      "features": [
+        "Up to 5 restaurants",
+        "Unlimited orders",
+        "Advanced analytics",
+        "Custom branding",
+        "Promo codes",
+        "Reservations module",
+        "Priority support"
+      ]
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "description": "Unlimited scale for enterprise food groups.",
+      "features": [
+        "Unlimited restaurants",
+        "Everything in Pro",
+        "White-label option",
+        "Custom integrations",
+        "Dedicated account manager",
+        "99.9% SLA guarantee"
+      ]
+    }
+  },
+  "restaurants": {
+    "heading": "Restaurants",
+    "subtext": "Manage all restaurant clients on the platform.",
+    "search": "Search...",
+    "addRestaurant": "Add Restaurant",
+    "total": "Total",
+    "active": "Active",
+    "inactive": "Inactive",
+    "tableHeaders": {
+      "restaurant": "Restaurant",
+      "status": "Status",
+      "customers": "Customers",
+      "orders": "Orders",
+      "revenue": "Revenue",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "noRestaurants": "No restaurants yet",
+    "noResults": "No results",
+    "addFirst": "Add first restaurant",
+    "viewDetails": "View details",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "deleteConfirm": "Delete this restaurant and ALL its data? This cannot be undone.",
+    "panel": {
+      "title": "Add Restaurant",
+      "restaurantInfo": "Restaurant Info",
+      "restaurantName": "Restaurant Name",
+      "contactEmail": "Contact Email",
+      "phone": "Phone",
+      "address": "Address",
+      "logoUrl": "Logo URL (optional)",
+      "adminAccount": "Admin Account",
+      "adminAccountNote": "This person will log into the restaurant admin dashboard",
+      "adminName": "Admin Full Name",
+      "adminEmail": "Admin Email",
+      "adminPassword": "Admin Password",
+      "passwordPlaceholder": "Min 6 characters",
+      "cancel": "Cancel",
+      "create": "Create Restaurant",
+      "creating": "Creating..."
+    }
+  },
+  "restaurantDetail": {
+    "allRestaurants": "All Restaurants",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "delete": "Delete",
+    "notFound": "Restaurant not found",
+    "stats": {
+      "totalOrders": "Total Orders",
+      "totalRevenue": "Total Revenue",
+      "customers": "Customers",
+      "menuItems": "Menu Items",
+      "reviews": "Reviews",
+      "reservations": "Reservations"
+    },
+    "adminAccount": "Admin Account",
+    "deleteConfirm": "Delete this restaurant and ALL its data? This cannot be undone."
+  },
+  "analytics": {
+    "heading": "Platform Analytics",
+    "subtext": "Real-time metrics across all restaurants.",
+    "kpis": {
+      "totalRestaurants": "Total Restaurants",
+      "activeRestaurants": "Active Restaurants",
+      "totalCustomers": "Total Customers",
+      "totalRevenue": "Total Revenue"
+    },
+    "newRestaurantsChart": "New Restaurants — Last 6 Months",
+    "restaurantsLabel": "Restaurants",
+    "perRestaurant": "Per-Restaurant Breakdown",
+    "tableHeaders": {
+      "restaurant": "Restaurant",
+      "status": "Status",
+      "customers": "Customers",
+      "orders": "Orders",
+      "revenue": "Revenue"
+    },
+    "noRestaurants": "No restaurants yet"
+  },
+  "customers": {
+    "heading": "Subscribers",
+    "subtext": "All MenuQR platform subscribers.",
+    "search": "Search name, email, or restaurant…",
+    "stats": {
+      "total": "Total",
+      "active": "Active",
+      "locked": "Locked"
+    },
+    "tableHeaders": {
+      "subscriber": "Subscriber",
+      "restaurant": "Restaurant",
+      "plan": "Plan",
+      "joined": "Joined",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "noSubscribers": "No subscribers yet",
+    "noResults": "No results found",
+    "actions": {
+      "plan": "Plan",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "delete": "Delete"
+    },
+    "deleteConfirm": "Delete this subscriber? This cannot be undone.",
+    "modal": {
+      "title": "Change Plan",
+      "subtitle": "Update subscription for {{name}}",
+      "selectPlan": "Select Plan",
+      "billing": "Billing:",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "saving": "Saving…"
+    }
+  },
+  "admins": {
+    "heading": "Restaurant Admins",
+    "subtext": "Manage accounts that can log into the restaurant dashboard.",
+    "search": "Search...",
+    "addAdmin": "Add Admin",
+    "bannerTitle": "Dashboard Access",
+    "bannerText": "Admin accounts created here can log in to the restaurant management dashboard with their email and password.",
+    "stats": {
+      "totalAdmins": "Total Admins",
+      "staff": "Staff"
+    },
+    "tableHeaders": {
+      "admin": "Admin",
+      "role": "Role",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "noAdmins": "No admin accounts yet",
+    "noResults": "No results found",
+    "createFirst": "Create first admin",
+    "deleteConfirm": "Delete this admin account?",
+    "panel": {
+      "title": "Add Restaurant Admin",
+      "note": "This account will be able to log in to the restaurant admin dashboard",
+      "fullName": "Full Name",
+      "emailAddress": "Email Address",
+      "jobTitle": "Job Title (optional)",
+      "role": "Role",
+      "password": "Password",
+      "passwordPlaceholder": "Min 6 characters",
+      "cancel": "Cancel",
+      "create": "Create Admin",
+      "creating": "Creating..."
+    }
+  }
+}

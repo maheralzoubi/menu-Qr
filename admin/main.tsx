@@ -1,12 +1,15 @@
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../src/index.css';
+import './i18n';
+import { useTranslation } from 'react-i18next';
 import { Dashboard } from './Dashboard';
 import { AdminLoginScreen } from '../src/screens/AdminLoginScreen';
 import { clearToken, getToken, setToken } from '../src/lib/auth';
 
 function DashboardApp() {
   const [authed, setAuthed] = useState(!!getToken());
+  const { t } = useTranslation();
 
   const handleLogout = () => { clearToken(); setAuthed(false); };
 
@@ -16,8 +19,8 @@ function DashboardApp() {
         onLogin={() => setAuthed(true)}
         onBack={() => {}}
         onTokenSave={setToken}
-        title="Admin Access"
-        subtitle="Sign in to manage your restaurant"
+        title={t('login.title')}
+        subtitle={t('login.subtitle')}
         icon="utensils"
       />
     );

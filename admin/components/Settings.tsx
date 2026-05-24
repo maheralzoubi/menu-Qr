@@ -4,6 +4,7 @@ import {
   Save, Lock, Palette, Upload, CheckCircle2, Image as ImageIcon
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { authFetch, getToken } from '../../src/lib/auth';
 
 interface UserProfile {
@@ -44,6 +45,7 @@ const PALETTE = [
 ];
 
 export const Settings = () => {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState('profile');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [form, setForm] = useState({ name: '', phone: '', title: '', currentPassword: '', newPassword: '' });
@@ -93,13 +95,13 @@ export const Settings = () => {
       if (res.ok) {
         const updated: UserProfile = await res.json();
         setProfile(updated);
-        setSaveMsg('Profile saved!');
+        setSaveMsg(t('settings.profile.saved'));
         setForm(f => ({ ...f, currentPassword: '', newPassword: '' }));
       } else {
-        setSaveMsg('Failed to save. Please try again.');
+        setSaveMsg(t('settings.profile.saveFailed'));
       }
     } catch {
-      setSaveMsg('Network error.');
+      setSaveMsg(t('settings.profile.networkError'));
     } finally {
       setSaving(false);
       setTimeout(() => setSaveMsg(''), 3000);
@@ -140,12 +142,12 @@ export const Settings = () => {
       if (res.ok) {
         const updated = await res.json();
         setBranding(updated);
-        setBrandingMsg('Branding saved!');
+        setBrandingMsg(t('settings.branding.saved'));
       } else {
-        setBrandingMsg('Failed to save. Try again.');
+        setBrandingMsg(t('settings.branding.saveFailed'));
       }
     } catch {
-      setBrandingMsg('Network error.');
+      setBrandingMsg(t('settings.branding.networkError'));
     } finally {
       setBrandingSaving(false);
       setTimeout(() => setBrandingMsg(''), 3000);
@@ -153,26 +155,32 @@ export const Settings = () => {
   };
 
   const sections = [
-    { id: 'profile',   label: 'Profile Settings',    icon: User,    description: 'Manage your personal information.' },
-    { id: 'branding',  label: 'Restaurant Branding',  icon: Palette, description: 'Logo and accent color for customers.' },
-    { id: 'notifications', label: 'Notifications',   icon: Bell,    description: 'Configure alerts and updates.' },
-    { id: 'security',  label: 'Security',             icon: Shield,  description: 'Password and account security.' },
-    { id: 'preferences', label: 'Preferences',       icon: Globe,   description: 'Language and display settings.' },
+    { id: 'profile',       icon: User    },
+    { id: 'branding',      icon: Palette },
+    { id: 'notifications', icon: Bell    },
+    { id: 'security',      icon: Shield  },
+    { id: 'preferences',   icon: Globe   },
+  ];
+
+  const notificationItems = [
+    { key: 'newOrders',    labelKey: 'settings.notifications.newOrders',    descKey: 'settings.notifications.newOrdersDesc' },
+    { key: 'reservations', labelKey: 'settings.notifications.reservations', descKey: 'settings.notifications.reservationsDesc' },
+    { key: 'reviews',      labelKey: 'settings.notifications.reviews',      descKey: 'settings.notifications.reviewsDesc' },
   ];
 
   return (
     <div className="flex h-full gap-10">
       <div className="w-80 shrink-0 space-y-10">
         <div>
-          <h2 className="text-4xl font-headline font-extrabold tracking-tight">Settings</h2>
-          <p className="text-on-surface-variant font-medium">Configure your workspace preferences.</p>
+          <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('settings.heading')}</h2>
+          <p className="text-on-surface-variant font-medium">{t('settings.subtext')}</p>
         </div>
         <nav className="space-y-2">
           {sections.map(section => (
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left ${
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-start ${
                 activeSection === section.id
                   ? 'bg-surface-container-high shadow-sm ring-1 ring-outline-variant/10'
                   : 'hover:bg-surface-container-low opacity-70 hover:opacity-100'
@@ -184,8 +192,8 @@ export const Settings = () => {
                 <section.icon className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-bold text-sm">{section.label}</p>
-                <p className="text-[10px] text-on-surface-variant line-clamp-1">{section.description}</p>
+                <p className="font-bold text-sm">{t(`settings.sections.${section.id}.label`)}</p>
+                <p className="text-[10px] text-on-surface-variant line-clamp-1">{t(`settings.sections.${section.id}.desc`)}</p>
               </div>
             </button>
           ))}
@@ -220,17 +228,17 @@ export const Settings = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ml-4">Full Name</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ms-4">{t('settings.profile.fullName')}</label>
                     <input
                       type="text"
                       value={form.name}
                       onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                      placeholder="Your full name"
+                      placeholder={t('settings.profile.fullNamePlaceholder')}
                       className="w-full bg-surface-container-lowest border-none rounded-2xl py-4 px-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ml-4">Email Address</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ms-4">{t('settings.profile.emailAddress')}</label>
                     <input
                       type="email"
                       value={profile.email}
@@ -239,7 +247,7 @@ export const Settings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ml-4">Phone Number</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ms-4">{t('settings.profile.phoneNumber')}</label>
                     <input
                       type="tel"
                       value={form.phone}
@@ -249,12 +257,12 @@ export const Settings = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ml-4">Job Title</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ms-4">{t('settings.profile.jobTitle')}</label>
                     <input
                       type="text"
                       value={form.title}
                       onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                      placeholder="e.g., Executive Manager"
+                      placeholder={t('settings.profile.jobTitlePlaceholder')}
                       className="w-full bg-surface-container-lowest border-none rounded-2xl py-4 px-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                     />
                   </div>
@@ -262,16 +270,16 @@ export const Settings = () => {
 
                 <div className="pt-8 border-t border-outline-variant/10">
                   <h4 className="text-sm font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-6 flex items-center gap-2">
-                    <Lock className="w-4 h-4" /> Change Password
+                    <Lock className="w-4 h-4" /> {t('settings.profile.changePassword')}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ml-4">New Password</label>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 ms-4">{t('settings.profile.newPassword')}</label>
                       <input
                         type="password"
                         value={form.newPassword}
                         onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
-                        placeholder="Leave blank to keep current"
+                        placeholder={t('settings.profile.newPasswordPlaceholder')}
                         className="w-full bg-surface-container-lowest border-none rounded-2xl py-4 px-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                       />
                     </div>
@@ -279,7 +287,7 @@ export const Settings = () => {
                 </div>
 
                 {saveMsg && (
-                  <p className={`text-sm font-bold text-center ${saveMsg.includes('saved') ? 'text-emerald-600' : 'text-rose-500'}`}>
+                  <p className={`text-sm font-bold text-center ${saveMsg === t('settings.profile.saved') ? 'text-emerald-600' : 'text-rose-500'}`}>
                     {saveMsg}
                   </p>
                 )}
@@ -289,7 +297,7 @@ export const Settings = () => {
                     onClick={() => setForm(f => ({ ...f, name: profile.name ?? '', phone: profile.phone ?? '', title: profile.title ?? '', newPassword: '' }))}
                     className="px-8 py-4 rounded-2xl bg-surface-container-high font-bold text-sm hover:bg-surface-variant transition-all"
                   >
-                    Discard
+                    {t('settings.profile.discard')}
                   </button>
                   <button
                     onClick={handleSaveProfile}
@@ -297,7 +305,7 @@ export const Settings = () => {
                     className="px-8 py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
                   >
                     <Save className="w-4 h-4" />
-                    {saving ? 'Saving...' : 'Save Profile'}
+                    {saving ? t('settings.profile.saving') : t('settings.profile.save')}
                   </button>
                 </div>
               </>
@@ -308,23 +316,19 @@ export const Settings = () => {
         {activeSection === 'notifications' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
             <div>
-              <h3 className="text-2xl font-headline font-extrabold mb-2">Notification Preferences</h3>
-              <p className="text-on-surface-variant font-medium">Choose how you want to be notified.</p>
+              <h3 className="text-2xl font-headline font-extrabold mb-2">{t('settings.notifications.heading')}</h3>
+              <p className="text-on-surface-variant font-medium">{t('settings.notifications.subtext')}</p>
             </div>
             <div className="space-y-4">
-              {[
-                { label: 'New Order Alerts', description: 'Get notified when a new order is placed.' },
-                { label: 'Reservation Updates', description: 'Alerts for new bookings or cancellations.' },
-                { label: 'Customer Reviews', description: 'Daily summaries of new guest feedback.' },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between p-6 bg-surface-container-lowest rounded-3xl shadow-sm border border-outline-variant/5">
+              {notificationItems.map(item => (
+                <div key={item.key} className="flex items-center justify-between p-6 bg-surface-container-lowest rounded-3xl shadow-sm border border-outline-variant/5">
                   <div>
-                    <p className="font-bold text-sm">{item.label}</p>
-                    <p className="text-xs text-on-surface-variant">{item.description}</p>
+                    <p className="font-bold text-sm">{t(item.labelKey)}</p>
+                    <p className="text-xs text-on-surface-variant">{t(item.descKey)}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-14 h-8 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary" />
+                    <div className="w-14 h-8 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:start-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary" />
                   </label>
                 </div>
               ))}
@@ -335,13 +339,13 @@ export const Settings = () => {
         {activeSection === 'branding' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
             <div>
-              <h3 className="text-2xl font-headline font-extrabold mb-1">Restaurant Branding</h3>
-              <p className="text-on-surface-variant font-medium">Customize how your restaurant looks for customers.</p>
+              <h3 className="text-2xl font-headline font-extrabold mb-1">{t('settings.branding.heading')}</h3>
+              <p className="text-on-surface-variant font-medium">{t('settings.branding.subtext')}</p>
             </div>
 
             {/* Logo */}
             <section className="space-y-5">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Restaurant Logo</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.branding.logoLabel')}</h4>
               <div className="flex items-center gap-6">
                 <div className="w-28 h-28 rounded-3xl bg-surface-container-highest flex items-center justify-center overflow-hidden shrink-0 border-2 border-dashed border-outline-variant/40">
                   {logoPreview
@@ -350,17 +354,17 @@ export const Settings = () => {
                   }
                 </div>
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-on-surface-variant">Upload a square PNG or JPG (recommended 256×256px).</p>
+                  <p className="text-sm font-medium text-on-surface-variant">{t('settings.branding.logoHint')}</p>
                   <button
                     onClick={() => logoInputRef.current?.click()}
                     disabled={uploadingLogo}
                     className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-highest rounded-xl font-bold text-sm hover:bg-surface-variant disabled:opacity-50 transition-colors"
                   >
                     <Upload className="w-4 h-4" />
-                    {uploadingLogo ? 'Uploading…' : 'Upload Logo'}
+                    {uploadingLogo ? t('settings.branding.uploading') : t('settings.branding.uploadLogo')}
                   </button>
                   {logoPreview && (
-                    <button onClick={() => setLogoPreview(null)} className="text-xs font-bold text-error hover:underline">Remove logo</button>
+                    <button onClick={() => setLogoPreview(null)} className="text-xs font-bold text-error hover:underline">{t('settings.branding.removeLogo')}</button>
                   )}
                 </div>
                 <input
@@ -376,7 +380,7 @@ export const Settings = () => {
             {/* Color palette */}
             <section className="space-y-5">
               <div className="flex items-center justify-between">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Accent Color</h4>
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.branding.accentColor')}</h4>
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-5 h-5 rounded-full border border-outline-variant/30 shrink-0" style={{ background: selectedColor }} />
                   <span className="font-mono font-bold text-on-surface-variant">{selectedColor}</span>
@@ -387,7 +391,7 @@ export const Settings = () => {
                 {PALETTE.map(({ name, hex }) => (
                   <button
                     key={hex}
-                    title={name}
+                    title={t(`settings.palette.${name}`, { defaultValue: name })}
                     onClick={() => setSelectedColor(hex)}
                     className="relative group"
                   >
@@ -406,24 +410,24 @@ export const Settings = () => {
 
               {/* Live preview */}
               <div className="mt-4 p-5 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest space-y-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Preview</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.branding.preview')}</p>
                 <div className="flex items-center gap-3 flex-wrap">
                   <button
                     className="px-5 py-2.5 rounded-xl text-white text-sm font-bold shadow-lg"
                     style={{ background: selectedColor }}
                   >
-                    Place Order
+                    {t('settings.branding.placeOrder')}
                   </button>
                   <span className="font-bold text-lg" style={{ color: selectedColor }}>$24.99</span>
                   <div className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: selectedColor }}>
-                    Active
+                    {t('settings.branding.active')}
                   </div>
                 </div>
               </div>
             </section>
 
             {brandingMsg && (
-              <p className={`text-sm font-bold ${brandingMsg.includes('saved') ? 'text-emerald-600' : 'text-rose-500'}`}>
+              <p className={`text-sm font-bold ${brandingMsg === t('settings.branding.saved') ? 'text-emerald-600' : 'text-rose-500'}`}>
                 {brandingMsg}
               </p>
             )}
@@ -433,7 +437,7 @@ export const Settings = () => {
                 onClick={() => { setSelectedColor(branding?.primaryColor ?? '#9b3f25'); setLogoPreview(branding?.logo ?? null); }}
                 className="px-8 py-4 rounded-2xl bg-surface-container-high font-bold text-sm hover:bg-surface-variant transition-all"
               >
-                Discard
+                {t('settings.branding.discard')}
               </button>
               <button
                 onClick={handleSaveBranding}
@@ -441,7 +445,7 @@ export const Settings = () => {
                 className="px-8 py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
               >
                 <Save className="w-4 h-4" />
-                {brandingSaving ? 'Saving…' : 'Save Branding'}
+                {brandingSaving ? t('settings.branding.saving') : t('settings.branding.save')}
               </button>
             </div>
           </motion.div>
@@ -450,8 +454,8 @@ export const Settings = () => {
         {activeSection !== 'profile' && activeSection !== 'notifications' && activeSection !== 'branding' && (
           <div className="h-full flex flex-col items-center justify-center text-center p-12 opacity-40">
             <Shield className="w-16 h-16 mb-4" />
-            <p className="font-bold">Coming Soon</p>
-            <p className="text-sm">This section will be available in a future update.</p>
+            <p className="font-bold">{t('settings.comingSoon')}</p>
+            <p className="text-sm">{t('settings.comingSoonMsg')}</p>
           </div>
         )}
       </div>

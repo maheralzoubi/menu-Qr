@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Lock, Unlock, Trash2, Users, UserCheck, UserX, Zap, Star, Building2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { ownerFetch as authFetch } from '../../src/lib/ownerAuth';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -21,19 +22,21 @@ interface Subscriber {
 
 interface Props { isSuperAdmin: boolean; }
 
-// ── Plan meta ──────────────────────────────────────────────────────────────────
-const PLAN_META: Record<PlanId, { label: string; icon: React.ReactNode; cls: string; price: number }> = {
-  starter:    { label: 'Starter',    icon: <Zap className="w-3 h-3" />,      cls: 'bg-tertiary/10 text-tertiary border-tertiary/20',          price: 29 },
-  pro:        { label: 'Pro',        icon: <Star className="w-3 h-3" />,     cls: 'bg-primary/10 text-primary border-primary/20',             price: 79 },
-  enterprise: { label: 'Enterprise', icon: <Building2 className="w-3 h-3" />, cls: 'bg-on-surface/10 text-on-surface border-outline-variant', price: 199 },
+// ── Plan icon & style meta (labels from i18n) ──────────────────────────────────
+const PLAN_STYLE: Record<PlanId, { icon: React.ReactNode; cls: string }> = {
+  starter:    { icon: <Zap className="w-3 h-3" />,       cls: 'bg-tertiary/10 text-tertiary border-tertiary/20' },
+  pro:        { icon: <Star className="w-3 h-3" />,      cls: 'bg-primary/10 text-primary border-primary/20' },
+  enterprise: { icon: <Building2 className="w-3 h-3" />, cls: 'bg-on-surface/10 text-on-surface border-outline-variant' },
 };
 
+const PLAN_PRICES: Record<PlanId, number> = { starter: 29, pro: 79, enterprise: 199 };
 const PLANS: PlanId[] = ['starter', 'pro', 'enterprise'];
 
 // ── Change Plan Modal ──────────────────────────────────────────────────────────
 const ChangePlanModal = ({
   subscriber, onClose, onUpdated,
 }: { subscriber: Subscriber; onClose: () => void; onUpdated: (s: Subscriber) => void }) => {
+  const { t } = useTranslation();
   const [plan, setPlan] = useState<PlanId>(subscriber.plan ?? 'starter');
   const [billing, setBilling] = useState<Billing>(subscriber.planBilling ?? 'monthly');
   const [loading, setLoading] = useState(false);
@@ -60,26 +63,26 @@ const ChangePlanModal = ({
       <motion.div initial={{ opacity: 0, scale: 0.96, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
         className="bg-surface rounded-3xl p-7 w-full max-w-md shadow-2xl border border-outline-variant">
 
-        <h3 className="text-xl font-extrabold font-headline mb-1">Change Plan</h3>
+        <h3 className="text-xl font-extrabold font-headline mb-1">{t('customers.modal.title')}</h3>
         <p className="text-sm text-on-surface-variant mb-6">
-          Update subscription for <strong>{subscriber.name}</strong>
+          {t('customers.modal.subtitle', { name: subscriber.name })}
         </p>
 
         {/* Plan selector */}
         <div className="space-y-2 mb-5">
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">Select Plan</p>
+          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">{t('customers.modal.selectPlan')}</p>
           {PLANS.map(p => {
-            const meta = PLAN_META[p];
+            const style = PLAN_STYLE[p];
             return (
               <button key={p} onClick={() => setPlan(p)}
                 className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border transition-all ${plan === p ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-outline-variant hover:border-outline hover:bg-surface-container-low'}`}>
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${meta.cls}`}>
-                    {meta.icon}
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${style.cls}`}>
+                    {style.icon}
                   </div>
-                  <span className="font-semibold text-sm">{meta.label}</span>
+                  <span className="font-semibold text-sm">{t(`plans.${p}.name`)}</span>
                 </div>
-                <span className="text-sm font-bold text-on-surface-variant">${meta.price}/mo</span>
+                <span className="text-sm font-bold text-on-surface-variant">${PLAN_PRICES[p]}/mo</span>
               </button>
             );
           })}
@@ -87,12 +90,12 @@ const ChangePlanModal = ({
 
         {/* Billing toggle */}
         <div className="flex items-center gap-2 mb-6">
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Billing:</p>
+          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">{t('customers.modal.billing')}</p>
           <div className="flex bg-surface-container-low border border-outline-variant p-0.5 rounded-xl gap-0.5">
             {(['monthly', 'annual'] as Billing[]).map(b => (
               <button key={b} onClick={() => setBilling(b)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize ${billing === b ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}>
-                {b}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${billing === b ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}>
+                {t(`common.${b}`)}
               </button>
             ))}
           </div>
@@ -103,11 +106,13 @@ const ChangePlanModal = ({
         <div className="flex gap-3">
           <button onClick={onClose}
             className="flex-1 py-3 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-all">
-            Cancel
+            {t('customers.modal.cancel')}
           </button>
           <button onClick={handleSave} disabled={loading}
             className="flex-1 btn-gradient text-white py-3 rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2 transition-all">
-            {loading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</> : 'Save Changes'}
+            {loading
+              ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('customers.modal.saving')}</>
+              : t('customers.modal.save')}
           </button>
         </div>
       </motion.div>
@@ -117,6 +122,7 @@ const ChangePlanModal = ({
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export const CustomerTable = ({ isSuperAdmin }: Props) => {
+  const { t } = useTranslation();
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,7 +148,7 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this subscriber? This cannot be undone.')) return;
+    if (!confirm(t('customers.deleteConfirm'))) return;
     try {
       const res = await authFetch(`/api/owner/customers/${id}`, { method: 'DELETE' });
       if (res.ok) setSubscribers(prev => prev.filter(s => s._id !== id));
@@ -165,33 +171,42 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
   const active = subscribers.filter(s => s.status === 'active').length;
   const locked = subscribers.filter(s => s.status === 'locked').length;
 
+  const tableHeaders = [
+    t('customers.tableHeaders.subscriber'),
+    t('customers.tableHeaders.restaurant'),
+    t('customers.tableHeaders.plan'),
+    t('customers.tableHeaders.joined'),
+    t('customers.tableHeaders.status'),
+    t('customers.tableHeaders.actions'),
+  ];
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-4xl font-headline font-extrabold tracking-tight">Subscribers</h2>
-          <p className="text-on-surface-variant font-medium">All MenuQR platform subscribers.</p>
+          <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('customers.heading')}</h2>
+          <p className="text-on-surface-variant font-medium">{t('customers.subtext')}</p>
         </div>
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
-          <input type="text" placeholder="Search name, email, or restaurant…" value={searchQuery}
+          <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
+          <input type="text" placeholder={t('customers.search')} value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="bg-surface-container-high border-none rounded-xl py-3 pl-12 pr-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none w-72" />
+            className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none w-72" />
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-6">
         {[
-          { label: 'Total', value: subscribers.length, icon: <Users className="w-6 h-6" />, color: 'text-primary', filter: 'all' },
-          { label: 'Active', value: active, icon: <UserCheck className="w-6 h-6" />, color: 'text-emerald-600', filter: 'active' },
-          { label: 'Locked', value: locked, icon: <UserX className="w-6 h-6" />, color: 'text-rose-500', filter: 'locked' },
+          { labelKey: 'customers.stats.total',  value: subscribers.length, icon: <Users className="w-6 h-6" />,     color: 'text-primary',      filter: 'all' },
+          { labelKey: 'customers.stats.active', value: active,             icon: <UserCheck className="w-6 h-6" />, color: 'text-emerald-600',  filter: 'active' },
+          { labelKey: 'customers.stats.locked', value: locked,             icon: <UserX className="w-6 h-6" />,     color: 'text-rose-500',     filter: 'locked' },
         ].map(s => (
-          <button key={s.label} onClick={() => setFilterStatus(s.filter as any)}
+          <button key={s.labelKey} onClick={() => setFilterStatus(s.filter as any)}
             className={`p-6 rounded-3xl flex items-center justify-between shadow-sm border transition-all ${filterStatus === s.filter ? 'bg-surface-container-lowest border-primary ring-2 ring-primary' : 'bg-surface-container-low border-outline-variant/10 hover:bg-surface-container-lowest'}`}>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{s.label}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
               <h4 className="text-3xl font-headline font-extrabold">{s.value}</h4>
             </div>
             <div className={`${s.color} opacity-60`}>{s.icon}</div>
@@ -209,23 +224,22 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-outline-variant/10">
-                {['Subscriber', 'Restaurant', 'Plan', 'Joined', 'Status', 'Actions'].map(h => (
-                  <th key={h} className="text-left p-5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{h}</th>
+                {tableHeaders.map(h => (
+                  <th key={h} className="text-start p-5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               <AnimatePresence>
                 {filtered.map((s, i) => {
-                  const planMeta = s.plan ? PLAN_META[s.plan] : null;
+                  const style = s.plan ? PLAN_STYLE[s.plan] : null;
                   return (
                     <motion.tr key={s._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
                       className="border-b border-outline-variant/5 hover:bg-surface-container-lowest transition-colors">
 
-                      {/* Subscriber */}
                       <td className="p-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                             {s.name.slice(0, 1).toUpperCase()}
                           </div>
                           <div>
@@ -235,50 +249,47 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
                         </div>
                       </td>
 
-                      {/* Restaurant */}
                       <td className="p-5 text-sm font-medium text-on-surface-variant">
                         {s.restaurantName ?? '—'}
                       </td>
 
-                      {/* Plan */}
                       <td className="p-5">
-                        {planMeta ? (
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${planMeta.cls}`}>
-                            {planMeta.icon} {planMeta.label}
+                        {style && s.plan ? (
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${style.cls}`}>
+                            {style.icon} {t(`plans.${s.plan}.name`)}
                           </span>
                         ) : (
                           <span className="text-xs text-on-surface-variant/40">—</span>
                         )}
                       </td>
 
-                      {/* Joined */}
                       <td className="p-5 text-sm text-on-surface-variant">
                         {new Date(s.createdAt).toLocaleDateString()}
                       </td>
 
-                      {/* Status */}
                       <td className="p-5">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${s.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
-                          {s.status}
+                          {t(`common.${s.status}`)}
                         </span>
                       </td>
 
-                      {/* Actions */}
                       <td className="p-5">
                         <div className="flex items-center gap-1">
                           {isSuperAdmin && (
                             <button onClick={() => setChangePlanTarget(s)}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-primary hover:bg-primary/10 transition-colors">
-                              <ChevronDown className="w-3 h-3" /> Plan
+                              <ChevronDown className="w-3 h-3" /> {t('customers.actions.plan')}
                             </button>
                           )}
                           <button onClick={() => handleStatusToggle(s._id, s.status)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${s.status === 'active' ? 'hover:bg-rose-50 text-rose-500' : 'hover:bg-emerald-50 text-emerald-600'}`}>
-                            {s.status === 'active' ? <><Lock className="w-3 h-3" /> Lock</> : <><Unlock className="w-3 h-3" /> Unlock</>}
+                            {s.status === 'active'
+                              ? <><Lock className="w-3 h-3" /> {t('customers.actions.lock')}</>
+                              : <><Unlock className="w-3 h-3" /> {t('customers.actions.unlock')}</>}
                           </button>
                           <button onClick={() => handleDelete(s._id)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-50 text-rose-500 transition-colors">
-                            <Trash2 className="w-3 h-3" /> Delete
+                            <Trash2 className="w-3 h-3" /> {t('customers.actions.delete')}
                           </button>
                         </div>
                       </td>
@@ -292,7 +303,7 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
           {filtered.length === 0 && (
             <div className="text-center py-16 text-on-surface-variant/40">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p className="font-bold">{subscribers.length === 0 ? 'No subscribers yet' : 'No results found'}</p>
+              <p className="font-bold">{subscribers.length === 0 ? t('customers.noSubscribers') : t('customers.noResults')}</p>
             </div>
           )}
         </div>

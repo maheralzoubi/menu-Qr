@@ -1,0 +1,316 @@
+{
+  "common": {
+    "search": "بحث...",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "locked": "مقفل",
+    "admin": "مشرف",
+    "staff": "موظف",
+    "monthly": "شهري",
+    "annual": "سنوي",
+    "creating": "جاري الإنشاء...",
+    "saving": "جاري الحفظ...",
+    "noResults": "لا توجد نتائج"
+  },
+  "nav": {
+    "restaurants": "المطاعم",
+    "analytics": "التحليلات",
+    "customers": "العملاء",
+    "logout": "تسجيل الخروج"
+  },
+  "sidebar": {
+    "ownerPanel": "لوحة المالك",
+    "appManagement": "إدارة التطبيق"
+  },
+  "header": {
+    "ownerDashboard": "لوحة تحكم المالك",
+    "superAdmin": "مدير عام",
+    "appOwner": "مالك التطبيق"
+  },
+  "login": {
+    "title": "صلاحية المالك",
+    "subtitle": "سجّل دخولك إلى لوحة تحكم المالك"
+  },
+  "landing": {
+    "signIn": "تسجيل الدخول",
+    "heroTag": "منصة المطاعم",
+    "heroHeading1": "أدر مطعمك",
+    "heroHeading2": "بذكاء مع MenuQR",
+    "heroSubtext": "قوائم رقمية، وإدارة الطلبات الفورية، والتحليلات، ودعم تعدد الفروع — كل ذلك في مكان واحد.",
+    "startTrial": "ابدأ التجربة المجانية",
+    "featuresHeading": "كل ما تحتاجه للنمو",
+    "featuresSubtext": "مصمم لعمليات المطاعم الحديثة، من طاولة واحدة إلى ألف طاولة.",
+    "pricingHeading": "أسعار بسيطة وشفافة",
+    "pricingSubtext": "لا رسوم خفية. لا عقود. يمكنك الترقية أو التخفيض في أي وقت.",
+    "save20": "وفّر 20%",
+    "mostPopular": "الأكثر شعبية",
+    "getStarted": "ابدأ الآن",
+    "perMonth": "/شهر",
+    "billedYearly": "يُحسب ${{amount}} / سنة",
+    "securePayments": "مدفوعات آمنة",
+    "pciCompliant": "متوافق مع PCI",
+    "cancelAnytime": "إلغاء في أي وقت",
+    "alreadyHaveAccount": "هل لديك حساب؟",
+    "signInLink": "سجّل دخولك",
+    "copyright": "© {{year}} MenuQR · جميع الحقوق محفوظة",
+    "features": {
+      "qrMenus": {
+        "title": "قوائم QR الذكية",
+        "desc": "قوائم رقمية جميلة بتحديثات فورية. لا حاجة للطباعة."
+      },
+      "orderManagement": {
+        "title": "إدارة الطلبات الفورية",
+        "desc": "تظهر الطلبات فوراً على لوحة التحكم مع تنبيهات صوتية."
+      },
+      "analytics": {
+        "title": "تحليلات معمّقة",
+        "desc": "الإيرادات، الأصناف الأكثر مبيعاً، أوقات الذروة — كل ما تحتاجه للنمو."
+      },
+      "multiLocation": {
+        "title": "جاهز لتعدد الفروع",
+        "desc": "أدر جميع فروعك من لوحة تحكم موحدة."
+      }
+    }
+  },
+  "checkout": {
+    "backToPlans": "العودة إلى الخطط",
+    "orderSummary": "ملخص الطلب",
+    "monthlyBilling": "فاتورة شهرية",
+    "annualBilling": "فاتورة سنوية",
+    "subtotal": "المجموع الجزئي",
+    "annualDiscount": "خصم سنوي",
+    "totalDueToday": "الإجمالي المستحق اليوم",
+    "chargedAnnually": "يُحسب سنوياً",
+    "chargedMonthly": "يُحسب شهرياً",
+    "renewsAuto": "· يتجدد تلقائياً",
+    "paymentDetails": "تفاصيل الدفع",
+    "orPayWithCard": "أو ادفع بالبطاقة",
+    "accepted": "البطاقات المقبولة:",
+    "allMajorCards": "· جميع البطاقات الرئيسية",
+    "cardNumber": "رقم البطاقة",
+    "cardholderName": "اسم حامل البطاقة",
+    "expiry": "تاريخ الانتهاء",
+    "cvv": "رمز الأمان",
+    "processing": "جاري المعالجة...",
+    "pay": "ادفع ${{amount}}",
+    "sslNote": "تشفير 256-bit SSL · نحن لا نحفظ بياناتك المصرفية",
+    "alreadyHaveAccount": "هل لديك حساب؟",
+    "signIn": "سجّل دخولك"
+  },
+  "setup": {
+    "stepPayment": "الدفع",
+    "stepSetup": "إعداد الحساب",
+    "heading": "أعدّ حسابك",
+    "subtext": "أنشئ بيانات تسجيل الدخول الخاصة بك لمنصة MenuQR {{plan}}.",
+    "fullName": "الاسم الكامل",
+    "emailAddress": "عنوان البريد الإلكتروني",
+    "restaurantName": "اسم المطعم",
+    "password": "كلمة المرور",
+    "passwordPlaceholder": "8 أحرف على الأقل",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أعد كتابة كلمة المرور",
+    "show": "إظهار",
+    "hide": "إخفاء",
+    "creating": "جاري إنشاء الحساب...",
+    "createAccount": "إنشاء حسابي"
+  },
+  "success": {
+    "badge": "تم إنشاء الحساب",
+    "heading": "أنت جاهز!",
+    "description": "حسابك في MenuQR {{plan}} جاهز. سجّل دخولك إلى لوحة التحكم للبدء.",
+    "emailSent": "تم إرسال رسالة ترحيب إلى بريدك الإلكتروني.",
+    "goToSignIn": "الذهاب إلى تسجيل الدخول"
+  },
+  "plans": {
+    "starter": {
+      "name": "مبتدئ",
+      "description": "مثالي للمطاعم ذات الفرع الواحد.",
+      "features": [
+        "مطعم واحد",
+        "500 طلب / شهر",
+        "قوائم رمز QR",
+        "تحليلات أساسية",
+        "دعم عبر البريد الإلكتروني"
+      ]
+    },
+    "pro": {
+      "name": "احترافي",
+      "description": "للعلامات التجارية المتنامية ذات المواقع المتعددة.",
+      "features": [
+        "حتى 5 مطاعم",
+        "طلبات غير محدودة",
+        "تحليلات متقدمة",
+        "علامة تجارية مخصصة",
+        "رموز ترويجية",
+        "وحدة الحجوزات",
+        "دعم ذو أولوية"
+      ]
+    },
+    "enterprise": {
+      "name": "مؤسسي",
+      "description": "نطاق غير محدود لمجموعات الأغذية الكبرى.",
+      "features": [
+        "مطاعم غير محدودة",
+        "كل مزايا الخطة الاحترافية",
+        "خيار العلامة البيضاء",
+        "تكاملات مخصصة",
+        "مدير حساب مخصص",
+        "ضمان 99.9% SLA"
+      ]
+    }
+  },
+  "restaurants": {
+    "heading": "المطاعم",
+    "subtext": "إدارة جميع عملاء المطاعم على المنصة.",
+    "search": "بحث...",
+    "addRestaurant": "إضافة مطعم",
+    "total": "الإجمالي",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "tableHeaders": {
+      "restaurant": "المطعم",
+      "status": "الحالة",
+      "customers": "العملاء",
+      "orders": "الطلبات",
+      "revenue": "الإيرادات",
+      "created": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    },
+    "noRestaurants": "لا توجد مطاعم بعد",
+    "noResults": "لا توجد نتائج",
+    "addFirst": "أضف أول مطعم",
+    "viewDetails": "عرض التفاصيل",
+    "deactivate": "تعطيل",
+    "activate": "تفعيل",
+    "deleteConfirm": "حذف هذا المطعم وجميع بياناته؟ لا يمكن التراجع عن هذا الإجراء.",
+    "panel": {
+      "title": "إضافة مطعم",
+      "restaurantInfo": "معلومات المطعم",
+      "restaurantName": "اسم المطعم",
+      "contactEmail": "البريد الإلكتروني للتواصل",
+      "phone": "رقم الهاتف",
+      "address": "العنوان",
+      "logoUrl": "رابط الشعار (اختياري)",
+      "adminAccount": "حساب المشرف",
+      "adminAccountNote": "سيتمكن هذا الشخص من تسجيل الدخول إلى لوحة تحكم المطعم",
+      "adminName": "الاسم الكامل للمشرف",
+      "adminEmail": "البريد الإلكتروني للمشرف",
+      "adminPassword": "كلمة مرور المشرف",
+      "passwordPlaceholder": "6 أحرف على الأقل",
+      "cancel": "إلغاء",
+      "create": "إنشاء المطعم",
+      "creating": "جاري الإنشاء..."
+    }
+  },
+  "restaurantDetail": {
+    "allRestaurants": "جميع المطاعم",
+    "deactivate": "تعطيل",
+    "activate": "تفعيل",
+    "delete": "حذف",
+    "notFound": "المطعم غير موجود",
+    "stats": {
+      "totalOrders": "إجمالي الطلبات",
+      "totalRevenue": "إجمالي الإيرادات",
+      "customers": "العملاء",
+      "menuItems": "عناصر القائمة",
+      "reviews": "التقييمات",
+      "reservations": "الحجوزات"
+    },
+    "adminAccount": "حساب المشرف",
+    "deleteConfirm": "حذف هذا المطعم وجميع بياناته؟ لا يمكن التراجع عن هذا الإجراء."
+  },
+  "analytics": {
+    "heading": "تحليلات المنصة",
+    "subtext": "مقاييس فورية عبر جميع المطاعم.",
+    "kpis": {
+      "totalRestaurants": "إجمالي المطاعم",
+      "activeRestaurants": "المطاعم النشطة",
+      "totalCustomers": "إجمالي العملاء",
+      "totalRevenue": "إجمالي الإيرادات"
+    },
+    "newRestaurantsChart": "المطاعم الجديدة — آخر 6 أشهر",
+    "restaurantsLabel": "المطاعم",
+    "perRestaurant": "تفصيل لكل مطعم",
+    "tableHeaders": {
+      "restaurant": "المطعم",
+      "status": "الحالة",
+      "customers": "العملاء",
+      "orders": "الطلبات",
+      "revenue": "الإيرادات"
+    },
+    "noRestaurants": "لا توجد مطاعم بعد"
+  },
+  "customers": {
+    "heading": "المشتركون",
+    "subtext": "جميع مشتركي منصة MenuQR.",
+    "search": "ابحث بالاسم، البريد، أو المطعم...",
+    "stats": {
+      "total": "الإجمالي",
+      "active": "نشط",
+      "locked": "مقفل"
+    },
+    "tableHeaders": {
+      "subscriber": "المشترك",
+      "restaurant": "المطعم",
+      "plan": "الخطة",
+      "joined": "تاريخ الانضمام",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "noSubscribers": "لا يوجد مشتركون بعد",
+    "noResults": "لا توجد نتائج",
+    "actions": {
+      "plan": "الخطة",
+      "lock": "قفل",
+      "unlock": "فتح",
+      "delete": "حذف"
+    },
+    "deleteConfirm": "حذف هذا المشترك؟ لا يمكن التراجع عن هذا الإجراء.",
+    "modal": {
+      "title": "تغيير الخطة",
+      "subtitle": "تحديث الاشتراك لـ {{name}}",
+      "selectPlan": "اختر الخطة",
+      "billing": "الفاتورة:",
+      "cancel": "إلغاء",
+      "save": "حفظ التغييرات",
+      "saving": "جاري الحفظ..."
+    }
+  },
+  "admins": {
+    "heading": "مشرفو المطاعم",
+    "subtext": "إدارة الحسابات التي يمكنها تسجيل الدخول إلى لوحة تحكم المطعم.",
+    "search": "بحث...",
+    "addAdmin": "إضافة مشرف",
+    "bannerTitle": "صلاحية لوحة التحكم",
+    "bannerText": "يمكن للحسابات التي تم إنشاؤها هنا تسجيل الدخول إلى لوحة إدارة المطاعم باستخدام بريدهم الإلكتروني وكلمة المرور.",
+    "stats": {
+      "totalAdmins": "إجمالي المشرفين",
+      "staff": "الموظفون"
+    },
+    "tableHeaders": {
+      "admin": "المشرف",
+      "role": "الدور",
+      "created": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    },
+    "noAdmins": "لا توجد حسابات مشرف بعد",
+    "noResults": "لا توجد نتائج",
+    "createFirst": "إنشاء أول مشرف",
+    "deleteConfirm": "حذف حساب المشرف هذا؟",
+    "panel": {
+      "title": "إضافة مشرف للمطعم",
+      "note": "سيتمكن هذا الحساب من تسجيل الدخول إلى لوحة تحكم المطاعم",
+      "fullName": "الاسم الكامل",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "jobTitle": "المسمى الوظيفي (اختياري)",
+      "role": "الدور",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "6 أحرف على الأقل",
+      "cancel": "إلغاء",
+      "create": "إنشاء مشرف",
+      "creating": "جاري الإنشاء..."
+    }
+  }
+}
