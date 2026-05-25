@@ -12,6 +12,7 @@ import apiRouter from './routes/api';
 import authRouter from './routes/auth';
 import customerRouter from './routes/customer';
 import ownerRouter from './routes/owner';
+import stripeRouter from './routes/stripe';
 import { errorHandler } from './middleware/errorHandler';
 import { runSeed } from './scripts/seed';
 
@@ -24,6 +25,10 @@ async function startServer() {
   initSocket(httpServer);
 
   app.use(cors());
+
+  // Stripe webhook needs raw body — register before express.json()
+  app.use('/api/stripe', stripeRouter);
+
   app.use(express.json());
 
   app.get('/health', async (_req, res) => {

@@ -14,4 +14,13 @@ export const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN ?? '7d',
   PORT: Number(process.env.PORT ?? 3000),
   NODE_ENV: process.env.NODE_ENV ?? 'development',
+  // Stripe — all optional; server skips Stripe if STRIPE_SECRET_KEY is absent
+  STRIPE_SECRET_KEY:               process.env.STRIPE_SECRET_KEY ?? '',
+  STRIPE_WEBHOOK_SECRET:           process.env.STRIPE_WEBHOOK_SECRET ?? '',
+  STRIPE_PRICE_STARTER_MONTHLY:    process.env.STRIPE_PRICE_STARTER_MONTHLY ?? '',
+  STRIPE_PRICE_STARTER_ANNUAL:     process.env.STRIPE_PRICE_STARTER_ANNUAL ?? '',
+  STRIPE_PRICE_PRO_MONTHLY:        process.env.STRIPE_PRICE_PRO_MONTHLY ?? '',
+  STRIPE_PRICE_PRO_ANNUAL:         process.env.STRIPE_PRICE_PRO_ANNUAL ?? '',
+  STRIPE_PRICE_ENTERPRISE_MONTHLY: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY ?? '',
+  STRIPE_PRICE_ENTERPRISE_ANNUAL:  process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL ?? '',
 };

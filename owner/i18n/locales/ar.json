@@ -97,7 +97,11 @@
     "pay": "ادفع ${{amount}}",
     "sslNote": "تشفير 256-bit SSL · نحن لا نحفظ بياناتك المصرفية",
     "alreadyHaveAccount": "هل لديك حساب؟",
-    "signIn": "سجّل دخولك"
+    "signIn": "سجّل دخولك",
+    "paymentFailed": "فشل الدفع. يرجى المحاولة مرة أخرى.",
+    "paymentNotCompleted": "تعذّر إتمام الدفع. يرجى المحاولة مرة أخرى.",
+    "verifyingPayment": "جاري التحقق من الدفع...",
+    "accountCreateFailed": "فشل إنشاء الحساب. يرجى التواصل مع الدعم."
   },
   "setup": {
     "stepPayment": "الدفع",
@@ -114,7 +118,17 @@
     "show": "إظهار",
     "hide": "إخفاء",
     "creating": "جاري إنشاء الحساب...",
-    "createAccount": "إنشاء حسابي"
+    "createAccount": "إنشاء حسابي",
+    "processing": "جاري الإعداد...",
+    "continueToPayment": "المتابعة للدفع",
+    "backToSetup": "العودة لإعداد الحساب",
+    "errorName": "الاسم الكامل مطلوب.",
+    "errorEmail": "أدخل عنوان بريد إلكتروني صحيحاً.",
+    "errorRestaurant": "اسم المطعم مطلوب.",
+    "errorPassword": "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
+    "errorMatch": "كلمتا المرور غير متطابقتين.",
+    "errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "errorNetwork": "خطأ في الشبكة. يرجى المحاولة مرة أخرى."
   },
   "success": {
     "badge": "تم إنشاء الحساب",

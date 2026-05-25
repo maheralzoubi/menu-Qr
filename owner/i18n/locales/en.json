@@ -97,7 +97,11 @@
     "pay": "Pay ${{amount}}",
     "sslNote": "256-bit SSL · We never store your card details",
     "alreadyHaveAccount": "Already have an account?",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "paymentFailed": "Payment failed. Please try again.",
+    "paymentNotCompleted": "Payment could not be completed. Please try again.",
+    "verifyingPayment": "Verifying payment…",
+    "accountCreateFailed": "Account creation failed. Please contact support."
   },
   "setup": {
     "stepPayment": "Payment",
@@ -114,7 +118,17 @@
     "show": "Show",
     "hide": "Hide",
     "creating": "Creating account…",
-    "createAccount": "Create My Account"
+    "createAccount": "Create My Account",
+    "processing": "Setting up…",
+    "continueToPayment": "Continue to Payment",
+    "backToSetup": "Back to account setup",
+    "errorName": "Full name is required.",
+    "errorEmail": "Enter a valid email address.",
+    "errorRestaurant": "Restaurant name is required.",
+    "errorPassword": "Password must be at least 8 characters.",
+    "errorMatch": "Passwords do not match.",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "errorNetwork": "Network error. Please try again."
   },
   "success": {
     "badge": "Account Created",

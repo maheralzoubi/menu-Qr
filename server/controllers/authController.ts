@@ -67,10 +67,10 @@ export const updateMe = async (req: AuthRequest, res: Response, next: NextFuncti
   } catch (e) { next(e); }
 };
 
-// Public endpoint — called after mock payment to create a new owner account
+// Called after Stripe payment confirms — verifies subscription then creates owner account
 export const subscribe = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, email, password, restaurantName, plan, billing } = req.body;
+    const { name, email, password, restaurantName, plan, billing, subscriptionId } = req.body;
     if (!name?.trim() || !email?.trim() || !password || !restaurantName?.trim() || !plan) {
       res.status(400).json({ message: 'All fields are required.' });
       return;
@@ -85,6 +85,23 @@ export const subscribe = async (req: Request, res: Response, next: NextFunction)
       res.status(409).json({ message: 'An account with this email already exists.' });
       return;
     }
+
+    // Verify the Stripe subscription is active before creating the account
+    let stripeCustomerId: string | undefined;
+    let stripeSubscriptionId: string | undefined;
+    if (subscriptionId) {
+      const { stripe } = await import('../services/stripe.js');
+      if (stripe) {
+        const sub = await stripe.subscriptions.retrieve(subscriptionId).catch(() => null);
+        if (!sub || !['active', 'trialing'].includes(sub.status)) {
+          res.status(402).json({ message: 'Payment was not completed successfully.' });
+          return;
+        }
+        stripeCustomerId    = sub.customer as string;
+        stripeSubscriptionId = sub.id;
+      }
+    }
+
     await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
@@ -94,6 +111,9 @@ export const subscribe = async (req: Request, res: Response, next: NextFunction)
       plan,
       planBilling: billing ?? 'monthly',
       planActivatedAt: new Date(),
+      planStatus: 'active',
+      stripeCustomerId,
+      stripeSubscriptionId,
     });
     res.status(201).json({ message: 'Account created successfully. You can now log in.', email });
   } catch (e) { next(e); }
