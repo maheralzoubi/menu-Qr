@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireOwnerAccess } from '../middleware/auth';
+import { requireOwnerAccess, requireSuperAdmin } from '../middleware/auth';
 import {
   getRestaurants, createRestaurant, getRestaurant,
   updateRestaurant, updateRestaurantStatus, deleteRestaurant,
@@ -8,6 +8,7 @@ import {
   updateCustomerPlan,
   getSubscription, checkoutSubscription,
 } from '../controllers/ownerController';
+import { getAdminPlans, updatePlan } from '../controllers/planController';
 
 const router = Router();
 router.use(requireOwnerAccess);
@@ -34,5 +35,9 @@ router.patch('/customers/:id/plan', updateCustomerPlan);
 // Subscription (current user's plan)
 router.get('/subscription', getSubscription);
 router.post('/subscription/checkout', checkoutSubscription);
+
+// Plan config management — superadmin only
+router.get('/plans', requireSuperAdmin, getAdminPlans);
+router.patch('/plans/:key', requireSuperAdmin, updatePlan);
 
 export default router;

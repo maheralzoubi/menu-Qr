@@ -8,6 +8,7 @@ import { MenuItem } from '../models/MenuItem';
 import { Review } from '../models/Review';
 import { Reservation } from '../models/Reservation';
 import { Category } from '../models/Category';
+import { Plan } from '../models/Plan';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,12 @@ const ownerFilter = (req: Request) =>
 const canManage = (req: Request, ownerId: any) =>
   isSuperAdmin(req) || String(ownerId) === callerId(req);
 
-const PLAN_LIMITS: Record<string, number> = { starter: 1, pro: 5, enterprise: Infinity };
+// Fetch plan limit from DB; fall back to safe defaults if DB is unavailable
+async function getPlanLimit(planKey: string): Promise<number> {
+  const plan = await Plan.findOne({ key: planKey }).select('restaurantLimit');
+  if (!plan) return 1;
+  return plan.restaurantLimit === -1 ? Infinity : plan.restaurantLimit;
+}
 
 // ── Restaurant management ──────────────────────────────────────────────────────
 
@@ -52,7 +58,7 @@ export const createRestaurant = async (req: Request, res: Response, next: NextFu
     // Enforce plan limits for non-superadmin owners
     if (!isSuperAdmin(req)) {
       const owner = await User.findById(callerId(req));
-      const limit = PLAN_LIMITS[owner?.plan ?? 'starter'] ?? 1;
+      const limit = await getPlanLimit(owner?.plan ?? 'starter');
       const count = await Restaurant.countDocuments({ ownerId: callerId(req) });
       if (count >= limit) {
         const limitLabel = limit === Infinity ? 'unlimited' : String(limit);
@@ -264,14 +270,35 @@ export const updateCustomerPlan = async (req: Request, res: Response, next: Next
 };
 
 // ── Subscription ───────────────────────────────────────────────────────────────
-// In-memory store — replace with a Subscription model + real payment provider (Stripe, etc.)
-const subscriptions = new Map<string, { plan: string; billing: string; activatedAt: string }>();
 
 export const getSubscription = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).user?.id ?? 'owner';
-    const sub = subscriptions.get(userId);
-    res.json(sub ?? { plan: null });
+    const user = (req as AuthRequest).user;
+    if (!user) { res.status(401).json({ message: 'Unauthorized' }); return; }
+
+    if (user.role === 'superadmin') {
+      res.json({ isSuperAdmin: true, plan: null, limit: null });
+      return;
+    }
+
+    const owner = await User.findById(user.id).select('plan planBilling planStatus planActivatedAt');
+    if (!owner?.plan) {
+      res.json({ plan: null, limit: 1 });
+      return;
+    }
+
+    const planDoc = await Plan.findOne({ key: owner.plan }).select('name restaurantLimit');
+    const rawLimit = planDoc?.restaurantLimit ?? 1;
+    const limit = rawLimit === -1 ? null : rawLimit; // null = unlimited
+
+    res.json({
+      plan:        owner.plan,
+      planName:    planDoc?.name ?? owner.plan,
+      billing:     owner.planBilling,
+      planStatus:  owner.planStatus,
+      activatedAt: owner.planActivatedAt,
+      limit,
+    });
   } catch (e) { next(e); }
 };
 

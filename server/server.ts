@@ -13,6 +13,7 @@ import authRouter from './routes/auth';
 import customerRouter from './routes/customer';
 import ownerRouter from './routes/owner';
 import stripeRouter from './routes/stripe';
+import { getPublicPlans } from './controllers/planController';
 import { errorHandler } from './middleware/errorHandler';
 import { runSeed } from './scripts/seed';
 
@@ -43,6 +44,7 @@ async function startServer() {
   app.use('/api/auth', authRouter);
   app.use('/api/customer', customerRouter);
   app.use('/api/owner', ownerRouter);
+  app.get('/api/plans', getPublicPlans);
   app.use('/api', apiRouter);
 
   if (env.NODE_ENV !== 'production') {

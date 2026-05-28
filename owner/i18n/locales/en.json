@@ -18,6 +18,7 @@
     "restaurants": "Restaurants",
     "analytics": "Analytics",
     "customers": "Customers",
+    "plans": "Plans",
     "logout": "Logout"
   },
   "sidebar": {
@@ -138,6 +139,31 @@
     "goToSignIn": "Go to Sign In"
   },
   "plans": {
+    "manager": {
+      "heading": "Subscription Plans",
+      "subtext": "Edit pricing, features, and limits for each plan. Changes appear live on the landing page.",
+      "editPlan": "Edit {{name}} Plan",
+      "planName": "Plan Name",
+      "description": "Description",
+      "monthlyPrice": "Monthly Price / mo",
+      "annualPrice": "Annual Price / mo",
+      "priceNote": "Price changes create a new Stripe price and apply to new subscriptions only. Existing subscribers keep their current rate.",
+      "restaurantLimit": "Restaurant Limit",
+      "limitHint": "Use -1 for unlimited restaurants.",
+      "mostPopular": "Most Popular",
+      "active": "Active",
+      "features": "Features",
+      "addFeaturePlaceholder": "Add a feature and press Enter…",
+      "restaurantsAllowed": "{{count}} restaurant(s) allowed",
+      "unlimited": "Unlimited",
+      "save": "Save Changes",
+      "saveFailed": "Failed to save plan. Please try again.",
+      "networkError": "Network error. Please try again.",
+      "loadFailed": "Failed to load plans.",
+      "loading": "Loading plans…",
+      "retry": "Retry",
+      "timeout": "Request timed out. Please check the server and try again."
+    },
     "starter": {
       "name": "Starter",
       "description": "Perfect for single-location restaurants.",
@@ -180,6 +206,10 @@
     "subtext": "Manage all restaurant clients on the platform.",
     "search": "Search...",
     "addRestaurant": "Add Restaurant",
+    "plan": "Plan",
+    "usageCount": "{{used}} / {{total}} restaurants used",
+    "limitReached": "Restaurant limit reached — upgrade your plan to add more",
+    "upgradePlan": "Upgrade Plan",
     "total": "Total",
     "active": "Active",
     "inactive": "Inactive",

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
-import { Plus, X, Eye, EyeOff, Loader, ToggleLeft, ToggleRight, Trash2, Search, Building2 } from 'lucide-react';
+import { Plus, X, Eye, EyeOff, Loader, ToggleLeft, ToggleRight, Trash2, Search, Building2, AlertCircle, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { ownerFetch as authFetch } from '../../src/lib/ownerAuth';
+import { ownerFetch as authFetch, isSuperAdmin } from '../../src/lib/ownerAuth';
 
 interface Restaurant {
   _id: string;
@@ -14,6 +14,13 @@ interface Restaurant {
   totalOrders: number;
   totalRevenue: number;
   totalCustomers: number;
+}
+
+interface Subscription {
+  isSuperAdmin?: boolean;
+  plan: string | null;
+  planName?: string;
+  limit: number | null; // null = unlimited
 }
 
 interface Props { onSelect: (r: Restaurant) => void; }
@@ -35,16 +42,30 @@ export const RestaurantList = ({ onSelect }: Props) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+
+  const superAdmin = isSuperAdmin();
 
   const fetchRestaurants = useCallback(async () => {
     try {
-      const res = await authFetch('/api/owner/restaurants');
-      if (res.ok) setRestaurants(await res.json());
+      const [restRes, subRes] = await Promise.all([
+        authFetch('/api/owner/restaurants'),
+        authFetch('/api/owner/subscription'),
+      ]);
+      if (restRes.ok) setRestaurants(await restRes.json());
+      if (subRes.ok) setSubscription(await subRes.json());
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
   }, []);
 
   useEffect(() => { fetchRestaurants(); }, [fetchRestaurants]);
+
+  // true when the owner has used all their allowed restaurants
+  const atLimit =
+    !superAdmin &&
+    subscription !== null &&
+    subscription.limit !== null &&
+    restaurants.length >= subscription.limit;
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -105,12 +126,55 @@ export const RestaurantList = ({ onSelect }: Props) => {
             <input type="text" placeholder={t('restaurants.search')} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none" />
           </div>
-          <button onClick={() => { setShowPanel(true); setFormError(''); setForm(emptyForm()); }}
-            className="flex items-center gap-2 btn-gradient text-white px-6 py-3 rounded-xl font-bold text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
+          <button
+            onClick={() => { if (atLimit) return; setShowPanel(true); setFormError(''); setForm(emptyForm()); }}
+            disabled={atLimit}
+            title={atLimit ? t('restaurants.limitReached') : undefined}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+              atLimit
+                ? 'bg-surface-container text-on-surface-variant cursor-not-allowed opacity-60'
+                : 'btn-gradient text-white shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95'
+            }`}>
             <Plus className="w-4 h-4" /> {t('restaurants.addRestaurant')}
           </button>
         </div>
       </div>
+
+      {/* Plan limit banner — shown to non-superadmin owners when subscription is loaded */}
+      <AnimatePresence>
+        {!superAdmin && subscription && subscription.limit !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className={`rounded-2xl border px-5 py-4 flex items-center gap-4 ${
+              atLimit
+                ? 'bg-error/5 border-error/20'
+                : 'bg-surface-container-low border-outline-variant/20'
+            }`}>
+            <AlertCircle className={`w-5 h-5 shrink-0 ${atLimit ? 'text-error' : 'text-on-surface-variant'}`} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">
+                {subscription.planName ?? subscription.plan} {t('restaurants.plan')}
+                {' · '}
+                <span className={atLimit ? 'text-error font-bold' : ''}>
+                  {t('restaurants.usageCount', { used: restaurants.length, total: subscription.limit })}
+                </span>
+              </p>
+              {/* progress bar */}
+              <div className="mt-1.5 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${atLimit ? 'bg-error' : 'bg-primary'}`}
+                  style={{ width: `${Math.min(100, (restaurants.length / subscription.limit) * 100)}%` }}
+                />
+              </div>
+            </div>
+            {atLimit && (
+              <span className="text-xs font-bold text-error bg-error/10 px-3 py-1.5 rounded-xl whitespace-nowrap flex items-center gap-1.5">
+                <ArrowUpRight className="w-3.5 h-3.5" /> {t('restaurants.upgradePlan')}
+              </span>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-6">

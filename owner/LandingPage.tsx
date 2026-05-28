@@ -11,7 +11,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-type PlanId = 'starter' | 'pro' | 'enterprise';
+type PlanId = string;
 type Billing = 'monthly' | 'annual';
 type Step = 'home' | 'setup' | 'checkout' | 'success';
 
@@ -20,6 +20,20 @@ interface PlanDef {
   price: { monthly: number; annual: number };
   popular?: boolean;
   icon: React.ReactNode;
+  description?: string;
+  features?: string[];
+}
+
+interface ApiPlan {
+  _id: string;
+  key: string;
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  features: string[];
+  popular: boolean;
+  active: boolean;
 }
 
 interface SetupForm {
@@ -40,11 +54,18 @@ interface PendingAccount {
   subscriptionId: string;
 }
 
-// ── Plans ──────────────────────────────────────────────────────────────────────
-const PLANS: PlanDef[] = [
-  { id: 'starter',    price: { monthly: 29,  annual: 23  }, icon: <Zap className="w-5 h-5" /> },
-  { id: 'pro',        price: { monthly: 79,  annual: 63  }, icon: <Star className="w-5 h-5" />, popular: true },
-  { id: 'enterprise', price: { monthly: 199, annual: 159 }, icon: <Building2 className="w-5 h-5" /> },
+// ── Plan icons mapped by key ───────────────────────────────────────────────────
+const PLAN_ICONS: Record<string, React.ReactNode> = {
+  starter:    <Zap className="w-5 h-5" />,
+  pro:        <Star className="w-5 h-5" />,
+  enterprise: <Building2 className="w-5 h-5" />,
+};
+
+// Fallback plans shown while loading or if the API fails
+const FALLBACK_PLANS: PlanDef[] = [
+  { id: 'starter',    price: { monthly: 29,  annual: 23  }, icon: PLAN_ICONS.starter },
+  { id: 'pro',        price: { monthly: 79,  annual: 63  }, icon: PLAN_ICONS.pro,    popular: true },
+  { id: 'enterprise', price: { monthly: 199, annual: 159 }, icon: PLAN_ICONS.enterprise },
 ];
 
 const FEATURE_KEYS = [
@@ -131,6 +152,25 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
   const [step, setStep]       = useState<Step>('home');
   const [billing, setBilling] = useState<Billing>('monthly');
   const [selected, setSelected] = useState<PlanDef | null>(null);
+  const [plans, setPlans]     = useState<PlanDef[]>(FALLBACK_PLANS);
+
+  // Fetch live plan data from the API on mount
+  useEffect(() => {
+    fetch('/api/plans')
+      .then(r => r.ok ? r.json() : null)
+      .then((data: ApiPlan[] | null) => {
+        if (!Array.isArray(data) || data.length === 0) return;
+        setPlans(data.map(p => ({
+          id:      p.key,
+          price:   { monthly: p.monthlyPrice, annual: p.annualPrice },
+          popular: p.popular,
+          icon:    PLAN_ICONS[p.key] ?? <Star className="w-5 h-5" />,
+          description: p.description,
+          features:    p.features,
+        })));
+      })
+      .catch(() => { /* keep fallback */ });
+  }, []);
 
   const [setup, setSetup] = useState<SetupForm>({
     fullName: '', email: '', restaurantName: '', password: '', confirmPassword: '',
@@ -169,7 +209,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
       const stored: PendingAccount = JSON.parse(raw);
       const subId = params.get('sub') ?? stored.subscriptionId;
-      const planObj = PLANS.find(p => p.id === stored.plan);
+      const planObj = FALLBACK_PLANS.find(p => p.id === stored.plan);
       if (!planObj) return;
 
       setSelected(planObj);
@@ -204,7 +244,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     }
 
     const { clientSecret: savedCs, pending: savedPending } = saved;
-    const savedPlan = PLANS.find(pl => pl.id === savedPending?.plan);
+    const savedPlan = FALLBACK_PLANS.find(pl => pl.id === savedPending?.plan);
     if (!savedCs || !savedPending || !savedPlan) {
       sessionStorage.removeItem('menuqr_checkout');
       return;
@@ -400,8 +440,9 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {PLANS.map((plan, i) => {
-                const planFeatures = t(`plans.${plan.id}.features`, { returnObjects: true }) as string[];
+              {plans.map((plan, i) => {
+                const planFeatures = plan.features ?? (t(`plans.${plan.id}.features`, { returnObjects: true }) as string[]);
+                const planDescription = plan.description ?? t(`plans.${plan.id}.description`);
                 return (
                   <motion.div key={plan.id} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                     className={`relative flex flex-col rounded-3xl p-7 border transition-all ${plan.popular
@@ -419,7 +460,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                         {plan.icon}
                       </div>
                       <h3 className={`font-extrabold text-lg font-headline ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>
-                        {t(`plans.${plan.id}.name`)}
+                        {t(`plans.${plan.id}.name`, { defaultValue: plan.id.charAt(0).toUpperCase() + plan.id.slice(1) })}
                       </h3>
                     </div>
 
@@ -435,7 +476,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                       </p>
                     )}
                     <p className={`text-sm mb-6 leading-relaxed ${plan.popular ? 'text-on-primary/80' : 'text-on-surface-variant'}`}>
-                      {t(`plans.${plan.id}.description`)}
+                      {planDescription}
                     </p>
 
                     <ul className="space-y-2.5 flex-1 mb-7">
@@ -643,7 +684,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                     </p>
                   </div>
                   <ul className="mt-5 space-y-1.5 pt-4 border-t border-outline-variant">
-                    {(t(`plans.${selected.id}.features`, { returnObjects: true }) as string[]).slice(0, 4).map((f, i) => (
+                    {(selected.features ?? (t(`plans.${selected.id}.features`, { returnObjects: true }) as string[])).slice(0, 4).map((f, i) => (
                       <li key={i} className="flex items-center gap-2 text-xs text-on-surface-variant">
                         <Check className="w-3 h-3 text-primary shrink-0" /> {f}
                       </li>

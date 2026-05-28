@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { Building2, TrendingUp, LogOut, Shield, Users } from 'lucide-react';
+import { Building2, TrendingUp, LogOut, Shield, Users, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { RestaurantList } from './components/RestaurantList';
 import { RestaurantDetail } from './components/RestaurantDetail';
 import { PlatformAnalytics } from './components/PlatformAnalytics';
 import { CustomerTable } from './components/CustomerTable';
+import { PlansManager } from './components/PlansManager';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { clearOwnerToken as clearToken, isSuperAdmin } from '../src/lib/ownerAuth';
 
-type Tab = 'restaurants' | 'analytics' | 'customers';
+type Tab = 'restaurants' | 'analytics' | 'customers' | 'plans';
 interface SelectedRestaurant { _id: string; name: string; }
 
 export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
@@ -22,9 +23,12 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     { id: 'restaurants', icon: <Building2 className="w-5 h-5" /> },
     { id: 'analytics',   icon: <TrendingUp className="w-5 h-5" /> },
     { id: 'customers',   icon: <Users className="w-5 h-5" /> },
+    { id: 'plans',       icon: <CreditCard className="w-5 h-5" /> },
   ];
 
-  const visibleNavItems = navItems.filter(item => item.id !== 'customers' || superAdmin);
+  const visibleNavItems = navItems.filter(
+    item => (item.id !== 'customers' && item.id !== 'plans') || superAdmin
+  );
   const handleLogout = () => { clearToken(); onLogout(); };
 
   return (
@@ -98,6 +102,7 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               )}
               {activeTab === 'analytics' && <PlatformAnalytics />}
               {activeTab === 'customers' && <CustomerTable isSuperAdmin={superAdmin} />}
+              {activeTab === 'plans' && <PlansManager />}
             </motion.div>
           </AnimatePresence>
         </div>

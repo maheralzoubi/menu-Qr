@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import type Stripe from 'stripe';
 import { stripe, PRICE_IDS } from '../services/stripe.js';
 import { User } from '../models/User.js';
+import { Plan } from '../models/Plan.js';
 import { env } from '../config/env.js';
 
 export const createIntent = async (req: Request, res: Response, next: NextFunction) => {
@@ -24,7 +25,15 @@ export const createIntent = async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
-    const priceId = PRICE_IDS[plan]?.[billing];
+    // Prefer the live Price ID stored in the Plan document (updated whenever the admin
+    // changes the price). Fall back to the env-var Price ID for backwards compatibility.
+    const planDoc = await Plan.findOne({ key: plan }).select('stripePriceIdMonthly stripePriceIdAnnual');
+    const priceId =
+      (billing === 'monthly'
+        ? planDoc?.stripePriceIdMonthly
+        : planDoc?.stripePriceIdAnnual)
+      || PRICE_IDS[plan]?.[billing];
+
     if (!priceId) {
       res.status(400).json({ message: `Stripe price not configured for ${plan}/${billing}.` });
       return;
