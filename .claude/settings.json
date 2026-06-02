@@ -1,7 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(kill 39178)",
+      "Bash(pkill -f \"tsx server/server.ts\")",
+      "Bash(pkill -f \"tsx server/server\")",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs kill -9)",
+      "Bash(lsof -i:3000)",
+      "Bash(stripe --version)",
+      "Bash(brew install *)",
+      "Bash(stripe login *)",
+      "Bash(echo \"Server PID: $!\")",
+      "Bash(curl -s http://localhost:3000/api/auth/login -X POST -H \"Content-Type: application/json\" -d '{\"email\":\"test@test.com\",\"password\":\"test\"}')",
+      "Bash(ps -p 42416 -p 98833 -o pid,command)",
+      "Bash(kill 42416)"
+    ],
+    "additionalDirectories": [
+      "/tmp",
+      "/private/tmp"
     ]
   }
 }
