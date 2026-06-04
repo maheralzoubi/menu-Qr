@@ -27,7 +27,7 @@ function applyBranding(name: string, logo: string) {
   document.title = name || 'Menu QR';
   const existing = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
   const favicon = existing ?? Object.assign(document.createElement('link'), { rel: 'icon' });
-  favicon.href = logo || '/favicon.ico';
+  favicon.href = logo || '/favicon.svg';
   if (!existing) document.head.appendChild(favicon);
 }
 
