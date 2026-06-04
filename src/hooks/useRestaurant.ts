@@ -23,6 +23,14 @@ function saveToStorage(ctx: RestaurantContext) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ctx));
 }
 
+function applyBranding(name: string, logo: string) {
+  document.title = name || 'Menu QR';
+  const existing = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+  const favicon = existing ?? Object.assign(document.createElement('link'), { rel: 'icon' });
+  favicon.href = logo || '/favicon.ico';
+  if (!existing) document.head.appendChild(favicon);
+}
+
 export function useRestaurant() {
   const [context, setContextState] = useState<RestaurantContext | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,8 +40,14 @@ export function useRestaurant() {
     const restaurantId = params.get('restaurant');
     const tableName = params.get('table') ?? '';
 
-    // Only auto-load when URL contains a restaurantId (QR scan / deep link).
-    // Normal app opens show ModeSelectionScreen (context remains null).
+    // Restore branding from previous visit even when no URL param.
+    const stored = readFromStorage();
+    if (stored) {
+      applyBranding(stored.restaurantName, stored.logo);
+      setContextState(stored);
+    }
+
+    // Only fetch fresh data when URL contains a restaurantId (QR scan / deep link).
     if (!restaurantId) {
       setLoading(false);
       return;
@@ -50,6 +64,7 @@ export function useRestaurant() {
           primaryColor: data.primaryColor ?? '#9b3f25',
         };
         saveToStorage(ctx);
+        applyBranding(ctx.restaurantName, ctx.logo);
         setContextState(ctx);
       })
       .catch(() => {})
@@ -58,6 +73,7 @@ export function useRestaurant() {
 
   const setContext = (ctx: RestaurantContext) => {
     saveToStorage(ctx);
+    applyBranding(ctx.restaurantName, ctx.logo);
     setContextState(ctx);
   };
 
