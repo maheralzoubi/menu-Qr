@@ -37,7 +37,7 @@ export const Header = ({ title, logo, restaurantName, onInfo }: HeaderProps) => 
         </div>
       </div>
 
-      <button onClick={onInfo} className="text-on-surface-variant/60 hover:text-on-surface transition-colors shrink-0 ml-2">
+      <button onClick={onInfo} className="text-on-surface-variant/60 hover:text-on-surface transition-colors shrink-0 ms-2">
         <Info className="w-5 h-5" />
       </button>
     </div>

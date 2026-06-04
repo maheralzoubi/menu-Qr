@@ -16,7 +16,9 @@ import { requestFCMToken, onMessage, messaging } from './lib/firebase';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { RestaurantListScreen } from './screens/RestaurantListScreen';
-import { ScanTableQRScreen } from './screens/ScanTableQRScreen';
+import { ModeSelectionScreen } from './screens/ModeSelectionScreen';
+import { QRScannerScreen } from './screens/QRScannerScreen';
+import { fetchRestaurantContext } from './services/AppEntryHandler';
 import { HomeScreen } from './screens/HomeScreen';
 import { MenuScreen } from './screens/MenuScreen';
 import { CartScreen } from './screens/CartScreen';
@@ -29,7 +31,7 @@ import { CustomerRegisterScreen } from './screens/CustomerRegisterScreen';
 import { CustomerProfileScreen } from './screens/CustomerProfileScreen';
 
 type AccountView = 'login' | 'register' | 'profile';
-interface SelectedRestaurant { _id: string; name: string; logo?: string; }
+type EntryScreen = 'mode-selection' | 'qr-scanner' | 'restaurant-list';
 
 function lightenHex(hex: string, amount = 0.22): string {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -42,7 +44,7 @@ function lightenHex(hex: string, amount = 0.22): string {
 }
 
 export default function App() {
-  const { context, loading } = useRestaurant();
+  const { context, loading, setContext } = useRestaurant();
   const [primaryColor, setPrimaryColor] = useState<string | null>(null);
   const [liveLogo, setLiveLogo] = useState<string | null>(null);
   const socketRef = useRef<ReturnType<typeof socketIO> | null>(null);
@@ -54,7 +56,7 @@ export default function App() {
   const [tipAmount, setTipAmount] = useState<number>(0);
   const [promoCode, setPromoCode] = useState<string>('');
   const [discount, setDiscount] = useState<number>(0);
-  const [selectedRestaurant, setSelectedRestaurant] = useState<SelectedRestaurant | null>(null);
+  const [entryScreen, setEntryScreen] = useState<EntryScreen>('mode-selection');
   const { cart, addToCart, updateQuantity, removeFromCart, cartCount, subtotal, clearCart } = useCart();
 
   const totalWithTaxAndTip = subtotal - discount + tipAmount;
@@ -122,16 +124,30 @@ export default function App() {
   // Detecting URL/localStorage context
   if (loading) return null;
 
-  // ── Flow 1: No context → restaurant discovery ─────────────────────────────
+  // ── Flow 1: No context → entry hub ───────────────────────────────────────
   if (!context) {
-    if (!selectedRestaurant) {
-      return <RestaurantListScreen onSelect={setSelectedRestaurant} />;
+    if (entryScreen === 'qr-scanner') {
+      return (
+        <QRScannerScreen
+          onBack={() => setEntryScreen('mode-selection')}
+          onScan={setContext}
+        />
+      );
     }
-    // Restaurant selected from list → show "scan QR at table" instruction
+    if (entryScreen === 'restaurant-list') {
+      return (
+        <RestaurantListScreen
+          onBack={() => setEntryScreen('mode-selection')}
+          onSelect={(r) => {
+            fetchRestaurantContext(r._id).then(ctx => { if (ctx) setContext(ctx); });
+          }}
+        />
+      );
+    }
     return (
-      <ScanTableQRScreen
-        restaurant={selectedRestaurant}
-        onBack={() => setSelectedRestaurant(null)}
+      <ModeSelectionScreen
+        onInsideRestaurant={() => setEntryScreen('qr-scanner')}
+        onBrowseRestaurants={() => setEntryScreen('restaurant-list')}
       />
     );
   }
@@ -246,6 +262,7 @@ export default function App() {
                   onReserve={() => setScreen('reservation')}
                   restaurantName={context.restaurantName}
                   logo={effectiveLogo || undefined}
+                  restaurantId={restaurantId}
                 />
               )}
               {screen === 'menu' && <MenuScreen addToCart={addToCart} restaurantId={restaurantId} />}

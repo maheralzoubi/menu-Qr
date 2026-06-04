@@ -1,16 +1,15 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useState, useMemo, useEffect } from 'react';
 import { Search, X, ChevronRight, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { Category, MenuItem } from '../types';
 import { Skeleton } from '../components/Skeleton';
 import { ItemDetailsModal } from '../components/ItemDetailsModal';
 
 export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: MenuItem) => void; restaurantId: string }) => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
+
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -27,12 +26,8 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
         ]);
         const menuData = await menuRes.json();
         const catData = await catRes.json();
-        
         setMenuItems(menuData);
         setCategories(catData);
-        if (catData.length > 0 && activeCategory === 'All') {
-          // You could set active category defaults here
-        }
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
@@ -45,7 +40,7 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
       const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            item.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
@@ -94,20 +89,20 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
     <div className="pt-20 pb-32 px-6 max-w-md mx-auto space-y-6">
       {/* Search Bar */}
       <div className="relative group">
-        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+        <div className="absolute inset-y-0 start-4 flex items-center pointer-events-none">
           <Search className="w-4 h-4 text-on-surface-variant/40 group-focus-within:text-primary transition-colors" />
         </div>
-        <input 
+        <input
           type="text"
-          placeholder="Search dishes or ingredients..."
+          placeholder={t('menu.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-surface-container-low border-none rounded-2xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 font-body text-sm"
+          className="w-full bg-surface-container-low border-none rounded-2xl py-4 ps-12 pe-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-300 font-body text-sm"
         />
         {searchQuery && (
-          <button 
+          <button
             onClick={() => setSearchQuery('')}
-            className="absolute inset-y-0 right-4 flex items-center text-on-surface-variant/40 hover:text-on-surface"
+            className="absolute inset-y-0 end-4 flex items-center text-on-surface-variant/40 hover:text-on-surface"
           >
             <X className="w-4 h-4" />
           </button>
@@ -116,26 +111,29 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
 
       {/* Category Tabs */}
       <div className="flex overflow-x-auto no-scrollbar gap-2 py-2">
-        {['All', ...categories.map(c => c.name)].map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`whitespace-nowrap px-5 py-2 rounded-full font-label text-sm font-semibold tracking-tight transition-all ${activeCategory === cat ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface-variant'}`}
-          >
-            {cat}
-          </button>
-        ))}
+        {[t('menu.all'), ...categories.map(c => c.name)].map((cat, idx) => {
+          const catKey = idx === 0 ? 'All' : categories[idx - 1].name;
+          return (
+            <button
+              key={catKey}
+              onClick={() => setActiveCategory(catKey)}
+              className={`whitespace-nowrap px-5 py-2 rounded-full font-label text-sm font-semibold tracking-tight transition-all ${activeCategory === catKey ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface-variant'}`}
+            >
+              {cat}
+            </button>
+          );
+        })}
       </div>
 
       {!searchQuery && activeCategory !== 'All' && specialItem && (
         <section className="relative rounded-2xl overflow-hidden aspect-[4/3] group shadow-xl">
-          <img 
-            src={specialItem.image} 
-            alt="Special" 
+          <img
+            src={specialItem.image}
+            alt="Special"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
-            <span className="text-white text-xs font-bold uppercase tracking-widest mb-2 opacity-90">Today's Special</span>
+            <span className="text-white text-xs font-bold uppercase tracking-widest mb-2 opacity-90">{t('menu.todaySpecial')}</span>
             <h2 className="text-white font-headline text-2xl font-bold leading-tight mb-2">{specialItem.name}</h2>
             <div className="flex justify-between items-end">
               <p className="text-white/80 text-sm max-w-[70%]">{specialItem.description}</p>
@@ -148,18 +146,18 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
       <div className="space-y-6">
         <div className="flex justify-between items-end px-1">
           <h3 className="font-headline text-xl font-bold text-on-surface-variant">
-            {searchQuery ? 'Search Results' : activeCategory}
+            {searchQuery ? t('menu.searchResults') : activeCategory}
           </h3>
           {searchQuery && (
             <span className="text-xs font-bold text-on-surface-variant/40 uppercase tracking-widest">
-              {filteredItems.length} found
+              {filteredItems.length} {t('menu.found')}
             </span>
           )}
         </div>
 
         <AnimatePresence mode="popLayout">
           {filteredItems.map(item => (
-            <motion.div 
+            <motion.div
               layout
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -174,16 +172,16 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
                 <div>
                   <h4 className="font-headline font-bold text-on-surface leading-tight mb-1">{item.name}</h4>
                   <p className="text-on-surface-variant text-xs leading-relaxed line-clamp-2 mb-2">{item.description}</p>
-                  <button 
+                  <button
                     onClick={() => setSelectedItem(item)}
                     className="text-primary text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 hover:underline"
                   >
-                    View Details <ChevronRight className="w-3 h-3" />
+                    {t('menu.viewDetails')} <ChevronRight className={`w-3 h-3 ${isRTL ? 'rotate-180' : ''}`} />
                   </button>
                 </div>
                 <div className="flex justify-between items-center mt-2">
                   <span className="font-headline font-bold text-primary">${item.price.toFixed(2)}</span>
-                  <button 
+                  <button
                     onClick={() => addToCart(item)}
                     className="w-8 h-8 rounded-full bg-surface-container-highest text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
                   >
@@ -200,12 +198,12 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
             <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mx-auto text-on-surface-variant/20">
               <Search className="w-8 h-8" />
             </div>
-            <p className="text-on-surface-variant font-medium">No dishes found matching your search</p>
-            <button 
+            <p className="text-on-surface-variant font-medium">{t('menu.noResults')}</p>
+            <button
               onClick={() => { setSearchQuery(''); setActiveCategory('All'); }}
               className="text-primary font-bold text-sm"
             >
-              Clear all filters
+              {t('menu.clearFilters')}
             </button>
           </div>
         )}
@@ -213,9 +211,9 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
 
       <AnimatePresence>
         {selectedItem && (
-          <ItemDetailsModal 
-            item={selectedItem} 
-            onClose={() => setSelectedItem(null)} 
+          <ItemDetailsModal
+            item={selectedItem}
+            onClose={() => setSelectedItem(null)}
             onAddToCart={() => addToCart(selectedItem)}
           />
         )}

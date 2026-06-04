@@ -24,7 +24,7 @@ function saveToStorage(ctx: RestaurantContext) {
 }
 
 export function useRestaurant() {
-  const [context, setContext] = useState<RestaurantContext | null>(null);
+  const [context, setContextState] = useState<RestaurantContext | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,35 +32,34 @@ export function useRestaurant() {
     const restaurantId = params.get('restaurant');
     const tableName = params.get('table') ?? '';
 
-    const init = async () => {
-      if (restaurantId) {
-        try {
-          const res = await fetch(`/api/restaurants/${restaurantId}/info`);
-          if (res.ok) {
-            const data = await res.json();
-            const ctx: RestaurantContext = {
-              restaurantId,
-              tableName,
-              restaurantName: data.name,
-              logo: data.logo ?? '',
-              primaryColor: data.primaryColor ?? '#9b3f25',
-            };
-            saveToStorage(ctx);
-            setContext(ctx);
-          }
-        } catch {
-          // Fall through to localStorage
-        }
-      } else {
-        // Try to restore from localStorage
-        const stored = readFromStorage();
-        if (stored) setContext(stored);
-      }
+    // Only auto-load when URL contains a restaurantId (QR scan / deep link).
+    // Normal app opens show ModeSelectionScreen (context remains null).
+    if (!restaurantId) {
       setLoading(false);
-    };
+      return;
+    }
 
-    init();
+    fetch(`/api/restaurants/${restaurantId}/info`)
+      .then(res => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        const ctx: RestaurantContext = {
+          restaurantId,
+          tableName,
+          restaurantName: data.name,
+          logo: data.logo ?? '',
+          primaryColor: data.primaryColor ?? '#9b3f25',
+        };
+        saveToStorage(ctx);
+        setContextState(ctx);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  return { context, loading };
+  const setContext = (ctx: RestaurantContext) => {
+    saveToStorage(ctx);
+    setContextState(ctx);
+  };
+
+  return { context, loading, setContext };
 }

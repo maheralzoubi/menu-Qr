@@ -1,11 +1,7 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useState, useEffect } from 'react';
 import { X, Minus, Plus, ReceiptText, Edit3, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { CartItem } from '../types';
 import { Skeleton } from '../components/Skeleton';
 
@@ -30,6 +26,9 @@ export const CartScreen = ({
   promoCode: string;
   onPromoApplied: (code: string, discountAmount: number) => void;
 }) => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
+
   const [customTip, setCustomTip] = useState<string>('');
   const [activeTipPreset, setActiveTipPreset] = useState<number | 'custom' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +41,6 @@ export const CartScreen = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Sync input with applied code
   useEffect(() => {
     if (promoCode) setPromoInput(promoCode);
   }, [promoCode]);
@@ -50,8 +48,7 @@ export const CartScreen = ({
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handlePresetTip = (percent: number) => {
-    const amount = subtotal * (percent / 100);
-    setTipAmount(amount);
+    setTipAmount(subtotal * (percent / 100));
     setActiveTipPreset(percent);
     setCustomTip('');
   };
@@ -82,16 +79,18 @@ export const CartScreen = ({
       const data = await res.json();
       if (data.valid) {
         setPromoStatus('success');
-        setPromoMessage(`${data.discountType === 'percentage' ? data.discountValue + '%' : '$' + data.discountValue.toFixed(2)} discount applied!`);
+        setPromoMessage(t('cart.promoApplied', {
+          value: data.discountType === 'percentage' ? data.discountValue + '%' : '$' + data.discountValue.toFixed(2)
+        }));
         onPromoApplied(code.toUpperCase(), data.discountAmount);
       } else {
         setPromoStatus('error');
-        setPromoMessage(data.message || 'Invalid promo code');
+        setPromoMessage(data.message || t('cart.promoInvalid'));
         onPromoApplied('', 0);
       }
     } catch {
       setPromoStatus('error');
-      setPromoMessage('Could not validate code. Try again.');
+      setPromoMessage(t('cart.promoError'));
       onPromoApplied('', 0);
     }
   };
@@ -132,8 +131,8 @@ export const CartScreen = ({
   return (
     <div className="pt-24 pb-48 px-6 max-w-md mx-auto flex flex-col gap-8">
       <section className="space-y-1">
-        <h2 className="font-headline font-extrabold text-3xl tracking-tight text-on-surface">Your Selection</h2>
-        <p className="text-on-surface-variant font-medium">Review your items before confirming</p>
+        <h2 className="font-headline font-extrabold text-3xl tracking-tight text-on-surface">{t('cart.title')}</h2>
+        <p className="text-on-surface-variant font-medium">{t('cart.subtitle')}</p>
       </section>
 
       <section className="flex flex-col gap-6">
@@ -141,7 +140,7 @@ export const CartScreen = ({
           {cart.map(item => (
             <motion.div
               layout
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               key={item.id}
@@ -187,41 +186,39 @@ export const CartScreen = ({
         </AnimatePresence>
 
         {cart.length === 0 && (
-          <div className="text-center py-12 text-on-surface-variant">
-            Your cart is empty
-          </div>
+          <div className="text-center py-12 text-on-surface-variant">{t('cart.empty')}</div>
         )}
       </section>
 
       <section className="mt-4 p-8 bg-surface-container-low rounded-[2rem] space-y-4">
         <div className="flex justify-between items-center">
-          <span className="text-on-surface-variant font-medium">Subtotal</span>
+          <span className="text-on-surface-variant font-medium">{t('cart.subtotal')}</span>
           <span className="font-headline font-semibold">${subtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-on-surface-variant font-medium">Tax & Service</span>
-          <span className="font-headline font-semibold text-tertiary-container">Included</span>
+          <span className="text-on-surface-variant font-medium">{t('cart.taxService')}</span>
+          <span className="font-headline font-semibold text-tertiary-container">{t('cart.included')}</span>
         </div>
         {discount > 0 && (
           <div className="flex justify-between items-center">
-            <span className="text-on-surface-variant font-medium">Promo ({promoCode})</span>
+            <span className="text-on-surface-variant font-medium">{t('cart.promo', { code: promoCode })}</span>
             <span className="font-headline font-semibold text-green-600">-${discount.toFixed(2)}</span>
           </div>
         )}
         {tipAmount > 0 && (
           <div className="flex justify-between items-center">
-            <span className="text-on-surface-variant font-medium">Gratuity</span>
+            <span className="text-on-surface-variant font-medium">{t('cart.gratuity')}</span>
             <span className="font-headline font-semibold text-primary">+${tipAmount.toFixed(2)}</span>
           </div>
         )}
         <div className="pt-4 border-t border-outline-variant/20 flex justify-between items-center">
-          <span className="font-headline font-bold text-xl text-on-surface">Total</span>
+          <span className="font-headline font-bold text-xl text-on-surface">{t('cart.total')}</span>
           <span className="font-headline font-extrabold text-2xl text-primary">${total.toFixed(2)}</span>
         </div>
       </section>
 
       <section className="space-y-4">
-        <label className="font-headline font-bold text-sm tracking-wide text-on-surface-variant uppercase px-2">Add a Tip</label>
+        <label className="font-headline font-bold text-sm tracking-wide text-on-surface-variant uppercase px-2">{t('cart.addTip')}</label>
         <div className="grid grid-cols-4 gap-2">
           {[15, 20, 25].map((percent) => (
             <button
@@ -236,22 +233,20 @@ export const CartScreen = ({
               {percent}%
             </button>
           ))}
-          <div className="relative">
-            <input
-              type="number"
-              placeholder="Custom"
-              value={customTip}
-              onChange={(e) => handleCustomTipChange(e.target.value)}
-              className={`w-full py-3 px-2 rounded-xl font-headline font-bold text-sm text-center bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 placeholder:text-on-surface-variant/40 ${
-                activeTipPreset === 'custom' ? 'ring-2 ring-primary bg-white' : ''
-              }`}
-            />
-          </div>
+          <input
+            type="number"
+            placeholder={t('cart.customTip')}
+            value={customTip}
+            onChange={(e) => handleCustomTipChange(e.target.value)}
+            className={`w-full py-3 px-2 rounded-xl font-headline font-bold text-sm text-center bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 placeholder:text-on-surface-variant/40 ${
+              activeTipPreset === 'custom' ? 'ring-2 ring-primary bg-white' : ''
+            }`}
+          />
         </div>
       </section>
 
       <section className="space-y-3">
-        <label className="font-headline font-bold text-sm tracking-wide text-on-surface-variant uppercase px-2">Promo Code</label>
+        <label className="font-headline font-bold text-sm tracking-wide text-on-surface-variant uppercase px-2">{t('cart.promoCode')}</label>
 
         {promoStatus === 'success' ? (
           <motion.div
@@ -278,7 +273,7 @@ export const CartScreen = ({
                 onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoStatus('idle'); setPromoMessage(''); }}
                 onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
                 className="bg-transparent border-none focus:ring-0 w-full p-0 uppercase placeholder:normal-case placeholder:text-on-surface-variant/60"
-                placeholder="Enter code..."
+                placeholder={t('cart.promoPlaceholder')}
               />
             </div>
             <button
@@ -286,7 +281,7 @@ export const CartScreen = ({
               disabled={promoStatus === 'loading' || !promoInput.trim()}
               className="px-4 py-3 bg-primary text-white rounded-xl font-headline font-bold text-sm disabled:opacity-40 hover:bg-primary/90 transition-colors shrink-0"
             >
-              {promoStatus === 'loading' ? '…' : 'Apply'}
+              {promoStatus === 'loading' ? '…' : t('cart.apply')}
             </button>
           </div>
         )}
@@ -304,10 +299,10 @@ export const CartScreen = ({
       </section>
 
       <section className="space-y-3">
-        <label className="font-headline font-bold text-sm tracking-wide text-on-surface-variant uppercase px-2">Kitchen Instructions</label>
+        <label className="font-headline font-bold text-sm tracking-wide text-on-surface-variant uppercase px-2">{t('cart.kitchenInstructions')}</label>
         <div className="w-full bg-surface-container-low rounded-xl px-4 py-3 min-h-[80px] text-on-surface-variant text-sm flex items-start gap-2 border border-transparent focus-within:bg-white focus-within:shadow-sm transition-all duration-300">
           <Edit3 className="w-4 h-4 mt-1" />
-          <textarea className="bg-transparent border-none focus:ring-0 w-full p-0 resize-none h-full" placeholder="Any allergies or special requests?"></textarea>
+          <textarea className="bg-transparent border-none focus:ring-0 w-full p-0 resize-none h-full" placeholder={t('cart.specialRequests')} />
         </div>
       </section>
     </div>

@@ -1,11 +1,7 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useState, useEffect } from 'react';
-import { ArrowRight, Star, Utensils } from 'lucide-react';
+import { ArrowRight, Star, Clock, Utensils, BookOpen, CalendarDays, ChefHat } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { MenuItem } from '../types';
 import { Skeleton } from '../components/Skeleton';
 
@@ -14,150 +10,283 @@ interface HomeScreenProps {
   onReserve: () => void;
   restaurantName?: string;
   logo?: string;
+  restaurantId?: string;
 }
 
-export const HomeScreen = ({ onStart, onReserve, restaurantName, logo }: HomeScreenProps) => {
+const DISH_GRADIENTS = [
+  'from-rose-500 to-orange-400',
+  'from-violet-500 to-indigo-400',
+  'from-emerald-500 to-teal-400',
+  'from-sky-500 to-blue-400',
+  'from-amber-500 to-yellow-400',
+];
+
+export const HomeScreen = ({ onStart, onReserve, restaurantName, logo, restaurantId }: HomeScreenProps) => {
+  const { t } = useTranslation();
+
   const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading]         = useState(true);
+  const [stats, setStats]                 = useState({ rating: 0, reviews: 0 });
+
+  // Pick one tagline deterministically — no newline split needed
+  const taglineKeys = ['tagline_0', 'tagline_1', 'tagline_2', 'tagline_3'] as const;
+  const taglineKey = restaurantName
+    ? taglineKeys[restaurantName.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 4]
+    : 'tagline_0';
 
   useEffect(() => {
-    const fetchFeatured = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/menu');
-        const data = await response.json();
-        setFeaturedItems(data.filter((item: MenuItem) => item.featured).slice(0, 2));
-      } catch (error) {
-        console.error('Failed to fetch featured items:', error);
-      } finally {
-        setIsLoading(false);
-      }
+        const [menuRes, reviewRes] = await Promise.allSettled([
+          fetch(`/api/menu?restaurantId=${restaurantId}`),
+          fetch(`/api/reviews?restaurantId=${restaurantId}`),
+        ]);
+        if (menuRes.status === 'fulfilled' && menuRes.value.ok) {
+          const data: MenuItem[] = await menuRes.value.json();
+          setFeaturedItems(data.filter(item => item.featured).slice(0, 3));
+        }
+        if (reviewRes.status === 'fulfilled' && reviewRes.value.ok) {
+          const data = await reviewRes.value.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const avg = data.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / data.length;
+            setStats({ rating: Math.round(avg * 10) / 10, reviews: data.length });
+          }
+        }
+      } catch { /* silent */ }
+      finally { setIsLoading(false); }
     };
-    fetchFeatured();
+    fetchData();
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-surface">
-      <section className="relative w-full h-[80vh] overflow-hidden">
-        <div className="absolute inset-0 bg-editorial-hero" />
-        <div className="absolute inset-0 bg-gradient-to-t from-on-surface/80 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 p-8 w-full pb-12">
-          {/* Logo + restaurant name badge */}
-          {(logo || restaurantName) && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 mb-5"
-            >
-              {logo && (
-                <div className="w-12 h-12 rounded-2xl overflow-hidden ring-2 ring-white/30 shadow-lg shrink-0">
-                  <img src={logo} alt={restaurantName} className="w-full h-full object-cover" />
+
+      {/* ── Gradient hero (no external image) ──────────── */}
+      <section
+        className="relative overflow-hidden flex flex-col"
+        style={{
+          background: 'linear-gradient(160deg, var(--color-primary) 0%, var(--color-primary-container) 55%, #1a0a05 100%)',
+          minHeight: '62vh',
+        }}
+      >
+        {/* Decorative blobs */}
+        <span className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/[0.06]" />
+        <span className="pointer-events-none absolute top-1/2 -left-20 w-56 h-56 rounded-full bg-black/[0.12]" />
+        <span className="pointer-events-none absolute -bottom-10 right-10 w-40 h-40 rounded-full bg-white/[0.04]" />
+
+        {/* Content */}
+        <div className="relative flex-1 flex flex-col items-center justify-between px-7 pt-16 pb-10 text-center">
+
+          {/* ── Brand identity ── */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+            className="flex flex-col items-center gap-4"
+          >
+            {/* Logo */}
+            <div className="w-24 h-24 rounded-3xl overflow-hidden ring-4 ring-white/20 shadow-2xl shadow-black/40">
+              {logo ? (
+                <img src={logo} alt={restaurantName} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <Utensils className="w-11 h-11 text-white" />
                 </div>
               )}
-              {restaurantName && (
-                <span className="text-white font-headline font-bold text-lg tracking-tight drop-shadow-md">
+            </div>
+
+            {/* Name */}
+            {restaurantName && (
+              <div>
+                <p className="text-white/55 text-[11px] font-bold uppercase tracking-[0.16em]">
+                  {t('home.welcomeTo')}
+                </p>
+                <h1 className="text-white font-headline font-extrabold text-[1.65rem] leading-tight mt-0.5">
                   {restaurantName}
-                </span>
-              )}
-            </motion.div>
-          )}
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-white text-5xl font-headline font-bold leading-tight tracking-tight mb-8"
-          >
-            Crafting Memories <br/>Through Fire & Flour
-          </motion.h2>
-          <motion.button 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            onClick={onStart}
-            className="bg-white text-on-surface px-8 py-4 rounded-full font-headline font-bold flex items-center gap-2 hover:scale-105 transition-transform"
-          >
-            View Menu <ArrowRight className="w-5 h-5" />
-          </motion.button>
-          <motion.button 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            onClick={onReserve}
-            className="mt-4 bg-white/10 backdrop-blur-md text-white border border-white/20 px-8 py-4 rounded-full font-headline font-bold flex items-center gap-2 hover:bg-white/20 transition-all"
-          >
-            Book a Table
-          </motion.button>
-        </div>
-      </section>
+                </h1>
+              </div>
+            )}
 
-      <section className="p-8 space-y-6">
-        <div className="flex justify-between items-end">
-          <div className="space-y-1">
-            <h3 className="font-headline font-bold text-2xl text-on-surface">Featured Dishes</h3>
-            <p className="text-xs text-on-surface-variant font-medium uppercase tracking-widest">Chef's Seasonal Selection</p>
-          </div>
-        </div>
+            {/* Tagline — whiteSpace:pre-line renders \n as line breaks, no split/map needed */}
+            <p
+              className="text-white/55 text-sm leading-relaxed max-w-[220px]"
+              style={{ whiteSpace: 'pre-line' }}
+            >
+              {t(`home.${taglineKey}`)}
+            </p>
+          </motion.div>
 
-        <div className="grid grid-cols-1 gap-6">
-          {isLoading ? (
-            [1, 2].map(i => <Skeleton key={i} className="h-48 rounded-3xl" />)
-          ) : (
-            featuredItems.map((item, i) => (
-              <motion.div 
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="relative h-48 rounded-3xl overflow-hidden group shadow-lg"
-              >
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
-                  <div className="flex items-center gap-1 text-primary mb-1">
-                    <Star className="w-3 h-3 fill-primary" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Featured</span>
-                  </div>
-                  <h4 className="text-white font-headline font-bold text-xl">{item.name}</h4>
-                  <p className="text-white/60 text-xs line-clamp-1">{item.description}</p>
+          {/* ── Stats + CTAs ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12, type: 'spring', stiffness: 220, damping: 22 }}
+            className="w-full max-w-sm flex flex-col items-center gap-5"
+          >
+            {/* Stats pills */}
+            {(stats.rating > 0) && (
+              <div className="flex items-center gap-2.5 flex-wrap justify-center">
+                <div className="flex items-center gap-1.5 bg-white/[0.14] backdrop-blur-sm rounded-full px-3.5 py-1.5">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span className="text-white font-bold text-[12px]">{stats.rating}</span>
+                  {stats.reviews > 0 && (
+                    <span className="text-white/50 text-[11px]">({stats.reviews})</span>
+                  )}
                 </div>
-              </motion.div>
-            ))
-          )}
+                <div className="flex items-center gap-1.5 bg-white/[0.14] backdrop-blur-sm rounded-full px-3.5 py-1.5">
+                  <Clock className="w-3.5 h-3.5 text-white/70" />
+                  <span className="text-white font-bold text-[12px]">{t('home.tableService')}</span>
+                </div>
+              </div>
+            )}
+
+            {/* CTA buttons */}
+            <div className="flex gap-3 w-full">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={onStart}
+                className="flex-1 bg-white font-headline font-bold text-[15px] py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-2xl shadow-black/30"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                <BookOpen className="w-4 h-4" />
+                {t('home.viewMenu')}
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={onReserve}
+                className="flex-1 bg-white/[0.15] backdrop-blur-md border border-white/25 text-white font-headline font-bold text-[15px] py-3.5 rounded-2xl flex items-center justify-center gap-2"
+              >
+                <CalendarDays className="w-4 h-4" />
+                {t('home.reserve')}
+              </motion.button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      <section className="bg-surface-container-low p-12 text-center space-y-6">
-        <div className="space-y-2">
-          <h3 className="font-headline font-bold text-2xl">The Artisan Way</h3>
-          <p className="text-on-surface-variant text-sm leading-relaxed max-w-xs mx-auto">
-            We believe in the power of simple ingredients, treated with respect and transformed by fire.
-          </p>
+      {/* ── Curved transition ──────────────────────────── */}
+      <div className="h-6 -mt-6 bg-surface rounded-t-[28px] relative z-10" />
+
+      {/* ── Featured Dishes ──────────────────────────────── */}
+      <section className="px-6 -mt-2 pb-6 space-y-4 relative z-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-headline font-extrabold text-[1.2rem] text-on-surface">
+              {t('home.chefSelection')}
+            </h2>
+            <p className="text-on-surface-variant text-[11px] font-medium uppercase tracking-widest mt-0.5">
+              {t('home.seasonalFavourites')}
+            </p>
+          </div>
+          <button
+            onClick={onStart}
+            className="flex items-center gap-1 text-primary text-xs font-bold"
+          >
+            {t('home.exploreMenu')}
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <p className="text-primary font-headline font-bold text-xl">100%</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Organic</p>
+
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2].map(i => <Skeleton key={i} className="h-[130px] rounded-2xl" />)}
           </div>
-          <div className="space-y-1">
-            <p className="text-primary font-headline font-bold text-xl">Local</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Sourced</p>
+        ) : featuredItems.length > 0 ? (
+          <div className="space-y-3">
+            {featuredItems.map((item, i) => (
+              <motion.button
+                key={item.id}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.07 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onStart}
+                className="w-full h-[130px] rounded-2xl overflow-hidden flex text-left relative"
+                style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+              >
+                {/* Image or gradient fallback */}
+                {item.image ? (
+                  <img src={item.image} alt={item.name} className="w-[110px] h-full object-cover shrink-0" />
+                ) : (
+                  <div className={`w-[110px] h-full bg-gradient-to-br ${DISH_GRADIENTS[i % DISH_GRADIENTS.length]} shrink-0 flex items-center justify-center`}>
+                    <ChefHat className="w-10 h-10 text-white/80" />
+                  </div>
+                )}
+
+                {/* Info */}
+                <div className="flex-1 bg-surface-container-low px-4 py-4 flex flex-col justify-between min-w-0">
+                  <div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span className="text-amber-500 text-[10px] font-bold uppercase tracking-widest">
+                        {t('home.featured')}
+                      </span>
+                    </div>
+                    <h3 className="font-headline font-bold text-on-surface text-[15px] leading-tight line-clamp-2">
+                      {item.name}
+                    </h3>
+                    <p className="text-on-surface-variant text-[11px] mt-1 line-clamp-1">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="font-headline font-extrabold text-primary text-[15px]">
+                      ${item.price.toFixed(2)}
+                    </span>
+                    <div className="flex items-center gap-1 bg-primary/10 rounded-full px-2.5 py-1">
+                      <span className="text-primary text-[10px] font-bold">{t('home.order')}</span>
+                      <ArrowRight className="w-3 h-3 text-primary" />
+                    </div>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
           </div>
-          <div className="space-y-1">
-            <p className="text-primary font-headline font-bold text-xl">Daily</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Fresh</p>
-          </div>
+        ) : (
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={onStart}
+            className="w-full py-5 bg-surface-container-low rounded-2xl flex items-center justify-center gap-2"
+          >
+            <ChefHat className="w-5 h-5 text-primary" />
+            <span className="text-primary font-headline font-bold text-sm">{t('home.exploreMenu')}</span>
+            <ArrowRight className="w-4 h-4 text-primary" />
+          </motion.button>
+        )}
+      </section>
+
+      {/* ── Promise strip ───────────────────────────────── */}
+      <section className="mx-6 mb-8 bg-surface-container-low rounded-2xl p-5 relative z-10">
+        <h3 className="font-headline font-extrabold text-[16px] text-on-surface mb-0.5">
+          {t('home.ourPromise')}
+        </h3>
+        <p className="text-on-surface-variant text-[12px] leading-relaxed mb-5">
+          {t('home.promiseDesc')}
+        </p>
+        <div className="grid grid-cols-3 gap-3 border-t border-outline-variant/20 pt-4">
+          {([
+            { val: t('home.orgValue'),   label: t('home.organic') },
+            { val: t('home.srcValue'),   label: t('home.sourced') },
+            { val: t('home.freshValue'), label: t('home.fresh')   },
+          ] as const).map(({ val, label }) => (
+            <div key={label} className="text-center">
+              <p className="font-headline font-extrabold text-primary text-lg">{val}</p>
+              <p className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                {label}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
-      {/* Footer */}
-      <footer className="px-6 py-12 border-t border-outline-variant/10 text-center space-y-6">
-        <div className="flex justify-center gap-4">
-          <div className="w-8 h-8 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface-variant">
-            <Star className="w-4 h-4" />
-          </div>
-          <div className="w-8 h-8 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface-variant">
-            <Utensils className="w-4 h-4" />
-          </div>
-        </div>
-        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">© 2026 Artisan Kitchen</p>
+
+      {/* ── Footer ──────────────────────────────────────── */}
+      <footer className="pb-36 pt-2 text-center">
+        <p className="text-[10px] font-bold text-on-surface-variant/25 uppercase tracking-[0.18em]">
+          © {new Date().getFullYear()} {restaurantName ?? 'Restaurant'}
+        </p>
       </footer>
     </div>
   );

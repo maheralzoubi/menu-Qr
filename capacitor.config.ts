@@ -5,7 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Menu QR',
   webDir: 'dist',
   server: {
-    androidScheme: 'https',
+    androidScheme: 'http',   // avoids mixed-content block when API is plain HTTP
+    cleartext: true,          // allow HTTP traffic to local backend
   },
 };
 
