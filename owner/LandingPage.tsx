@@ -100,7 +100,7 @@ function StripePayForm({
     setPaying(true);
 
     // Store pending data in sessionStorage in case of 3DS redirect
-    sessionStorage.setItem('menuqr_pending', JSON.stringify(pending));
+    sessionStorage.setItem('monar_pending', JSON.stringify(pending));
 
     const returnUrl = new URL(window.location.href);
     returnUrl.searchParams.set('stripe_return', '1');
@@ -119,7 +119,7 @@ function StripePayForm({
     }
 
     if (paymentIntent?.status === 'succeeded') {
-      sessionStorage.removeItem('menuqr_pending');
+      sessionStorage.removeItem('monar_pending');
       onSuccess();
     } else {
       onError(t('checkout.paymentNotCompleted'));
@@ -191,10 +191,10 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
   // Persist checkout state so a page refresh or tab restore doesn't lose the payment form
   useEffect(() => {
     if (step === 'checkout' && clientSecret && pending) {
-      sessionStorage.setItem('menuqr_checkout', JSON.stringify({ clientSecret, pending }));
+      sessionStorage.setItem('monar_checkout', JSON.stringify({ clientSecret, pending }));
     } else if (step === 'success') {
-      sessionStorage.removeItem('menuqr_checkout');
-      sessionStorage.removeItem('menuqr_pending');
+      sessionStorage.removeItem('monar_checkout');
+      sessionStorage.removeItem('monar_pending');
     }
   }, [step, clientSecret, pending]);
 
@@ -204,7 +204,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
     // ── Case 1: Stripe redirected back after 3DS authentication ──────────────
     if (params.get('stripe_return')) {
-      const raw = sessionStorage.getItem('menuqr_pending');
+      const raw = sessionStorage.getItem('monar_pending');
       if (!raw) return;
 
       const stored: PendingAccount = JSON.parse(raw);
@@ -234,19 +234,19 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     }
 
     // ── Case 2: Page was refreshed or tab was restored mid-checkout ──────────
-    const raw = sessionStorage.getItem('menuqr_checkout');
+    const raw = sessionStorage.getItem('monar_checkout');
     if (!raw) return;
 
     let saved: { clientSecret: string; pending: PendingAccount };
     try { saved = JSON.parse(raw); } catch {
-      sessionStorage.removeItem('menuqr_checkout');
+      sessionStorage.removeItem('monar_checkout');
       return;
     }
 
     const { clientSecret: savedCs, pending: savedPending } = saved;
     const savedPlan = FALLBACK_PLANS.find(pl => pl.id === savedPending?.plan);
     if (!savedCs || !savedPending || !savedPlan) {
-      sessionStorage.removeItem('menuqr_checkout');
+      sessionStorage.removeItem('monar_checkout');
       return;
     }
 
@@ -340,8 +340,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       });
       const body = await res.json();
       if (!res.ok) { setPayError(body.message ?? t('checkout.accountCreateFailed')); return; }
-      sessionStorage.removeItem('menuqr_pending');
-      sessionStorage.removeItem('menuqr_checkout');
+      sessionStorage.removeItem('monar_pending');
+      sessionStorage.removeItem('monar_checkout');
       setStep('success');
     } catch {
       setPayError(t('setup.errorNetwork'));
@@ -356,11 +356,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       <div className="min-h-screen bg-surface">
         <nav className="fixed top-0 start-0 end-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <QrCode className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-extrabold text-lg font-headline">MenuQR</span>
+            <div className="flex items-center">
+              <img src="/logo.svg" alt="Monar" className="h-8 w-auto" />
             </div>
             <div className="flex items-center gap-3">
               <LanguageSwitcher />
@@ -528,11 +525,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       <div className="min-h-screen bg-surface">
         <nav className="fixed top-0 start-0 end-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <QrCode className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-extrabold text-lg font-headline">MenuQR</span>
+            <div className="flex items-center">
+              <img src="/logo.svg" alt="Monar" className="h-8 w-auto" />
             </div>
             <button onClick={onLoginClick} className="text-sm text-on-surface-variant hover:text-on-surface transition-colors">
               {t('checkout.alreadyHaveAccount')} <span className="font-bold text-primary">{t('checkout.signIn')}</span>
@@ -631,11 +625,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       <div className="min-h-screen bg-surface">
         <nav className="fixed top-0 start-0 end-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <QrCode className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-extrabold text-lg font-headline">MenuQR</span>
+            <div className="flex items-center">
+              <img src="/logo.svg" alt="Monar" className="h-8 w-auto" />
             </div>
             <button onClick={onLoginClick} className="text-sm text-on-surface-variant hover:text-on-surface transition-colors">
               {t('checkout.alreadyHaveAccount')} <span className="font-bold text-primary">{t('checkout.signIn')}</span>
@@ -644,7 +635,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         </nav>
 
         <div className="pt-28 pb-16 px-6 max-w-4xl mx-auto">
-          <button onClick={() => { sessionStorage.removeItem('menuqr_checkout'); setStep('setup'); }}
+          <button onClick={() => { sessionStorage.removeItem('monar_checkout'); setStep('setup'); }}
             className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-on-surface mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4 rtl:scale-x-[-1]" /> {t('setup.backToSetup')}
           </button>
@@ -660,7 +651,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                   <div className="flex items-center gap-3 mb-6 pb-5 border-b border-outline-variant">
                     <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">{selected.icon}</div>
                     <div>
-                      <p className="font-bold">MenuQR {t(`plans.${selected.id}.name`)}</p>
+                      <p className="font-bold">Monar {t(`plans.${selected.id}.name`)}</p>
                       <p className="text-xs text-on-surface-variant">{t(`checkout.${billing}Billing`)}</p>
                     </div>
                   </div>

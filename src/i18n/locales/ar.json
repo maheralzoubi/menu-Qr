@@ -15,7 +15,7 @@
     }
   },
   "mode": {
-    "appName": "Menu QR",
+    "appName": "Monar",
     "toggleTheme": "تغيير المظهر",
     "heading": "كيف ستتناول\nطعامك اليوم؟",
     "scanLabel": "داخل مطعم",
@@ -25,7 +25,7 @@
     "browseLabel": "تصفح المطاعم",
     "browseTitle": "اطلب أونلاين",
     "browseDesc": "استكشف جميع المطاعم وقدّم طلبك",
-    "poweredBy": "مشغّل بواسطة Menu QR · v1.0"
+    "poweredBy": "مشغّل بواسطة Monar · v1.0"
   },
   "home": {
     "welcomeTo": "مرحباً بك في",
@@ -161,7 +161,7 @@
     "largePartyDesc": "للمجموعات التي تتجاوز 6 أشخاص، يرجى الاتصال بنا مباشرة لضمان استيعاب مجموعتك."
   },
   "restaurants": {
-    "appName": "Menu QR",
+    "appName": "Monar",
     "back": "رجوع",
     "findMeal": "اعثر على وجبتك القادمة",
     "searchPlaceholder": "ابحث عن مطاعم أو مطبخ...",

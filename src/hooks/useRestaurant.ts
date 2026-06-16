@@ -24,7 +24,7 @@ function saveToStorage(ctx: RestaurantContext) {
 }
 
 function applyBranding(name: string, logo: string) {
-  document.title = name || 'Menu QR';
+  document.title = name || 'Monar';
   const existing = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
   const favicon = existing ?? Object.assign(document.createElement('link'), { rel: 'icon' });
   favicon.href = logo || '/favicon.svg';
@@ -40,14 +40,8 @@ export function useRestaurant() {
     const restaurantId = params.get('restaurant');
     const tableName = params.get('table') ?? '';
 
-    // Restore branding from previous visit even when no URL param.
-    const stored = readFromStorage();
-    if (stored) {
-      applyBranding(stored.restaurantName, stored.logo);
-      setContextState(stored);
-    }
-
-    // Only fetch fresh data when URL contains a restaurantId (QR scan / deep link).
+    // Only load a restaurant when the URL carries a restaurantId (QR scan / deep link).
+    // Without it the app always starts on the home / mode-selection screen.
     if (!restaurantId) {
       setLoading(false);
       return;

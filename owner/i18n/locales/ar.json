@@ -38,7 +38,7 @@
     "signIn": "تسجيل الدخول",
     "heroTag": "منصة المطاعم",
     "heroHeading1": "أدر مطعمك",
-    "heroHeading2": "بذكاء مع MenuQR",
+    "heroHeading2": "بذكاء مع Monar",
     "heroSubtext": "قوائم رقمية، وإدارة الطلبات الفورية، والتحليلات، ودعم تعدد الفروع — كل ذلك في مكان واحد.",
     "startTrial": "ابدأ التجربة المجانية",
     "featuresHeading": "كل ما تحتاجه للنمو",
@@ -55,7 +55,7 @@
     "cancelAnytime": "إلغاء في أي وقت",
     "alreadyHaveAccount": "هل لديك حساب؟",
     "signInLink": "سجّل دخولك",
-    "copyright": "© {{year}} MenuQR · جميع الحقوق محفوظة",
+    "copyright": "© {{year}} Monar · جميع الحقوق محفوظة",
     "features": {
       "qrMenus": {
         "title": "قوائم QR الذكية",
@@ -108,7 +108,7 @@
     "stepPayment": "الدفع",
     "stepSetup": "إعداد الحساب",
     "heading": "أعدّ حسابك",
-    "subtext": "أنشئ بيانات تسجيل الدخول الخاصة بك لمنصة MenuQR {{plan}}.",
+    "subtext": "أنشئ بيانات تسجيل الدخول الخاصة بك لمنصة Monar {{plan}}.",
     "fullName": "الاسم الكامل",
     "emailAddress": "عنوان البريد الإلكتروني",
     "restaurantName": "اسم المطعم",
@@ -134,7 +134,7 @@
   "success": {
     "badge": "تم إنشاء الحساب",
     "heading": "أنت جاهز!",
-    "description": "حسابك في MenuQR {{plan}} جاهز. سجّل دخولك إلى لوحة التحكم للبدء.",
+    "description": "حسابك في Monar {{plan}} جاهز. سجّل دخولك إلى لوحة التحكم للبدء.",
     "emailSent": "تم إرسال رسالة ترحيب إلى بريدك الإلكتروني.",
     "goToSignIn": "الذهاب إلى تسجيل الدخول"
   },
@@ -288,7 +288,7 @@
   },
   "customers": {
     "heading": "المشتركون",
-    "subtext": "جميع مشتركي منصة MenuQR.",
+    "subtext": "جميع مشتركي منصة Monar.",
     "search": "ابحث بالاسم، البريد، أو المطعم...",
     "stats": {
       "total": "الإجمالي",

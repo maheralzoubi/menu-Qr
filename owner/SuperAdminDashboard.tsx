@@ -36,15 +36,7 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
       {/* Sidebar */}
       <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 border-r rtl:border-r-0 rtl:border-l border-surface-container bg-surface flex flex-col py-8 z-50">
         <div className="px-6 mb-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shrink-0">
-              <Shield className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-extrabold leading-none">{t('sidebar.ownerPanel')}</h1>
-              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60">{t('sidebar.appManagement')}</p>
-            </div>
-          </div>
+          <img src="/logo.svg" alt="Monar" className="h-9 w-auto" />
         </div>
 
         <nav className="flex-1 px-4 space-y-1">

@@ -1,4 +1,4 @@
-package io.connectedmotion.menuqr;
+package com.monar.app;
 
 import com.getcapacitor.BridgeActivity;
 

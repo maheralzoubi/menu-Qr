@@ -15,7 +15,7 @@
     }
   },
   "mode": {
-    "appName": "Menu QR",
+    "appName": "Monar",
     "toggleTheme": "Toggle theme",
     "heading": "How are you\ndining today?",
     "scanLabel": "Inside a restaurant",
@@ -25,7 +25,7 @@
     "browseLabel": "Browse restaurants",
     "browseTitle": "Order Online",
     "browseDesc": "Explore all restaurants and place your order",
-    "poweredBy": "Powered by Menu QR · v1.0"
+    "poweredBy": "Powered by Monar · v1.0"
   },
   "home": {
     "welcomeTo": "Welcome to",
@@ -161,7 +161,7 @@
     "largePartyDesc": "For groups larger than 6, please call us directly to ensure we can accommodate your party."
   },
   "restaurants": {
-    "appName": "Menu QR",
+    "appName": "Monar",
     "back": "Back",
     "findMeal": "Find your next meal",
     "searchPlaceholder": "Search restaurants or cuisine…",

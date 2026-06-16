@@ -89,8 +89,8 @@ export const HomeScreen = ({ onStart, onReserve, restaurantName, logo, restauran
               {logo ? (
                 <img src={logo} alt={restaurantName} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                  <Utensils className="w-11 h-11 text-white" />
+                <div className="w-full h-full bg-white/15 backdrop-blur-sm flex items-center justify-center p-3">
+                  <img src="/favicon.svg" alt="Monar" className="w-full h-full object-contain" />
                 </div>
               )}
             </div>

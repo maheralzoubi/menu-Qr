@@ -38,7 +38,7 @@
     "signIn": "Sign In",
     "heroTag": "The Restaurant Platform",
     "heroHeading1": "Run your restaurant",
-    "heroHeading2": "smarter with MenuQR",
+    "heroHeading2": "smarter with Monar",
     "heroSubtext": "Digital menus, live order management, analytics, and multi-location support — all in one place.",
     "startTrial": "Start Free Trial",
     "featuresHeading": "Everything you need to grow",
@@ -55,7 +55,7 @@
     "cancelAnytime": "Cancel anytime",
     "alreadyHaveAccount": "Already have an account?",
     "signInLink": "Sign in",
-    "copyright": "© {{year}} MenuQR · All rights reserved",
+    "copyright": "© {{year}} Monar · All rights reserved",
     "features": {
       "qrMenus": {
         "title": "Smart QR Menus",
@@ -108,7 +108,7 @@
     "stepPayment": "Payment",
     "stepSetup": "Setup Account",
     "heading": "Set up your account",
-    "subtext": "Create your login credentials for the MenuQR {{plan}} owner panel.",
+    "subtext": "Create your login credentials for the Monar {{plan}} owner panel.",
     "fullName": "Full Name",
     "emailAddress": "Email Address",
     "restaurantName": "Restaurant Name",
@@ -134,7 +134,7 @@
   "success": {
     "badge": "Account Created",
     "heading": "You're all set!",
-    "description": "Your MenuQR {{plan}} account is ready. Sign in to your owner panel to get started.",
+    "description": "Your Monar {{plan}} account is ready. Sign in to your owner panel to get started.",
     "emailSent": "A welcome email has been sent to your inbox.",
     "goToSignIn": "Go to Sign In"
   },
@@ -288,7 +288,7 @@
   },
   "customers": {
     "heading": "Subscribers",
-    "subtext": "All MenuQR platform subscribers.",
+    "subtext": "All Monar platform subscribers.",
     "search": "Search name, email, or restaurant…",
     "stats": {
       "total": "Total",
