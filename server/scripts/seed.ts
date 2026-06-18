@@ -2,7 +2,55 @@ import '../config/env';
 import { User } from '../models/User';
 import { Restaurant } from '../models/Restaurant';
 import { Plan } from '../models/Plan';
+import { Category } from '../models/Category';
+import { MenuItem } from '../models/MenuItem';
 import { env } from '../config/env';
+
+const FAKE_CATEGORIES = [
+  { name: 'Starters',  description: 'Light bites and appetizers to kick off your meal' },
+  { name: 'Mains',     description: 'Hearty main courses crafted with fresh ingredients' },
+  { name: 'Burgers',   description: 'Juicy handcrafted burgers stacked high' },
+  { name: 'Pizza',     description: 'Stone-baked pizzas with house-made tomato sauce' },
+  { name: 'Pasta',     description: 'Classic Italian pasta dishes made fresh daily' },
+  { name: 'Salads',    description: 'Crisp seasonal salads and grain bowls' },
+  { name: 'Desserts',  description: 'Sweet endings to your perfect meal' },
+  { name: 'Drinks',    description: 'Refreshing beverages, cocktails and mocktails' },
+];
+
+const FAKE_MENU_ITEMS = [
+  // Starters
+  { name: 'Bruschetta al Pomodoro', category: 'Starters', price: 8.50, description: 'Toasted sourdough topped with fresh tomato, basil and olive oil', ingredients: ['sourdough bread', 'cherry tomatoes', 'fresh basil', 'garlic', 'extra virgin olive oil'], allergens: ['gluten'], featured: false },
+  { name: 'Crispy Calamari', category: 'Starters', price: 12.00, description: 'Golden fried squid rings with lemon aioli', ingredients: ['squid', 'flour', 'lemon', 'aioli', 'parsley'], allergens: ['gluten', 'eggs', 'fish'], featured: false },
+  { name: 'Soup of the Day', category: 'Starters', price: 7.00, description: 'Ask your server for today\'s freshly made soup', ingredients: ['seasonal vegetables', 'stock', 'herbs'], allergens: [], featured: false },
+  // Mains
+  { name: 'Grilled Salmon', category: 'Mains', price: 22.00, description: 'Atlantic salmon fillet with roasted vegetables and lemon butter sauce', ingredients: ['salmon', 'asparagus', 'cherry tomatoes', 'butter', 'lemon'], allergens: ['fish', 'dairy'], featured: true },
+  { name: 'Chicken Parmigiana', category: 'Mains', price: 18.50, description: 'Crumbed chicken breast, napoli sauce, mozzarella, served with fries', ingredients: ['chicken breast', 'breadcrumbs', 'mozzarella', 'tomato sauce', 'fries'], allergens: ['gluten', 'dairy', 'eggs'], featured: true },
+  { name: 'Beef Tenderloin', category: 'Mains', price: 34.00, description: '200g tenderloin with truffle mash and red wine jus', ingredients: ['beef tenderloin', 'potatoes', 'truffle oil', 'red wine', 'shallots'], allergens: ['dairy', 'sulphites'], featured: true },
+  // Burgers
+  { name: 'Classic Smash Burger', category: 'Burgers', price: 15.00, description: 'Double smash patty, American cheese, pickles, special sauce', ingredients: ['beef patty', 'brioche bun', 'American cheese', 'pickles', 'lettuce', 'special sauce'], allergens: ['gluten', 'dairy', 'eggs', 'sesame'], featured: true },
+  { name: 'BBQ Bacon Burger', category: 'Burgers', price: 17.50, description: 'Beef patty, crispy bacon, cheddar, onion rings, BBQ sauce', ingredients: ['beef patty', 'brioche bun', 'bacon', 'cheddar', 'onion rings', 'BBQ sauce'], allergens: ['gluten', 'dairy', 'eggs'], featured: false },
+  { name: 'Mushroom Swiss Burger', category: 'Burgers', price: 16.00, description: 'Beef patty, sautéed mushrooms, Swiss cheese, garlic aioli', ingredients: ['beef patty', 'brioche bun', 'mushrooms', 'Swiss cheese', 'garlic aioli'], allergens: ['gluten', 'dairy', 'eggs'], featured: false },
+  // Pizza
+  { name: 'Margherita', category: 'Pizza', price: 14.00, description: 'San Marzano tomato, fresh mozzarella, basil, olive oil', ingredients: ['pizza dough', 'San Marzano tomato', 'fresh mozzarella', 'basil'], allergens: ['gluten', 'dairy'], featured: false },
+  { name: 'Diavola', category: 'Pizza', price: 16.00, description: 'Spicy salami, mozzarella, chilli flakes, tomato base', ingredients: ['pizza dough', 'tomato sauce', 'mozzarella', 'salami', 'chilli flakes'], allergens: ['gluten', 'dairy'], featured: true },
+  { name: 'Quattro Formaggi', category: 'Pizza', price: 17.00, description: 'Mozzarella, gorgonzola, brie, parmesan on white base', ingredients: ['pizza dough', 'mozzarella', 'gorgonzola', 'brie', 'parmesan'], allergens: ['gluten', 'dairy'], featured: false },
+  // Pasta
+  { name: 'Spaghetti Carbonara', category: 'Pasta', price: 15.50, description: 'Guanciale, egg yolk, pecorino, black pepper — the real deal', ingredients: ['spaghetti', 'guanciale', 'egg yolks', 'pecorino romano', 'black pepper'], allergens: ['gluten', 'eggs', 'dairy'], featured: true },
+  { name: 'Penne Arrabbiata', category: 'Pasta', price: 13.00, description: 'Spicy tomato sauce, garlic, chilli, fresh parsley', ingredients: ['penne', 'tomato', 'garlic', 'chilli', 'parsley'], allergens: ['gluten'], featured: false },
+  { name: 'Tagliatelle al Ragù', category: 'Pasta', price: 17.00, description: 'Slow-cooked beef and pork ragù, fresh egg tagliatelle', ingredients: ['tagliatelle', 'beef mince', 'pork mince', 'tomato', 'carrot', 'celery', 'wine'], allergens: ['gluten', 'eggs', 'sulphites'], featured: false },
+  // Salads
+  { name: 'Caesar Salad', category: 'Salads', price: 12.00, description: 'Cos lettuce, parmesan shards, house croutons, Caesar dressing', ingredients: ['cos lettuce', 'parmesan', 'croutons', 'Caesar dressing', 'anchovies'], allergens: ['gluten', 'dairy', 'eggs', 'fish'], featured: false },
+  { name: 'Greek Salad', category: 'Salads', price: 11.00, description: 'Tomato, cucumber, kalamata olives, red onion, feta', ingredients: ['tomatoes', 'cucumber', 'olives', 'red onion', 'feta', 'oregano'], allergens: ['dairy'], featured: false },
+  { name: 'Quinoa Power Bowl', category: 'Salads', price: 14.00, description: 'Tri-colour quinoa, roasted sweet potato, kale, tahini dressing', ingredients: ['quinoa', 'sweet potato', 'kale', 'chickpeas', 'tahini', 'lemon'], allergens: ['sesame'], featured: false },
+  // Desserts
+  { name: 'Tiramisu', category: 'Desserts', price: 9.00, description: 'Classic Italian dessert with mascarpone, espresso, ladyfingers', ingredients: ['mascarpone', 'ladyfingers', 'espresso', 'egg yolks', 'cocoa'], allergens: ['gluten', 'dairy', 'eggs'], featured: true },
+  { name: 'Chocolate Lava Cake', category: 'Desserts', price: 10.00, description: 'Warm chocolate cake with molten centre, vanilla ice cream', ingredients: ['dark chocolate', 'butter', 'eggs', 'flour', 'vanilla ice cream'], allergens: ['gluten', 'dairy', 'eggs'], featured: true },
+  { name: 'Panna Cotta', category: 'Desserts', price: 8.00, description: 'Vanilla panna cotta with mixed berry coulis', ingredients: ['cream', 'vanilla', 'gelatin', 'mixed berries', 'sugar'], allergens: ['dairy'], featured: false },
+  // Drinks
+  { name: 'Fresh Orange Juice', category: 'Drinks', price: 5.00, description: 'Freshly squeezed orange juice', ingredients: ['oranges'], allergens: [], featured: false },
+  { name: 'House Lemonade', category: 'Drinks', price: 4.50, description: 'Homemade lemonade with fresh mint', ingredients: ['lemon', 'sugar syrup', 'sparkling water', 'mint'], allergens: [], featured: false },
+  { name: 'Espresso Martini', category: 'Drinks', price: 14.00, description: 'Vodka, espresso, coffee liqueur, vanilla — shaken cold', ingredients: ['vodka', 'espresso', 'Kahlúa', 'vanilla syrup'], allergens: [], featured: true },
+];
 
 // Stripe Price IDs from env vars — used to seed the Plan docs on first run
 const ENV_PRICE_IDS: Record<string, { monthly: string; annual: string }> = {
@@ -93,6 +141,26 @@ export async function runSeed() {
       restaurant.adminId = admin._id as any;
       await restaurant.save();
       console.log('Demo restaurant created: admin@restaurant.com / admin123');
+    }
+  }
+
+  // Seed fake categories and menu items for the demo restaurant
+  const demoRestaurant = await Restaurant.findOne({ contactEmail: 'admin@restaurant.com' });
+  if (demoRestaurant) {
+    const categoryCount = await Category.countDocuments({ restaurantId: demoRestaurant._id });
+    if (categoryCount === 0) {
+      await Category.insertMany(
+        FAKE_CATEGORIES.map(c => ({ ...c, restaurantId: demoRestaurant._id }))
+      );
+      console.log(`Seeded ${FAKE_CATEGORIES.length} categories`);
+    }
+
+    const menuItemCount = await MenuItem.countDocuments({ restaurantId: demoRestaurant._id });
+    if (menuItemCount === 0) {
+      await MenuItem.insertMany(
+        FAKE_MENU_ITEMS.map(item => ({ ...item, restaurantId: demoRestaurant._id }))
+      );
+      console.log(`Seeded ${FAKE_MENU_ITEMS.length} menu items`);
     }
   }
 }
