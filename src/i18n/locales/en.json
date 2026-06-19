@@ -224,5 +224,20 @@
     "recentOrders": "Recent Orders",
     "noOrders": "No orders yet",
     "orderNum": "Order #{{id}}"
+  },
+  "spinWheel": {
+    "title": "🎡 Spin the Wheel",
+    "subtitle": "Let luck decide your meal!",
+    "filterAll": "All Items",
+    "filterPopular": "Popular",
+    "spinButton": "Spin!",
+    "spinning": "Spinning...",
+    "resultTitle": "Today's Pick for You!",
+    "addToCart": "Add to Cart",
+    "spinAgain": "Spin Again",
+    "viewDetails": "View Details",
+    "notEnoughItems": "Not enough items for this filter",
+    "showAll": "Show All Items",
+    "itemCount": "{{count}} dishes on the wheel"
   }
 }

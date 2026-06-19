@@ -224,5 +224,20 @@
     "recentOrders": "الطلبات الأخيرة",
     "noOrders": "لا توجد طلبات بعد",
     "orderNum": "طلب #{{id}}"
+  },
+  "spinWheel": {
+    "title": "🎡 عجلة الحظ",
+    "subtitle": "دع الحظ يختار وجبتك!",
+    "filterAll": "كل الأطباق",
+    "filterPopular": "الأكثر شعبية",
+    "spinButton": "أدر العجلة!",
+    "spinning": "تدور...",
+    "resultTitle": "اختيارك لهذا اليوم!",
+    "addToCart": "أضف إلى السلة",
+    "spinAgain": "أدر مجدداً",
+    "viewDetails": "عرض التفاصيل",
+    "notEnoughItems": "لا توجد أطباق كافية لهذا الفلتر",
+    "showAll": "عرض جميع الأطباق",
+    "itemCount": "{{count}} طبق على العجلة"
   }
 }
