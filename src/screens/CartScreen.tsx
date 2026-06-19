@@ -3,19 +3,15 @@ import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MessageSquare, Clock, Aler
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../contexts/CartContext';
-import { getCustomerInfo } from '../lib/customerAuth';
-import type { CustomerInfo } from '../lib/customerAuth';
 
 interface Props {
   onBack: () => void;
   onOrderPlaced: (orderId: string) => void;
-  customer: CustomerInfo | null;
-  onLoginRequest: () => void;
 }
 
 const PICKUP_TIMES = ['ASAP', '15 min', '30 min', '45 min', '1 hour'];
 
-export const CartScreen = ({ onBack, onOrderPlaced, customer, onLoginRequest }: Props) => {
+export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
   const { i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
   const { items, restaurantName, restaurantId, updateQty, removeItem, updateNote, clearCart, total } = useCart();
@@ -27,7 +23,6 @@ export const CartScreen = ({ onBack, onOrderPlaced, customer, onLoginRequest }: 
   const [error, setError] = useState('');
 
   const handlePlace = async () => {
-    if (!customer) { onLoginRequest(); return; }
     if (items.length === 0) return;
     setError(''); setPlacing(true);
 
@@ -41,7 +36,7 @@ export const CartScreen = ({ onBack, onOrderPlaced, customer, onLoginRequest }: 
         })),
         total,
         restaurantId,
-        customerName: customer.name || customer.email,
+        customerName: 'Guest',
         order_source: 'CUSTOMER_APP',
         order_type: 'PICKUP',
         payment_method: 'PAY_LATER',

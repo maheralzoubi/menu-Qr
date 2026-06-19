@@ -1,10 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { CartProvider } from './contexts/CartContext';
-import { WelcomeScreen } from './screens/WelcomeScreen';
-import { CustomerLoginScreen } from './screens/CustomerLoginScreen';
-import { CustomerRegisterScreen } from './screens/CustomerRegisterScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { RestaurantScreen } from './screens/RestaurantScreen';
 import { CartScreen } from './screens/CartScreen';
@@ -12,10 +9,7 @@ import { OrderTrackingScreen } from './screens/OrderTrackingScreen';
 import { OrdersScreen } from './screens/OrdersScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { BottomNav } from './components/BottomNav';
-import { getCustomerToken, clearCustomerToken, getCustomerInfo, setCustomerInfo, setCustomerToken } from './lib/customerAuth';
-import type { CustomerInfo } from './lib/customerAuth';
 
-type AuthScreen = 'welcome' | 'login' | 'register';
 export type MainTab = 'home' | 'orders' | 'profile';
 export type Overlay =
   | null
@@ -33,27 +27,8 @@ export default function App() {
   const { i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
-  const [authScreen, setAuthScreen] = useState<AuthScreen | null>(null);
   const [mainTab, setMainTab] = useState<MainTab>('home');
   const [overlay, setOverlay] = useState<Overlay>(null);
-  const [customer, setCustomer] = useState<CustomerInfo | null>(getCustomerInfo());
-
-  useEffect(() => {
-    if (!getCustomerToken()) setAuthScreen('welcome');
-  }, []);
-
-  const handleAuthSuccess = useCallback(() => {
-    setCustomer(getCustomerInfo());
-    setAuthScreen(null);
-  }, []);
-
-  const handleLogout = useCallback(() => {
-    clearCustomerToken();
-    setCustomer(null);
-    setOverlay(null);
-    setMainTab('home');
-    setAuthScreen('welcome');
-  }, []);
 
   const openRestaurant = useCallback((id: string, name: string, logo?: string) => {
     setOverlay({ type: 'restaurant', id, name, logo });
@@ -68,44 +43,6 @@ export default function App() {
     setTimeout(() => setOverlay({ type: 'tracking', orderId }), 50);
   }, []);
 
-  if (authScreen) {
-    return (
-      <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-surface">
-        <AnimatePresence mode="wait">
-          {authScreen === 'welcome' && (
-            <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <WelcomeScreen
-                onLogin={() => setAuthScreen('login')}
-                onRegister={() => setAuthScreen('register')}
-                onGuest={() => setAuthScreen(null)}
-              />
-            </motion.div>
-          )}
-          {authScreen === 'login' && (
-            <motion.div key="login" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-              <CustomerLoginScreen
-                restaurantId=""
-                onSuccess={handleAuthSuccess}
-                onBack={() => setAuthScreen('welcome')}
-                onRegisterClick={() => setAuthScreen('register')}
-              />
-            </motion.div>
-          )}
-          {authScreen === 'register' && (
-            <motion.div key="register" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-              <CustomerRegisterScreen
-                restaurantId=""
-                onSuccess={handleAuthSuccess}
-                onBack={() => setAuthScreen('login')}
-                onLoginClick={() => setAuthScreen('login')}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  }
-
   return (
     <CartProvider>
       <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-gray-50 flex flex-col select-none">
@@ -114,30 +51,17 @@ export default function App() {
           <AnimatePresence mode="wait">
             {mainTab === 'home' && (
               <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <HomeScreen
-                  customer={customer}
-                  onOpenRestaurant={openRestaurant}
-                  onOpenTracking={openTracking}
-                  onLoginRequest={() => setAuthScreen('login')}
-                />
+                <HomeScreen onOpenRestaurant={openRestaurant} onOpenTracking={openTracking} />
               </motion.div>
             )}
             {mainTab === 'orders' && (
               <motion.div key="orders" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <OrdersScreen
-                  customer={customer}
-                  onOpenTracking={openTracking}
-                  onLoginRequest={() => setAuthScreen('login')}
-                />
+                <OrdersScreen onOpenTracking={openTracking} />
               </motion.div>
             )}
             {mainTab === 'profile' && (
               <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <ProfileScreen
-                  customer={customer}
-                  onLogout={handleLogout}
-                  onLoginRequest={() => setAuthScreen('login')}
-                />
+                <ProfileScreen />
               </motion.div>
             )}
           </AnimatePresence>
@@ -160,12 +84,7 @@ export default function App() {
           )}
           {overlay?.type === 'cart' && (
             <motion.div key="cart" className="fixed inset-0 z-50 bg-surface" {...slideUp}>
-              <CartScreen
-                onBack={closeOverlay}
-                onOrderPlaced={handleOrderPlaced}
-                customer={customer}
-                onLoginRequest={() => { closeOverlay(); setAuthScreen('login'); }}
-              />
+              <CartScreen onBack={closeOverlay} onOrderPlaced={handleOrderPlaced} />
             </motion.div>
           )}
           {overlay?.type === 'tracking' && (

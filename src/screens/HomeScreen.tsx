@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Search, Bell, ChevronRight, Clock, Star, RefreshCw, MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import type { CustomerInfo } from '../lib/customerAuth';
 
 interface Restaurant {
   _id: string;
@@ -14,10 +13,8 @@ interface Restaurant {
 }
 
 interface Props {
-  customer: CustomerInfo | null;
   onOpenRestaurant: (id: string, name: string, logo?: string) => void;
   onOpenTracking: (orderId: string) => void;
-  onLoginRequest: () => void;
 }
 
 const FOOD_CATEGORIES = [
@@ -51,7 +48,7 @@ function getGreeting() {
   return '🌙 Good evening';
 }
 
-export const HomeScreen = ({ customer, onOpenRestaurant, onOpenTracking }: Props) => {
+export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
   const { i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
@@ -82,7 +79,7 @@ export const HomeScreen = ({ customer, onOpenRestaurant, onOpenTracking }: Props
     return () => clearInterval(t);
   }, []);
 
-  const firstName = customer?.name?.split(' ')[0] || '';
+  const firstName = '';
 
   return (
     <div className="bg-gray-50 min-h-screen pb-4">

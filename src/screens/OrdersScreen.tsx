@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Package, ChevronRight, Clock, LogIn } from 'lucide-react';
+import { Package, ChevronRight, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import type { CustomerInfo } from '../lib/customerAuth';
 
 interface Props {
-  customer: CustomerInfo | null;
   onOpenTracking: (orderId: string) => void;
-  onLoginRequest: () => void;
 }
 
 type Tab = 'current' | 'past';
@@ -21,7 +18,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ACTIVE_STATUSES = ['Pending', 'Preparing', 'Ready'];
 
-export const OrdersScreen = ({ customer, onOpenTracking, onLoginRequest }: Props) => {
+export const OrdersScreen = ({ onOpenTracking }: Props) => {
   const [tab, setTab] = useState<Tab>('current');
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,29 +37,10 @@ export const OrdersScreen = ({ customer, onOpenTracking, onLoginRequest }: Props
   const pastOrders = orders.filter(o => !ACTIVE_STATUSES.includes(o.status));
   const displayOrders = tab === 'current' ? currentOrders : pastOrders;
 
-  if (!customer) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-8 text-center gap-5">
-        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
-          <Package className="w-10 h-10 text-primary opacity-60" />
-        </div>
-        <div>
-          <h2 className="text-xl font-extrabold font-headline">Track Your Orders</h2>
-          <p className="text-sm text-on-surface-variant mt-2">Sign in to see your order history and real-time status</p>
-        </div>
-        <button onClick={onLoginRequest} className="btn-gradient text-white px-8 py-3.5 rounded-2xl font-extrabold flex items-center gap-2 shadow-lg shadow-primary/20">
-          <LogIn className="w-4 h-4" /> Sign In
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* Header */}
       <div className="bg-surface px-5 pt-12 pb-4 sticky top-0 z-10 shadow-sm">
         <h1 className="text-xl font-extrabold font-headline mb-4">My Orders</h1>
-        {/* Tabs */}
         <div className="flex gap-1 bg-surface-container rounded-2xl p-1">
           {(['current', 'past'] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)}
@@ -89,13 +67,11 @@ export const OrdersScreen = ({ customer, onOpenTracking, onLoginRequest }: Props
           <AnimatePresence>
             <div className="space-y-3">
               {displayOrders.map((order, idx) => (
-                <motion.button
-                  key={order._id}
+                <motion.button key={order._id}
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOpenTracking(order._id)}
-                  className="w-full bg-surface rounded-2xl p-4 text-left shadow-sm border border-surface-container"
-                >
+                  className="w-full bg-surface rounded-2xl p-4 text-left shadow-sm border border-surface-container">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
                       <p className="font-extrabold text-sm">#{order._id?.slice(-6).toUpperCase()}</p>
