@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, ChevronRight, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { io } from 'socket.io-client';
 
 interface Props {
   onOpenTracking: (orderId: string) => void;
@@ -23,6 +24,7 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Initial load
   useEffect(() => {
     try {
       const history: string[] = JSON.parse(localStorage.getItem('order_history') || '[]');
@@ -31,6 +33,18 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
         .then(results => { setOrders(results.filter(Boolean)); setLoading(false); })
         .catch(() => setLoading(false));
     } catch { setLoading(false); }
+  }, []);
+
+  // Live status updates via socket
+  useEffect(() => {
+    const socketUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    const socket = io(socketUrl, { path: '/socket.io' });
+
+    socket.on('order:status', ({ id, status }: { id: string; status: string }) => {
+      setOrders(prev => prev.map(o => o._id === id ? { ...o, status } : o));
+    });
+
+    return () => { socket.disconnect(); };
   }, []);
 
   const currentOrders = orders.filter(o => ACTIVE_STATUSES.includes(o.status));
@@ -45,7 +59,7 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
           {(['current', 'past'] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`flex-1 py-2.5 rounded-xl text-sm font-bold capitalize transition-all ${
-                tab === t ? 'bg-surface shadow-sm text-on-surface' : 'text-on-surface-variant'
+                tab === t ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant'
               }`}>
               {t === 'current' ? `Active (${currentOrders.length})` : `Past (${pastOrders.length})`}
             </button>
@@ -55,7 +69,7 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
 
       <div className="px-5 py-4">
         {loading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-surface rounded-2xl h-24 animate-pulse" />)}</div>
+          <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-surface-container rounded-2xl h-24 animate-pulse" />)}</div>
         ) : displayOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant gap-3">
             <Package className="w-12 h-12 opacity-20" />
@@ -71,7 +85,7 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOpenTracking(order._id)}
-                  className="w-full bg-surface rounded-2xl p-4 text-left shadow-sm border border-surface-container">
+                  className="w-full bg-surface-container rounded-2xl p-4 text-left border border-surface-container-high">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
                       <p className="font-extrabold text-sm">#{order._id?.slice(-6).toUpperCase()}</p>
@@ -81,9 +95,13 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status] || 'bg-surface-container-high text-on-surface-variant'}`}>
+                      <motion.span
+                        key={order.status}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status] || 'bg-surface-container-high text-on-surface-variant'}`}>
                         {order.status}
-                      </span>
+                      </motion.span>
                       <ChevronRight className="w-4 h-4 text-on-surface-variant/40" />
                     </div>
                   </div>
