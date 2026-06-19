@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { Utensils, Shield, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface Props {
@@ -18,7 +18,6 @@ export const AdminLoginScreen = ({
   onTokenSave,
   title = 'Admin Access',
   subtitle = 'Sign in to manage the restaurant',
-  icon = 'utensils',
 }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,14 +49,15 @@ export const AdminLoginScreen = ({
     }
   };
 
-  const Icon = icon === 'shield' ? Shield : Utensils;
-
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-primary-container flex items-center justify-center text-on-primary mx-auto">
-            <Icon className="w-8 h-8" />
+          <div className="flex justify-center">
+            <picture>
+              <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
+              <img src="/logo.svg" alt="Monar" className="h-20 w-auto" />
+            </picture>
           </div>
           <h1 className="text-2xl font-headline font-extrabold">{title}</h1>
           <p className="text-sm text-on-surface-variant">{subtitle}</p>
@@ -91,9 +91,7 @@ export const AdminLoginScreen = ({
           </button>
         </form>
 
-        <button onClick={onBack} className="w-full text-center text-xs text-on-surface-variant/40 hover:text-on-surface-variant transition-colors">
-          Back to app
-        </button>
+
       </motion.div>
     </div>
   );

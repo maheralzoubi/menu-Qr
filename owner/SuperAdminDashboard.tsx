@@ -36,7 +36,7 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
       {/* Sidebar */}
       <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50" style={{ backgroundColor: '#303942' }}>
         <div className="px-6 mb-10">
-          <img src="/favicon.svg" alt="Monar" className="h-9 w-auto" />
+          <img src="/logo-dark.svg" alt="Monar" className="h-9 w-auto" />
         </div>
 
         <nav className="flex-1 px-4 space-y-1">
