@@ -80,14 +80,14 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
           <button onClick={handleToggleStatus}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
               restaurant.status === 'active'
-                ? 'bg-rose-50 text-rose-600 hover:bg-rose-100'
-                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                ? 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                : 'bg-primary/10 text-primary hover:bg-primary/20'
             }`}>
             {restaurant.status === 'active'
               ? <><ToggleRight className="w-4 h-4" /> {t('restaurantDetail.deactivate')}</>
               : <><ToggleLeft className="w-4 h-4" /> {t('restaurantDetail.activate')}</>}
           </button>
-          <button onClick={handleDelete} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+          <button onClick={handleDelete} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">
             <Trash2 className="w-4 h-4" /> {t('restaurantDetail.delete')}
           </button>
         </div>
@@ -102,7 +102,7 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2 flex-wrap">
             <h2 className="text-3xl font-headline font-extrabold">{restaurant.name}</h2>
-            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${restaurant.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${restaurant.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
               {t(`common.${restaurant.status}`)}
             </span>
           </div>

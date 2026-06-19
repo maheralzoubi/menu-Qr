@@ -220,7 +220,7 @@ export const RestaurantList = ({ onSelect }: Props) => {
                       </div>
                     </td>
                     <td className="p-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${r.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${r.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
                         {t(`common.${r.status}`)}
                       </span>
                     </td>
@@ -234,11 +234,11 @@ export const RestaurantList = ({ onSelect }: Props) => {
                           <Eye className="w-4 h-4" />
                         </button>
                         <button onClick={() => handleToggleStatus(r._id, r.status)}
-                          className={`p-2 rounded-xl transition-colors ${r.status === 'active' ? 'hover:bg-rose-50 text-rose-500' : 'hover:bg-emerald-50 text-emerald-600'}`}
+                          className={`p-2 rounded-xl transition-colors ${r.status === 'active' ? 'hover:bg-surface-container-high text-on-surface-variant' : 'hover:bg-primary/10 text-primary'}`}
                           title={r.status === 'active' ? t('restaurants.deactivate') : t('restaurants.activate')}>
                           {r.status === 'active' ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                         </button>
-                        <button onClick={() => handleDelete(r._id)} className="p-2 rounded-xl hover:bg-rose-50 text-rose-500 transition-colors" title={t('common.delete')}>
+                        <button onClick={() => handleDelete(r._id)} className="p-2 rounded-xl hover:bg-surface-container-high text-on-surface-variant transition-colors" title={t('common.delete')}>
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -323,7 +323,7 @@ export const RestaurantList = ({ onSelect }: Props) => {
                   </div>
                 </div>
 
-                {formError && <p className="text-sm text-rose-500 font-medium">{formError}</p>}
+                {formError && <p className="text-sm text-on-surface-variant font-medium">{formError}</p>}
               </form>
 
               <div className="px-8 py-6 border-t border-surface-container flex gap-3">

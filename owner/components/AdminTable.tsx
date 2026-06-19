@@ -112,7 +112,7 @@ export const AdminTable = () => {
       <div className="grid grid-cols-2 gap-6">
         {[
           { labelKey: 'admins.stats.totalAdmins', value: admins.length, color: 'text-primary' },
-          { labelKey: 'admins.stats.staff', value: admins.filter(a => a.role === 'staff').length, color: 'text-amber-600' },
+          { labelKey: 'admins.stats.staff', value: admins.filter(a => a.role === 'staff').length, color: 'text-on-surface-variant' },
         ].map(s => (
           <div key={s.labelKey} className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10 shadow-sm">
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
@@ -154,7 +154,7 @@ export const AdminTable = () => {
                       </div>
                     </td>
                     <td className="p-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${a.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'}`}>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${a.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-[#303942]/20 text-on-surface-variant'}`}>
                         {t(`common.${a.role}`)}
                       </span>
                     </td>
@@ -162,7 +162,7 @@ export const AdminTable = () => {
                     <td className="p-5">
                       <div className="flex justify-end">
                         <button onClick={() => handleDelete(a._id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-50 text-rose-500 transition-colors">
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-surface-container-high text-on-surface-variant transition-colors">
                           <Trash2 className="w-3 h-3" /> {t('common.delete')}
                         </button>
                       </div>
@@ -247,7 +247,7 @@ export const AdminTable = () => {
                   </div>
                 </div>
 
-                {formError && <p className="text-sm text-rose-500 font-medium">{formError}</p>}
+                {formError && <p className="text-sm text-on-surface-variant font-medium">{formError}</p>}
               </form>
 
               <div className="px-8 py-6 border-t border-surface-container flex gap-3">

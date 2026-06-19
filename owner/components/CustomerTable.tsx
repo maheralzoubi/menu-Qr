@@ -200,8 +200,8 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
       <div className="grid grid-cols-3 gap-6">
         {[
           { labelKey: 'customers.stats.total',  value: subscribers.length, icon: <Users className="w-6 h-6" />,     color: 'text-primary',      filter: 'all' },
-          { labelKey: 'customers.stats.active', value: active,             icon: <UserCheck className="w-6 h-6" />, color: 'text-emerald-600',  filter: 'active' },
-          { labelKey: 'customers.stats.locked', value: locked,             icon: <UserX className="w-6 h-6" />,     color: 'text-rose-500',     filter: 'locked' },
+          { labelKey: 'customers.stats.active', value: active,             icon: <UserCheck className="w-6 h-6" />, color: 'text-primary',  filter: 'active' },
+          { labelKey: 'customers.stats.locked', value: locked,             icon: <UserX className="w-6 h-6" />,     color: 'text-on-surface-variant',     filter: 'locked' },
         ].map(s => (
           <button key={s.labelKey} onClick={() => setFilterStatus(s.filter as any)}
             className={`p-6 rounded-3xl flex items-center justify-between shadow-sm border transition-all ${filterStatus === s.filter ? 'bg-surface-container-lowest border-primary ring-2 ring-primary' : 'bg-surface-container-low border-outline-variant/10 hover:bg-surface-container-lowest'}`}>
@@ -268,7 +268,7 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
                       </td>
 
                       <td className="p-5">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${s.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${s.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
                           {t(`common.${s.status}`)}
                         </span>
                       </td>
@@ -282,13 +282,13 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
                             </button>
                           )}
                           <button onClick={() => handleStatusToggle(s._id, s.status)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${s.status === 'active' ? 'hover:bg-rose-50 text-rose-500' : 'hover:bg-emerald-50 text-emerald-600'}`}>
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${s.status === 'active' ? 'hover:bg-surface-container-high text-on-surface-variant' : 'hover:bg-primary/10 text-primary'}`}>
                             {s.status === 'active'
                               ? <><Lock className="w-3 h-3" /> {t('customers.actions.lock')}</>
                               : <><Unlock className="w-3 h-3" /> {t('customers.actions.unlock')}</>}
                           </button>
                           <button onClick={() => handleDelete(s._id)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-50 text-rose-500 transition-colors">
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-surface-container-high text-on-surface-variant transition-colors">
                             <Trash2 className="w-3 h-3" /> {t('customers.actions.delete')}
                           </button>
                         </div>
