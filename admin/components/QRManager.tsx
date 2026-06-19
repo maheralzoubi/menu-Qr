@@ -227,8 +227,8 @@ export const QRManager = ({ restaurantId }: Props) => {
         <div className="grid grid-cols-3 gap-6">
           {[
             { labelKey: 'qr.totalTables', value: tables.length },
-            { labelKey: 'qr.occupied',    value: occupied, color: 'text-amber-600' },
-            { labelKey: 'qr.free',        value: free,     color: 'text-emerald-600' },
+            { labelKey: 'qr.occupied',    value: occupied, color: 'text-primary' },
+            { labelKey: 'qr.free',        value: free,     color: 'text-primary' },
           ].map(s => (
             <div key={s.labelKey} className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10 shadow-sm">
               <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
@@ -280,13 +280,13 @@ export const QRManager = ({ restaurantId }: Props) => {
                     className={`bg-surface-container-low rounded-3xl overflow-hidden border shadow-sm flex flex-col cursor-pointer transition-all hover:shadow-xl ${
                       isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-outline-variant/10 hover:border-primary/30'
                     }`}>
-                    <div className={`h-1.5 w-full ${isOccupied ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                    <div className={`h-1.5 w-full ${isOccupied ? 'bg-[#303942]/30' : 'bg-primary'}`} />
                     <div className="p-5 flex flex-col flex-1 space-y-4">
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="font-headline font-bold text-lg leading-tight">{table.name}</h3>
                           <div className="flex items-center gap-1.5 mt-1">
-                            <span className={`w-2 h-2 rounded-full ${isOccupied ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                            <span className={`w-2 h-2 rounded-full ${isOccupied ? 'bg-[#303942]/30' : 'bg-primary'}`} />
                             <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
                               {isOccupied ? t('qr.occupied') : t('qr.free')}
                               {isManual && ` ${t('qr.manual')}`}
@@ -309,8 +309,8 @@ export const QRManager = ({ restaurantId }: Props) => {
                         <button onClick={(e) => { e.stopPropagation(); handleStatusCycle(table); }}
                           className={`p-2.5 rounded-xl font-bold text-xs transition-colors ${
                             table.manualStatus === null ? 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
-                            : table.manualStatus === 'occupied' ? 'bg-amber-100 text-amber-700'
-                            : 'bg-emerald-100 text-emerald-700'
+                            : table.manualStatus === 'occupied' ? 'bg-[#303942]/10 text-[#303942]'
+                            : 'bg-primary/10 text-primary'
                           }`}
                           title={table.manualStatus === null ? t('qr.autoMode') : t(table.manualStatus === 'occupied' ? 'qr.manualOccupied' : 'qr.manualFree')}>
                           {table.manualStatus === null ? <Minus className="w-3.5 h-3.5" /> :
@@ -318,7 +318,7 @@ export const QRManager = ({ restaurantId }: Props) => {
                            <ToggleLeft className="w-3.5 h-3.5" />}
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); handleDelete(table._id); }}
-                          className="p-2.5 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-100 transition-colors">
+                          className="p-2.5 rounded-xl bg-rose-50 text-primary hover:bg-rose-100 transition-colors">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -333,8 +333,8 @@ export const QRManager = ({ restaurantId }: Props) => {
         {tables.length > 0 && (
           <div className="flex items-center gap-6 text-xs text-on-surface-variant/60 font-medium flex-wrap">
             <div className="flex items-center gap-2"><Minus className="w-3 h-3" /> {t('qr.autoMode')}</div>
-            <div className="flex items-center gap-2"><ToggleRight className="w-3 h-3 text-amber-600" /> {t('qr.manualOccupied')}</div>
-            <div className="flex items-center gap-2"><ToggleLeft className="w-3 h-3 text-emerald-600" /> {t('qr.manualFree')}</div>
+            <div className="flex items-center gap-2"><ToggleRight className="w-3 h-3 text-primary" /> {t('qr.manualOccupied')}</div>
+            <div className="flex items-center gap-2"><ToggleLeft className="w-3 h-3 text-primary" /> {t('qr.manualFree')}</div>
           </div>
         )}
       </div>
@@ -426,7 +426,7 @@ export const QRManager = ({ restaurantId }: Props) => {
                         <p className="text-xs font-bold text-on-surface-variant truncate">Logo set</p>
                       </div>
                       <button onClick={() => applyStyle({ ...qrStyle, logo: null })}
-                        className="p-1.5 rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 transition-colors shrink-0">
+                        className="p-1.5 rounded-lg bg-rose-50 text-primary hover:bg-rose-100 transition-colors shrink-0">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>

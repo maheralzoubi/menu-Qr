@@ -168,7 +168,7 @@ const ReceiptModal: React.FC<{ order: any; onClose: () => void; onPrint: () => v
       {/* Totals + meta */}
       <div className="px-6 pb-2 border-t border-surface-container space-y-2 pt-3">
         {order.discount > 0 && (
-          <div className="flex justify-between text-sm text-green-600">
+          <div className="flex justify-between text-sm text-primary">
             <span>Discount</span><span>-${order.discount.toFixed(2)}</span>
           </div>
         )}
@@ -475,7 +475,7 @@ export const CashierPOS = () => {
                   )}
                 </div>
               )}
-              {promoResult && <p className="text-[10px] text-green-600 flex items-center gap-1"><Check className="w-3 h-3" /> Applied — save ${discountAmount.toFixed(2)}</p>}
+              {promoResult && <p className="text-[10px] text-primary flex items-center gap-1"><Check className="w-3 h-3" /> Applied — save ${discountAmount.toFixed(2)}</p>}
               {promoError && <p className="text-[10px] text-red-500">{promoError}</p>}
             </div>
 
@@ -498,7 +498,7 @@ export const CashierPOS = () => {
                 <span>Subtotal</span><span className="tabular-nums">${subtotal.toFixed(2)}</span>
               </div>
               {discountAmount > 0 && (
-                <div className="flex justify-between text-xs text-green-600 font-medium">
+                <div className="flex justify-between text-xs text-primary font-medium">
                   <span>Discount</span><span className="tabular-nums">-${discountAmount.toFixed(2)}</span>
                 </div>
               )}

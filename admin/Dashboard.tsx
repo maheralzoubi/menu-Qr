@@ -90,12 +90,9 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   return (
     <div className="min-h-screen bg-surface flex text-on-surface">
       {/* Sidebar */}
-      <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 border-r rtl:border-r-0 rtl:border-l border-surface-container bg-surface flex flex-col py-8 z-50">
+      <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50" style={{ backgroundColor: '#303942' }}>
         <div className="px-6 mb-10">
-          <picture>
-            <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
-            <img src="/logo.svg" alt="Monar" className="h-9 w-auto" />
-          </picture>
+          <img src="/favicon.svg" alt="Monar" className="h-9 w-auto" />
         </div>
 
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
@@ -105,8 +102,8 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
               onClick={() => setActiveTab(item.id as DashboardTab)}
               className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-xl ${
                 activeTab === item.id
-                  ? 'text-on-surface font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-surface-container'
-                  : 'text-on-surface-variant opacity-70 hover:bg-surface-container hover:opacity-100'
+                  ? 'text-white font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-white/10'
+                  : 'text-white/60 hover:bg-white/10 hover:text-white'
               }`}
             >
               <span className="shrink-0">{item.icon}</span>
@@ -115,9 +112,9 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           ))}
         </nav>
 
-        <div className="px-4 mt-auto pt-6 border-t border-surface-container space-y-2">
-          <LanguageSwitcher className="w-full justify-center" />
-          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant opacity-70 hover:bg-surface-container rounded-xl transition-all">
+        <div className="px-4 mt-auto pt-6 border-t border-white/10 space-y-2">
+          <LanguageSwitcher className="w-full justify-center text-white border-white/20 hover:bg-white/10" />
+          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/10 hover:text-white rounded-xl transition-all">
             <LogOut className="w-5 h-5" />
             <span className="text-sm">{t('dashboard.logout')}</span>
           </button>
@@ -126,7 +123,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
 
       {/* Main */}
       <main className="flex-1 ml-64 rtl:ml-0 rtl:mr-64 min-h-screen">
-        <header className="w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-surface-container flex justify-between items-center px-8 py-4">
+        <header className="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-surface-container flex justify-between items-center px-8 py-4">
           <span className="text-xl font-bold font-headline">{t('dashboard.headerTitle')}</span>
           <div className="flex items-center gap-3">
             <div className="text-end hidden xl:block">

@@ -1,0 +1,48 @@
+/* ── Admin-specific theme overrides ───────────────────────────────────────
+   Surfaces are light; sidebar uses #303942 explicitly in components.
+   Primary = #FE5722 | Secondary/Dark = #303942
+────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Surfaces: clean white / light-gray scale */
+  --color-surface:                   #ffffff;
+  --color-surface-dim:               #eef0f3;
+  --color-surface-bright:            #ffffff;
+  --color-surface-container-lowest:  #ffffff;
+  --color-surface-container-low:     #f5f6f8;
+  --color-surface-container:         #eef0f3;
+  --color-surface-container-high:    #e5e8ed;
+  --color-surface-container-highest: #dce0e6;
+
+  /* Text */
+  --color-on-surface:         #303942;
+  --color-on-surface-variant: #606878;
+
+  /* Brand */
+  --color-primary:           #FE5722;
+  --color-primary-container: #D94A1C;
+  --color-on-primary:        #ffffff;
+
+  /* Remove tertiary — map to brand dark */
+  --color-tertiary:           #303942;
+  --color-tertiary-container: #3f4a5c;
+
+  /* Borders */
+  --color-outline:         #c8cdd5;
+  --color-outline-variant: #e2e5ea;
+
+  /* Error */
+  --color-error: #d32f2f;
+}
+
+/* btn-gradient in admin: orange gradient */
+.btn-gradient {
+  background: linear-gradient(135deg, #FE5722 0%, #D94A1C 100%) !important;
+}
+
+/* text-gradient */
+.text-gradient {
+  background: linear-gradient(135deg, #FE5722, #D94A1C) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}

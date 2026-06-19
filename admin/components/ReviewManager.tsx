@@ -93,7 +93,7 @@ export const ReviewManager = () => {
             <h4 className="text-5xl font-headline font-extrabold text-primary mb-2">{averageRating}</h4>
             <div className="flex items-center gap-1 mb-4">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className={`w-4 h-4 ${i < Math.round(Number(averageRating)) ? 'text-amber-400 fill-amber-400' : 'text-surface-variant'}`} />
+                <Star key={i} className={`w-4 h-4 ${i < Math.round(Number(averageRating)) ? 'text-primary fill-primary' : 'text-surface-variant'}`} />
               ))}
             </div>
             <p className="text-xs font-bold text-on-surface-variant">{t('reviews.basedOn', { count: reviews.length })}</p>
@@ -103,8 +103,8 @@ export const ReviewManager = () => {
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-6">{t('reviews.sentiment')}</p>
             <div className="space-y-5">
               {[
-                { labelKey: 'reviews.positive', value: sentiment.positive, color: 'bg-emerald-500', icon: ThumbsUp },
-                { labelKey: 'reviews.neutral',  value: sentiment.neutral,  color: 'bg-amber-400',  icon: MessageSquare },
+                { labelKey: 'reviews.positive', value: sentiment.positive, color: 'bg-primary', icon: ThumbsUp },
+                { labelKey: 'reviews.neutral',  value: sentiment.neutral,  color: 'bg-[#303942]/30',  icon: MessageSquare },
                 { labelKey: 'reviews.negative', value: sentiment.negative, color: 'bg-rose-500',   icon: ThumbsDown },
               ].map(item => (
                 <div key={item.labelKey} className="space-y-2">
@@ -138,7 +138,7 @@ export const ReviewManager = () => {
                   <div key={star} className="flex items-center gap-2 text-xs">
                     <span className="w-4 text-end font-bold">{star}★</span>
                     <div className="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-400 rounded-full" style={{ width: `${(count / total) * 100}%` }} />
+                      <div className="h-full bg-[#303942]/30 rounded-full" style={{ width: `${(count / total) * 100}%` }} />
                     </div>
                     <span className="text-on-surface-variant w-4">{count}</span>
                   </div>
@@ -173,7 +173,7 @@ export const ReviewManager = () => {
                           <h4 className="font-bold leading-tight">{review.userName || t('reviews.anonymous')}</h4>
                           <div className="flex items-center gap-0.5 mt-0.5">
                             {[...Array(5)].map((_, idx) => (
-                              <Star key={idx} className={`w-3 h-3 ${idx < review.rating ? 'text-amber-400 fill-amber-400' : 'text-surface-variant'}`} />
+                              <Star key={idx} className={`w-3 h-3 ${idx < review.rating ? 'text-primary fill-primary' : 'text-surface-variant'}`} />
                             ))}
                           </div>
                         </div>
@@ -185,7 +185,7 @@ export const ReviewManager = () => {
                     <p className="text-on-surface-variant text-sm leading-relaxed line-clamp-3 italic">"{review.comment}"</p>
                     <div className="flex items-center justify-between pt-3 border-t border-outline-variant/10">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <div className="w-2 h-2 rounded-full bg-primary" />
                         <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('reviews.verifiedGuest')}</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
@@ -225,7 +225,7 @@ export const ReviewManager = () => {
                   <h4 className="text-lg font-bold">{selectedReview.userName || t('reviews.anonymous')}</h4>
                   <div className="flex justify-center items-center gap-1 mt-2">
                     {[...Array(5)].map((_, idx) => (
-                      <Star key={idx} className={`w-5 h-5 ${idx < selectedReview.rating ? 'text-amber-400 fill-amber-400' : 'text-surface-variant'}`} />
+                      <Star key={idx} className={`w-5 h-5 ${idx < selectedReview.rating ? 'text-primary fill-primary' : 'text-surface-variant'}`} />
                     ))}
                   </div>
                   <p className="text-xs text-on-surface-variant mt-2">

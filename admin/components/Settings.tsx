@@ -287,7 +287,7 @@ export const Settings = () => {
                 </div>
 
                 {saveMsg && (
-                  <p className={`text-sm font-bold text-center ${saveMsg === t('settings.profile.saved') ? 'text-emerald-600' : 'text-rose-500'}`}>
+                  <p className={`text-sm font-bold text-center ${saveMsg === t('settings.profile.saved') ? 'text-primary' : 'text-primary'}`}>
                     {saveMsg}
                   </p>
                 )}
@@ -427,7 +427,7 @@ export const Settings = () => {
             </section>
 
             {brandingMsg && (
-              <p className={`text-sm font-bold ${brandingMsg === t('settings.branding.saved') ? 'text-emerald-600' : 'text-rose-500'}`}>
+              <p className={`text-sm font-bold ${brandingMsg === t('settings.branding.saved') ? 'text-primary' : 'text-primary'}`}>
                 {brandingMsg}
               </p>
             )}

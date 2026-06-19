@@ -370,7 +370,7 @@ export const MenuManager = () => {
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => handleDelete(item.id)}
-                      className="w-9 h-9 bg-surface-container-lowest rounded-full flex items-center justify-center text-rose-500 hover:scale-110 transition-transform shadow-md">
+                      className="w-9 h-9 bg-surface-container-lowest rounded-full flex items-center justify-center text-primary hover:scale-110 transition-transform shadow-md">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -390,7 +390,7 @@ export const MenuManager = () => {
                   </div>
                   <p className="text-xs text-on-surface-variant line-clamp-2 flex-1">{item.description}</p>
                   <div className="mt-3 pt-3 border-t border-outline-variant/20 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                     <span className="text-xs font-semibold text-on-surface-variant">{t('menu.available')}</span>
                     {item.featured && <span className="ms-auto px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">{t('menu.featured')}</span>}
                   </div>
@@ -483,7 +483,7 @@ export const MenuManager = () => {
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => startEditCat(cat)} className="p-2 hover:bg-primary/10 text-primary rounded-xl transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => handleDeleteCategory(cat.id)} className="p-2 hover:bg-rose-50 text-rose-500 rounded-xl transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => handleDeleteCategory(cat.id)} className="p-2 hover:bg-rose-50 text-primary rounded-xl transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                             </div>
                           </div>
                         )}

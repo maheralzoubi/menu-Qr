@@ -17,14 +17,18 @@ interface Order {
 }
 
 const SOURCE_LABEL: Record<string, string> = { CASHIER_POS: 'POS', QR_CODE: 'QR', CUSTOMER_APP: 'App' };
-const SOURCE_COLOR: Record<string, string> = { CASHIER_POS: 'bg-violet-100 text-violet-700', QR_CODE: 'bg-sky-100 text-sky-700', CUSTOMER_APP: 'bg-emerald-100 text-emerald-700' };
+const SOURCE_COLOR: Record<string, string> = {
+  CASHIER_POS: 'bg-[#303942] text-white',
+  QR_CODE:     'bg-primary/10 text-primary',
+  CUSTOMER_APP:'bg-[#303942]/10 text-[#303942]',
+};
 const PAYMENT_COLOR: Record<string, string> = {
-  PAID: 'bg-emerald-100 text-emerald-700',
-  UNPAID: 'bg-red-100 text-red-600',
-  PENDING_CASH: 'bg-amber-100 text-amber-700',
-  PENDING_CARD_PAYMENT: 'bg-blue-100 text-blue-700',
-  PENDING_CLIQ_VERIFICATION: 'bg-purple-100 text-purple-700',
-  REFUNDED: 'bg-gray-100 text-gray-600',
+  PAID:                       'bg-primary/10 text-primary',
+  UNPAID:                     'bg-[#303942]/10 text-[#303942]',
+  PENDING_CASH:               'bg-primary/10 text-primary',
+  PENDING_CARD_PAYMENT:       'bg-primary/15 text-primary',
+  PENDING_CLIQ_VERIFICATION:  'bg-primary/20 text-primary',
+  REFUNDED:                   'bg-[#303942]/10 text-[#303942]',
 };
 
 type OrderView = 'feed' | 'kds' | 'archive';
@@ -131,7 +135,7 @@ export const OrderManager = () => {
             {activeOrders.map((order, i) => (
               <motion.div key={order._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 className={`flex flex-col bg-surface-container-low rounded-3xl border-s-8 overflow-hidden shadow-sm ${
-                  order.status === 'Preparing' ? 'border-primary' : 'border-amber-400'
+                  order.status === 'Preparing' ? 'border-primary' : 'border-[#303942]'
                 }`}>
                 <div className="p-5 border-b border-outline-variant/20 flex justify-between items-center">
                   <div>
@@ -205,7 +209,7 @@ export const OrderManager = () => {
               <Archive className="w-4 h-4" /> {t('orders.archive')}
             </button>
             <button onClick={() => setArchiveConfirm(true)} disabled={orders.length === 0}
-              className="flex items-center gap-2 px-6 py-3 bg-amber-500/10 text-amber-700 rounded-xl font-bold text-sm hover:bg-amber-500/20 disabled:opacity-30 transition-all">
+              className="flex items-center gap-2 px-6 py-3 bg-primary/10 text-primary rounded-xl font-bold text-sm hover:bg-primary/20 disabled:opacity-30 transition-all">
               <Archive className="w-4 h-4" /> {t('orders.archiveDay')}
             </button>
           </div>
@@ -214,13 +218,13 @@ export const OrderManager = () => {
         <AnimatePresence>
           {archiveConfirm && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              className="flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4">
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-              <p className="flex-1 text-sm font-medium text-amber-800">
+              className="flex items-center gap-4 bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4">
+              <AlertTriangle className="w-5 h-5 text-primary shrink-0" />
+              <p className="flex-1 text-sm font-medium text-on-surface">
                 {t('orders.archiveConfirmPrefix')} <strong>{orders.length}</strong> {t('orders.archiveConfirmSuffix')}
               </p>
               <button onClick={handleArchiveToday} disabled={archiving}
-                className="px-5 py-2 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 disabled:opacity-50 transition-colors">
+                className="px-5 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-container disabled:opacity-50 transition-colors">
                 {archiving ? t('orders.archiving') : t('orders.confirm')}
               </button>
               <button onClick={() => setArchiveConfirm(false)}
@@ -231,7 +235,7 @@ export const OrderManager = () => {
           )}
           {archiveMsg && !archiveConfirm && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-3 text-emerald-700 font-medium text-sm">
+              className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-2xl px-6 py-3 text-primary font-medium text-sm">
               <CheckCircle2 className="w-4 h-4" />{archiveMsg}
             </motion.div>
           )}
@@ -239,9 +243,9 @@ export const OrderManager = () => {
 
         <div className="grid grid-cols-3 gap-6">
           {[
-            { labelKey: 'orders.pending',   count: pendingOrders.length,                          color: 'bg-amber-400' },
+            { labelKey: 'orders.pending',   count: pendingOrders.length,                          color: 'bg-primary' },
             { labelKey: 'orders.preparing', count: preparingOrders.length,                        color: 'bg-primary' },
-            { labelKey: 'orders.ready',     count: orders.filter(o => o.status === 'Ready').length, color: 'bg-emerald-500' },
+            { labelKey: 'orders.ready',     count: orders.filter(o => o.status === 'Ready').length, color: 'bg-[#303942]' },
           ].map(stat => (
             <div key={stat.labelKey} className="bg-surface-container-low p-6 rounded-3xl flex items-center justify-between shadow-sm border border-outline-variant/10">
               <div>
@@ -264,7 +268,7 @@ export const OrderManager = () => {
                   selectedOrder?._id === order._id ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
                 }`}>
                 <div className="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center shrink-0 me-6 group-hover:scale-110 transition-transform">
-                  <Package className={`w-6 h-6 ${order.status === 'Delivered' ? 'text-emerald-500' : order.status === 'Preparing' ? 'text-primary' : 'text-amber-500'}`} />
+                  <Package className={`w-6 h-6 ${order.status === 'Delivered' ? 'text-primary' : order.status === 'Preparing' ? 'text-primary' : 'text-[#303942]'}`} />
                 </div>
                 <div className="flex-1 grid grid-cols-5 gap-4">
                   {[
@@ -284,8 +288,8 @@ export const OrderManager = () => {
                   {order.order_source && <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${SOURCE_COLOR[order.order_source] ?? 'bg-gray-100 text-gray-600'}`}>{SOURCE_LABEL[order.order_source] ?? order.order_source}</span>}
                   {order.payment_status && <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${PAYMENT_COLOR[order.payment_status] ?? 'bg-gray-100 text-gray-600'}`}>{order.payment_status.replace(/_/g, ' ')}</span>}
                   <div className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                    order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
-                    order.status === 'Preparing' ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'
+                    order.status === 'Delivered' ? 'bg-primary/10 text-primary' :
+                    order.status === 'Preparing' ? 'bg-primary/10 text-primary' : 'bg-[#303942]/10 text-[#303942]'
                   }`}>{order.status}</div>
                   <ChevronRight className="w-5 h-5 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
                 </div>
@@ -391,9 +395,9 @@ export const ToastStack = ({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: 
   };
 
   const ICON: Record<Toast['type'], { icon: React.ReactNode; bg: string }> = {
-    new:       { icon: <Bell className="w-5 h-5" />,          bg: 'bg-amber-500' },
+    new:       { icon: <Bell className="w-5 h-5" />,          bg: 'bg-primary' },
     preparing: { icon: <ChefHat className="w-5 h-5" />,       bg: 'bg-primary' },
-    delivered: { icon: <CheckCircle2 className="w-5 h-5" />,  bg: 'bg-emerald-500' },
+    delivered: { icon: <CheckCircle2 className="w-5 h-5" />,  bg: 'bg-[#303942]' },
   };
 
   return (

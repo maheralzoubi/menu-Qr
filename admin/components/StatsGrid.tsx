@@ -33,8 +33,8 @@ export const StatsGrid = ({ stats }: { stats: Stats | null }) => {
 
   const metrics = [
     { labelKey: 'stats.totalRevenue', value: `$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: <DollarSign className="w-6 h-6" />, color: 'bg-primary/10 text-primary' },
-    { labelKey: 'stats.totalOrders',  value: stats.totalOrders,                           icon: <ShoppingBag className="w-6 h-6" />, color: 'bg-tertiary/10 text-tertiary' },
-    { labelKey: 'stats.avgOrderValue',value: `$${avgOrderValue}`,                          icon: <TrendingUp className="w-6 h-6" />, color: 'bg-amber-500/10 text-amber-600' },
+    { labelKey: 'stats.totalOrders',  value: stats.totalOrders,                           icon: <ShoppingBag className="w-6 h-6" />, color: 'bg-[#303942]/10 text-[#303942]' },
+    { labelKey: 'stats.avgOrderValue',value: `$${avgOrderValue}`,                          icon: <TrendingUp className="w-6 h-6" />, color: 'bg-primary/10 text-primary' },
     { labelKey: 'stats.satisfaction', value: `${stats.averageRating} / 5`,                 icon: <Star className="w-6 h-6" />,       color: 'bg-primary text-on-primary', isFeatured: true },
   ];
 
@@ -154,7 +154,7 @@ export const StatsGrid = ({ stats }: { stats: Stats | null }) => {
                       </div>
                       <span className="font-bold text-sm">{review.userName}</span>
                     </div>
-                    <div className="flex text-amber-500">
+                    <div className="flex text-[#303942]">
                       {[1, 2, 3, 4, 5].map(s => (
                         <Star key={s} className={`w-4 h-4 ${s <= review.rating ? 'fill-current' : 'text-surface-variant'}`} />
                       ))}

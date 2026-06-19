@@ -108,7 +108,7 @@ export const ReservationManager = () => {
               <motion.div key={table.id} initial={{ scale: 0 }} animate={{ scale: 1 }}
                 style={{ left: `${table.x}%`, top: `${table.y}%` }}
                 className={`absolute -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-3xl flex flex-col items-center justify-center cursor-pointer shadow-lg transition-all hover:scale-110 ${
-                  table.status === 'Reserved' ? 'bg-amber-400 text-white' : 'bg-surface-container-highest text-on-surface'
+                  table.status === 'Reserved' ? 'bg-[#303942] text-white' : 'bg-surface-container-highest text-on-surface'
                 }`}>
                 <span className="text-xs font-bold opacity-60 mb-1">{table.id}</span>
                 <Users className="w-6 h-6 mb-2" />
@@ -119,7 +119,7 @@ export const ReservationManager = () => {
               </motion.div>
             ))}
             <div className="absolute bottom-0 end-0 p-6 bg-surface-container-lowest/80 backdrop-blur-md rounded-3xl border border-outline-variant/10 flex gap-8">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-400" /><span className="text-xs font-bold">{t('reservations.reserved')}</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#303942]/30" /><span className="text-xs font-bold">{t('reservations.reserved')}</span></div>
               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-surface-container-highest" /><span className="text-xs font-bold">{t('reservations.available')}</span></div>
             </div>
           </div>
@@ -161,7 +161,7 @@ export const ReservationManager = () => {
                     selectedRes && resKey(selectedRes) === resKey(res) ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
                   }`}>
                   <div className="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center shrink-0 me-6 group-hover:scale-110 transition-transform">
-                    <CalendarDays className={`w-6 h-6 ${res.status === 'Confirmed' ? 'text-emerald-500' : res.status === 'Cancelled' ? 'text-rose-500' : 'text-amber-500'}`} />
+                    <CalendarDays className={`w-6 h-6 ${res.status === 'Confirmed' ? 'text-primary' : res.status === 'Cancelled' ? 'text-primary' : 'text-[#303942]'}`} />
                   </div>
                   <div className="flex-1 grid grid-cols-4 gap-4">
                     <div>
@@ -178,8 +178,8 @@ export const ReservationManager = () => {
                     </div>
                     <div>
                       <div className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mt-1 ${
-                        res.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-700' :
-                        res.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                        res.status === 'Confirmed' ? 'bg-primary/10 text-primary' :
+                        res.status === 'Cancelled' ? 'bg-[#303942]/10 text-[#303942]' : 'bg-[#303942]/10 text-[#303942]'
                       }`}>{statusLabel(res.status)}</div>
                     </div>
                   </div>
@@ -222,8 +222,8 @@ export const ReservationManager = () => {
                     <div>
                       <p className="font-bold">{selectedRes.name}</p>
                       <div className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${
-                        selectedRes.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-700' :
-                        selectedRes.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                        selectedRes.status === 'Confirmed' ? 'bg-primary/10 text-primary' :
+                        selectedRes.status === 'Cancelled' ? 'bg-[#303942]/10 text-[#303942]' : 'bg-[#303942]/10 text-[#303942]'
                       }`}>{statusLabel(selectedRes.status)}</div>
                     </div>
                   </div>
@@ -272,7 +272,7 @@ export const ReservationManager = () => {
                 </button>
               </div>
               <button onClick={() => handleDelete(resKey(selectedRes))}
-                className="mt-3 w-full py-3 rounded-2xl text-rose-500 font-bold text-sm hover:bg-rose-50 transition-all flex items-center justify-center gap-2">
+                className="mt-3 w-full py-3 rounded-2xl text-primary font-bold text-sm hover:bg-rose-50 transition-all flex items-center justify-center gap-2">
                 <Trash2 className="w-4 h-4" /> {t('reservations.deleteReservation')}
               </button>
             </motion.div>

@@ -20,10 +20,10 @@ const PAGE_SIZE = 50;
 
 const statusStyle = (s: string) => {
   switch (s) {
-    case 'Delivered': return 'bg-emerald-100 text-emerald-700';
+    case 'Delivered': return 'bg-primary/10 text-primary';
     case 'Preparing': return 'bg-primary/10 text-primary';
-    case 'Ready':     return 'bg-blue-100 text-blue-700';
-    default:          return 'bg-amber-100 text-amber-700';
+    case 'Ready':     return 'bg-primary/15 text-primary';
+    default:          return 'bg-[#303942]/10 text-[#303942]';
   }
 };
 
@@ -302,7 +302,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                   {selectedOrder.discount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-on-surface-variant">{t('orderArchive.discount')} {selectedOrder.promoCode ? `(${selectedOrder.promoCode})` : ''}</span>
-                      <span className="font-bold text-green-600">-${selectedOrder.discount.toFixed(2)}</span>
+                      <span className="font-bold text-primary">-${selectedOrder.discount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="h-px bg-primary/10" />
