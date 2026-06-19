@@ -88,7 +88,7 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs text-on-surface-variant">{getGreeting()}</p>
-            <h1 className="text-xl font-extrabold font-headline">{firstName ? `Hi, ${firstName}!` : 'Monar'}</h1>
+            <img src="/logo.svg" alt="Monar" className="h-7 w-auto" />
           </div>
           <button className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center active:scale-90 transition-transform">
             <Bell className="w-5 h-5 text-on-surface-variant" />

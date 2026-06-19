@@ -10,11 +10,11 @@ export const ProfileScreen = () => {
       {/* Header */}
       <div className="bg-surface px-5 pt-12 pb-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-4xl">
-            🍽️
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden">
+            <img src="/monar-logo.png" alt="Monar" className="w-12 h-12 object-contain" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold font-headline">Monar</h1>
+            <img src="/logo.svg" alt="Monar" className="h-7 w-auto mb-0.5" />
             <p className="text-sm text-on-surface-variant">Pre-order · Skip the Wait</p>
           </div>
         </div>
