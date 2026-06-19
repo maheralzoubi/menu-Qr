@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowLeft, Search, X, ShoppingCart, Star, Clock, Plus, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Search, X, Star, Clock, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../contexts/CartContext';
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo, onBack, onCartOpen }: Props) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
   const { addItem, itemCount, total, restaurantId: cartRestId } = useCart();
 
@@ -73,7 +73,7 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
         {/* Top bar */}
         <div className="flex items-center gap-3 px-4 pt-12 pb-3">
           <button onClick={onBack} className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center active:scale-90 transition-transform shrink-0">
-            <ArrowLeft className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
+            <ArrowLeft className={`w-5 h-5 rtl:rotate-180`} />
           </button>
           <AnimatePresence>
             {headerCollapsed && (
@@ -111,13 +111,13 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
         {/* Search bar */}
         <div className="px-4 pb-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
             <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search menu..."
-              className="w-full bg-surface-container rounded-xl pl-9 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder={t('restaurantPage.searchMenu')}
+              className="w-full bg-surface-container rounded-xl ps-9 pe-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+              <button onClick={() => setSearch('')} className="absolute end-3 top-1/2 -translate-y-1/2">
                 <X className="w-4 h-4 text-on-surface-variant" />
               </button>
             )}
@@ -168,7 +168,7 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
             {filteredItems.length === 0 && (
               <div className="text-center py-16 text-on-surface-variant">
                 <p className="text-4xl mb-3">🔍</p>
-                <p className="text-sm">No items found</p>
+                <p className="text-sm">{t('restaurantPage.noItems')}</p>
               </div>
             )}
           </div>
@@ -184,7 +184,7 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
               className="w-full btn-gradient text-white rounded-2xl py-4 flex items-center justify-between px-5 shadow-xl shadow-primary/30">
               <div className="flex items-center gap-2">
                 <span className="bg-white/20 text-white text-xs font-extrabold w-6 h-6 rounded-lg flex items-center justify-center">{itemCount}</span>
-                <span className="font-extrabold text-sm">View Cart</span>
+                <span className="font-extrabold text-sm">{t('restaurantPage.viewCart')}</span>
               </div>
               <span className="font-extrabold text-sm">${total.toFixed(2)}</span>
             </button>

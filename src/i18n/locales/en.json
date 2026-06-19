@@ -224,5 +224,76 @@
     "recentOrders": "Recent Orders",
     "noOrders": "No orders yet",
     "orderNum": "Order #{{id}}"
+  },
+  "app": {
+    "searchPlaceholder": "Search restaurants or dishes...",
+    "craving": "What are you craving?",
+    "recentOrders": "Recent Orders",
+    "viewAll": "View all",
+    "reorder": "Reorder",
+    "nearYou": "Restaurants Near You",
+    "available": "available",
+    "noRestaurants": "No restaurants available"
+  },
+  "pickup": {
+    "cartTitle": "Your Cart",
+    "clearAll": "Clear all",
+    "tapToAdd": "Tap any product to add to cart",
+    "emptyCart": "Your cart is empty",
+    "browseMenu": "Browse Menu",
+    "pickupTime": "Pickup Time",
+    "orderNote": "Order Note",
+    "orderNotePlaceholder": "Any special instructions for the whole order...",
+    "itemNotePlaceholder": "Special request for this item...",
+    "payAtPickup": "Pay at Pickup",
+    "payAtPickupDesc": "Payment will be collected when you pick up your order",
+    "placeOrder": "Place Order",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "discount": "Discount",
+    "items": "items",
+    "item": "item"
+  },
+  "ordersPage": {
+    "title": "My Orders",
+    "active": "Active",
+    "past": "Past",
+    "noActive": "No active orders",
+    "noPast": "No past orders yet"
+  },
+  "tracking": {
+    "received": "Order Received",
+    "receivedDesc": "Your order has been received",
+    "preparing": "Preparing",
+    "preparingDesc": "The kitchen is preparing your order",
+    "ready": "Ready for Pickup",
+    "readyDesc": "Your order is ready — come pick it up!",
+    "completed": "Completed",
+    "completedDesc": "Enjoy your meal!",
+    "cancelled": "Order Cancelled",
+    "cancelledDesc": "Your order was cancelled",
+    "summary": "Order Summary",
+    "payAtPickup": "Pay at Pickup",
+    "viewOrders": "View All Orders",
+    "backHome": "Back to Home"
+  },
+  "product": {
+    "addToCart": "Add to Cart",
+    "specialRequest": "e.g. No onions, extra sauce...",
+    "specialRequestLabel": "Special Request",
+    "inCart": "in cart",
+    "ingredients": "Ingredients",
+    "allergens": "Allergens"
+  },
+  "restaurantPage": {
+    "searchMenu": "Search menu...",
+    "noItems": "No items found",
+    "viewCart": "View Cart"
+  },
+  "bottomNav": {
+    "home": "Home",
+    "orders": "Orders",
+    "profile": "Profile",
+    "cart": "Cart"
   }
 }

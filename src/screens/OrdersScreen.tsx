@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, ChevronRight, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { io } from 'socket.io-client';
 
 interface Props {
@@ -20,11 +21,13 @@ const STATUS_COLORS: Record<string, string> = {
 const ACTIVE_STATUSES = ['Pending', 'Preparing', 'Ready'];
 
 export const OrdersScreen = ({ onOpenTracking }: Props) => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
+
   const [tab, setTab] = useState<Tab>('current');
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Initial load
   useEffect(() => {
     try {
       const history: string[] = JSON.parse(localStorage.getItem('order_history') || '[]');
@@ -35,15 +38,13 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
     } catch { setLoading(false); }
   }, []);
 
-  // Live status updates via socket
+  // Live status updates
   useEffect(() => {
     const socketUrl = import.meta.env.VITE_API_URL || window.location.origin;
     const socket = io(socketUrl, { path: '/socket.io' });
-
     socket.on('order:status', ({ id, status }: { id: string; status: string }) => {
       setOrders(prev => prev.map(o => o._id === id ? { ...o, status } : o));
     });
-
     return () => { socket.disconnect(); };
   }, []);
 
@@ -54,14 +55,16 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
   return (
     <div className="bg-surface min-h-screen">
       <div className="bg-surface px-5 pt-12 pb-4 sticky top-0 z-10 shadow-sm">
-        <h1 className="text-xl font-extrabold font-headline mb-4">My Orders</h1>
+        <h1 className="text-xl font-extrabold font-headline mb-4">{t('ordersPage.title')}</h1>
         <div className="flex gap-1 bg-surface-container rounded-2xl p-1">
-          {(['current', 'past'] as Tab[]).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold capitalize transition-all ${
-                tab === t ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant'
+          {(['current', 'past'] as Tab[]).map(tt => (
+            <button key={tt} onClick={() => setTab(tt)}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                tab === tt ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant'
               }`}>
-              {t === 'current' ? `Active (${currentOrders.length})` : `Past (${pastOrders.length})`}
+              {tt === 'current'
+                ? `${t('ordersPage.active')} (${currentOrders.length})`
+                : `${t('ordersPage.past')} (${pastOrders.length})`}
             </button>
           ))}
         </div>
@@ -74,7 +77,7 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
           <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant gap-3">
             <Package className="w-12 h-12 opacity-20" />
             <p className="text-sm font-medium">
-              {tab === 'current' ? 'No active orders' : 'No past orders yet'}
+              {tab === 'current' ? t('ordersPage.noActive') : t('ordersPage.noPast')}
             </p>
           </div>
         ) : (
@@ -85,7 +88,7 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOpenTracking(order._id)}
-                  className="w-full bg-surface-container rounded-2xl p-4 text-left border border-surface-container-high">
+                  className="w-full bg-surface-container rounded-2xl p-4 text-start border border-surface-container-high">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
                       <p className="font-extrabold text-sm">#{order._id?.slice(-6).toUpperCase()}</p>
@@ -95,21 +98,20 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <motion.span
-                        key={order.status}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
+                      <motion.span key={order.status} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                         className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status] || 'bg-surface-container-high text-on-surface-variant'}`}>
                         {order.status}
                       </motion.span>
-                      <ChevronRight className="w-4 h-4 text-on-surface-variant/40" />
+                      <ChevronRight className={`w-4 h-4 text-on-surface-variant/40 ${isRTL ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
                   <p className="text-xs text-on-surface-variant truncate">
                     {order.items?.slice(0,3).map((i: any) => `${i.quantity}× ${i.name}`).join(' · ')}
                   </p>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-on-surface-variant">{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</span>
+                    <span className="text-xs text-on-surface-variant">
+                      {order.items?.length} {order.items?.length !== 1 ? t('pickup.items') : t('pickup.item')}
+                    </span>
                     <span className="font-extrabold text-sm text-primary">${order.total?.toFixed(2)}</span>
                   </div>
                 </motion.button>

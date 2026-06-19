@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { useCart } from '../contexts/CartContext';
 import type { MenuItem } from '../types';
 
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export const ProductDetailModal = ({ item, restaurantId, restaurantName, restaurantLogo, onClose, onCartOpen }: Props) => {
+  const { t } = useTranslation();
   const { addItem, items } = useCart();
   const [qty, setQty] = useState(1);
   const [note, setNote] = useState('');
@@ -58,8 +60,8 @@ export const ProductDetailModal = ({ item, restaurantId, restaurantName, restaur
             <X className="w-4 h-4" />
           </button>
           {existingQty > 0 && (
-            <div className="absolute top-4 left-4 bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full">
-              {existingQty} in cart
+            <div className="absolute top-4 start-4 bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full">
+              {existingQty} {t('product.inCart')}
             </div>
           )}
         </div>
@@ -81,7 +83,7 @@ export const ProductDetailModal = ({ item, restaurantId, restaurantName, restaur
           {/* Allergens */}
           {item.allergens?.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-on-surface-variant mb-2">Allergens</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-on-surface-variant mb-2">{t('product.allergens')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {item.allergens.map(a => (
                   <span key={a} className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">{a}</span>
@@ -93,17 +95,17 @@ export const ProductDetailModal = ({ item, restaurantId, restaurantName, restaur
           {/* Ingredients */}
           {item.ingredients?.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-on-surface-variant mb-2">Ingredients</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-on-surface-variant mb-2">{t('product.ingredients')}</p>
               <p className="text-xs text-on-surface-variant">{item.ingredients.join(', ')}</p>
             </div>
           )}
 
           {/* Note */}
           <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-wide text-on-surface-variant mb-2">Special Request</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-on-surface-variant mb-2">{t('product.specialRequestLabel')}</p>
             <textarea
               value={note} onChange={e => setNote(e.target.value)}
-              placeholder="e.g. No onions, extra sauce..."
+              placeholder={t('product.specialRequest')}
               rows={2}
               className="w-full bg-surface-container rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
@@ -127,7 +129,7 @@ export const ProductDetailModal = ({ item, restaurantId, restaurantName, restaur
           <button onClick={handleAdd}
             className="flex-1 btn-gradient text-white rounded-2xl py-3.5 font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-transform">
             <ShoppingCart className="w-4 h-4" />
-            Add to Cart · ${(item.price * qty).toFixed(2)}
+            {t('product.addToCart')} · ${(item.price * qty).toFixed(2)}
           </button>
         </div>
       </motion.div>

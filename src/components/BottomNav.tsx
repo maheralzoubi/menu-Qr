@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useCart } from '../contexts/CartContext';
 import type { MainTab } from '../App';
 
+
+
 interface Props {
   activeTab: MainTab;
   onTabChange: (tab: MainTab) => void;
@@ -13,13 +15,13 @@ interface Props {
 interface NavItem { tab: MainTab; icon: ReactNode; label: string; }
 
 export const BottomNav = ({ activeTab, onTabChange, onCartOpen }: Props) => {
-  const { i18n } = useTranslation();
+  const { t } = useTranslation();
   const { itemCount } = useCart();
 
   const items: NavItem[] = [
-    { tab: 'home',    icon: <Home className="w-5 h-5" />,    label: 'Home'    },
-    { tab: 'orders',  icon: <Package className="w-5 h-5" />, label: 'Orders'  },
-    { tab: 'profile', icon: <User className="w-5 h-5" />,    label: 'Profile' },
+    { tab: 'home',    icon: <Home className="w-5 h-5" />,    label: t('bottomNav.home')    },
+    { tab: 'orders',  icon: <Package className="w-5 h-5" />, label: t('bottomNav.orders')  },
+    { tab: 'profile', icon: <User className="w-5 h-5" />,    label: t('bottomNav.profile') },
   ];
 
   return (

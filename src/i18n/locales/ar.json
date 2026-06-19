@@ -224,5 +224,76 @@
     "recentOrders": "الطلبات الأخيرة",
     "noOrders": "لا توجد طلبات بعد",
     "orderNum": "طلب #{{id}}"
+  },
+  "app": {
+    "searchPlaceholder": "ابحث عن مطاعم أو أطباق...",
+    "craving": "ماذا تشتهي؟",
+    "recentOrders": "الطلبات الأخيرة",
+    "viewAll": "عرض الكل",
+    "reorder": "إعادة الطلب",
+    "nearYou": "مطاعم قريبة منك",
+    "available": "متاح",
+    "noRestaurants": "لا توجد مطاعم متاحة"
+  },
+  "pickup": {
+    "cartTitle": "سلة الطلب",
+    "clearAll": "مسح الكل",
+    "tapToAdd": "اضغط على أي منتج لإضافته",
+    "emptyCart": "سلتك فارغة",
+    "browseMenu": "تصفح القائمة",
+    "pickupTime": "وقت الاستلام",
+    "orderNote": "ملاحظة الطلب",
+    "orderNotePlaceholder": "أي تعليمات خاصة للطلب...",
+    "itemNotePlaceholder": "طلب خاص لهذا المنتج...",
+    "payAtPickup": "الدفع عند الاستلام",
+    "payAtPickupDesc": "سيتم تحصيل الدفع عند استلام طلبك",
+    "placeOrder": "تأكيد الطلب",
+    "subtotal": "المجموع الفرعي",
+    "total": "الإجمالي",
+    "discount": "خصم",
+    "items": "منتجات",
+    "item": "منتج"
+  },
+  "ordersPage": {
+    "title": "طلباتي",
+    "active": "النشطة",
+    "past": "السابقة",
+    "noActive": "لا توجد طلبات نشطة",
+    "noPast": "لا توجد طلبات سابقة"
+  },
+  "tracking": {
+    "received": "تم استلام الطلب",
+    "receivedDesc": "لقد تم استلام طلبك",
+    "preparing": "قيد التحضير",
+    "preparingDesc": "المطبخ يحضر طلبك الآن",
+    "ready": "جاهز للاستلام",
+    "readyDesc": "طلبك جاهز — تفضل بالاستلام!",
+    "completed": "مكتمل",
+    "completedDesc": "بالهناء والشفاء!",
+    "cancelled": "تم إلغاء الطلب",
+    "cancelledDesc": "تم إلغاء طلبك",
+    "summary": "ملخص الطلب",
+    "payAtPickup": "الدفع عند الاستلام",
+    "viewOrders": "عرض جميع الطلبات",
+    "backHome": "العودة للرئيسية"
+  },
+  "product": {
+    "addToCart": "أضف إلى السلة",
+    "specialRequest": "مثال: بدون بصل، صوص إضافي...",
+    "specialRequestLabel": "طلب خاص",
+    "inCart": "في السلة",
+    "ingredients": "المكونات",
+    "allergens": "مسببات الحساسية"
+  },
+  "restaurantPage": {
+    "searchMenu": "ابحث في القائمة...",
+    "noItems": "لا توجد منتجات",
+    "viewCart": "عرض السلة"
+  },
+  "bottomNav": {
+    "home": "الرئيسية",
+    "orders": "الطلبات",
+    "profile": "الملف",
+    "cart": "السلة"
   }
 }
