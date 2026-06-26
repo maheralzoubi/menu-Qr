@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Search, Bell, ChevronRight, Clock, Star, RefreshCw, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +37,12 @@ const FOOD_CATEGORIES = [
   { key: 'Chicken',   emoji: '🍗' },
   { key: 'Healthy',   emoji: '🌿' },
 ];
+
+const RestaurantLogo = memo(({ logo, name }: { logo?: string; name: string }) => {
+  const [error, setError] = useState(false);
+  if (!logo || error) return <span className="text-4xl">🍽️</span>;
+  return <img src={logo} alt={name} className="w-full h-full object-cover" onError={() => setError(true)} />;
+});
 
 const FALLBACK_PROMOS = [
   { title: 'Free Pickup',   subtitle: 'All orders this week', emoji: '🛍️' },
@@ -288,9 +294,7 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking, onViewAllOrders }
                     >
                       {/* Logo */}
                       <div className="w-20 h-20 rounded-2xl overflow-hidden bg-surface-container-high shrink-0 flex items-center justify-center">
-                        {r.logo
-                          ? <img src={r.logo} alt={r.name} className="w-full h-full object-cover" />
-                          : <span className="text-4xl">🍽️</span>}
+                        <RestaurantLogo logo={r.logo} name={r.name} />
                       </div>
 
                       {/* Info */}
