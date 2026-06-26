@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { applyPrimaryColor } from '../lib/branding';
 
 const STORAGE_KEY = 'restaurant_context';
 
@@ -23,12 +24,13 @@ function saveToStorage(ctx: RestaurantContext) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ctx));
 }
 
-function applyBranding(name: string, logo: string) {
+function applyBranding(name: string, logo: string, primaryColor?: string) {
   document.title = name || 'Monar';
   const existing = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
   const favicon = existing ?? Object.assign(document.createElement('link'), { rel: 'icon' });
   favicon.href = logo || '/favicon.svg';
   if (!existing) document.head.appendChild(favicon);
+  if (primaryColor) applyPrimaryColor(primaryColor);
 }
 
 export function useRestaurant() {
@@ -58,7 +60,7 @@ export function useRestaurant() {
           primaryColor: data.primaryColor ?? '#9b3f25',
         };
         saveToStorage(ctx);
-        applyBranding(ctx.restaurantName, ctx.logo);
+        applyBranding(ctx.restaurantName, ctx.logo, ctx.primaryColor);
         setContextState(ctx);
       })
       .catch(() => {})
@@ -67,7 +69,7 @@ export function useRestaurant() {
 
   const setContext = (ctx: RestaurantContext) => {
     saveToStorage(ctx);
-    applyBranding(ctx.restaurantName, ctx.logo);
+    applyBranding(ctx.restaurantName, ctx.logo, ctx.primaryColor);
     setContextState(ctx);
   };
 
