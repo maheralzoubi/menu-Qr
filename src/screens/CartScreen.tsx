@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MessageSquare, Clock, AlertCircle, Bike } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MessageSquare, Clock, AlertCircle, Bike, Tag, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../contexts/CartContext';
@@ -10,42 +10,110 @@ interface Props {
 }
 
 const PICKUP_TIMES = ['ASAP', '15 min', '30 min', '45 min', '1 hour'];
+const TIP_OPTIONS = [0, 10, 15, 20];
+const TAX_RATE = 0.10;
+
+interface AppliedPromo {
+  code: string;
+  discountAmount: number;
+  discountType: string;
+  discountValue: number;
+}
 
 export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
-  const { items, restaurantName, restaurantId, updateQty, removeItem, updateNote, clearCart, total } = useCart();
+  const { items, restaurantName, restaurantId, updateQty, removeItem, updateNote, clearCart, total: subtotal } = useCart();
 
+  // Detect dine-in mode (arrived via QR code with a table context)
+  const { isDineIn, tableNumber } = useMemo(() => {
+    try {
+      const ctx = JSON.parse(localStorage.getItem('restaurant_context') || 'null');
+      if (ctx?.tableName && ctx?.restaurantId === restaurantId) {
+        return { isDineIn: true, tableNumber: ctx.tableName as string };
+      }
+    } catch { /* ignore */ }
+    return { isDineIn: false, tableNumber: undefined };
+  }, [restaurantId]);
+
+  // Shared state
   const [orderNote, setOrderNote] = useState('');
-  const [pickupTime, setPickupTime] = useState('ASAP');
   const [activeNote, setActiveNote] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState('');
 
+  // Pickup-only state
+  const [pickupTime, setPickupTime] = useState('ASAP');
+
+  // Dine-in–only state
+  const [tipPercent, setTipPercent] = useState(0);
+  const [promoInput, setPromoInput] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
+
+  // Dine-in totals
+  const taxAmount    = isDineIn ? parseFloat((subtotal * TAX_RATE).toFixed(2)) : 0;
+  const tipAmount    = isDineIn ? parseFloat((subtotal * (tipPercent / 100)).toFixed(2)) : 0;
+  const discountAmt  = appliedPromo?.discountAmount ?? 0;
+  const finalTotal   = isDineIn
+    ? parseFloat((subtotal + taxAmount + tipAmount - discountAmt).toFixed(2))
+    : subtotal;
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoError(''); setPromoLoading(true);
+    try {
+      const res = await fetch('/api/promos/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoInput.trim(), restaurantId, subtotal }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedPromo({
+          code: promoInput.trim().toUpperCase(),
+          discountAmount: data.discountAmount,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+        });
+        setPromoInput('');
+      } else {
+        setPromoError(data.message || t('cart.promoInvalid'));
+      }
+    } catch {
+      setPromoError(t('cart.promoError'));
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
   const handlePlace = async () => {
     if (items.length === 0) return;
     setError(''); setPlacing(true);
-
-    let tableNumber: string | undefined;
     try {
-      const ctx = JSON.parse(localStorage.getItem('restaurant_context') || 'null');
-      if (ctx?.tableName && ctx?.restaurantId === restaurantId) tableNumber = ctx.tableName;
-    } catch { /* ignore */ }
-
-    try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         items: items.map(i => ({ ...i })),
-        total,
+        total: finalTotal,
         restaurantId,
         customerName: 'Guest',
         order_source: 'CUSTOMER_APP',
-        order_type: tableNumber ? 'DINE_IN' : 'PICKUP',
+        order_type: isDineIn ? 'DINE_IN' : 'PICKUP',
         payment_method: 'PAY_LATER',
         payment_status: 'UNPAID',
         order_note: orderNote || undefined,
         tableNumber,
       };
-      const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (isDineIn && appliedPromo) {
+        payload.discount    = appliedPromo.discountAmount;
+        payload.promoCode   = appliedPromo.code;
+        payload.discount_type = 'CODE';
+      }
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
       if (!res.ok) { const d = await res.json(); setError(d.message || 'Failed to place order'); return; }
       const order = await res.json();
       try {
@@ -69,7 +137,9 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
           </button>
           <div className="flex-1">
             <h1 className="text-lg font-extrabold font-headline">{t('pickup.cartTitle')}</h1>
-            <p className="text-xs text-on-surface-variant">{restaurantName}</p>
+            <p className="text-xs text-on-surface-variant">
+              {restaurantName}{isDineIn && tableNumber ? ` · ${tableNumber}` : ''}
+            </p>
           </div>
           <ShoppingBag className="w-5 h-5 text-primary" />
         </div>
@@ -97,7 +167,9 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
                     className={`px-4 py-3.5 ${idx < items.length - 1 ? 'border-b border-surface-container-high' : ''}`}>
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl overflow-hidden bg-surface-container-high shrink-0">
-                        {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl">🍴</div>}
+                        {item.image
+                          ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center text-xl">🍴</div>}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm">{item.name}</p>
@@ -135,57 +207,152 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
               </AnimatePresence>
             </div>
 
-            {/* Pickup Time */}
-            <div className="bg-surface-container rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Clock className="w-4 h-4 text-primary" />
-                <p className="text-sm font-extrabold">{t('pickup.pickupTime')}</p>
-              </div>
-              <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                {PICKUP_TIMES.map(time => (
-                  <button key={time} onClick={() => setPickupTime(time)}
-                    className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                      pickupTime === time ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface-variant'
-                    }`}>
-                    {time}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Order Note */}
-            <div className="bg-surface-container rounded-2xl p-4">
-              <p className="text-sm font-extrabold mb-2">{t('pickup.orderNote')}</p>
-              <textarea value={orderNote} onChange={e => setOrderNote(e.target.value)}
-                placeholder={t('pickup.orderNotePlaceholder')} rows={2}
-                className="w-full bg-surface-container-high rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            {/* Pay at Pickup */}
-            <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center shrink-0">
-                <Bike className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-extrabold text-primary">{t('pickup.payAtPickup')}</p>
-                <p className="text-xs text-on-surface-variant mt-0.5">{t('pickup.payAtPickupDesc')}</p>
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="bg-surface-container rounded-2xl p-4 space-y-2">
-              {items.map(item => (
-                <div key={item.id} className="flex justify-between text-xs text-on-surface-variant">
-                  <span>{item.quantity}× {item.name}</span>
-                  <span className="tabular-nums">${(item.price * item.quantity).toFixed(2)}</span>
+            {isDineIn ? (
+              <>
+                {/* Tips */}
+                <div className="bg-surface-container rounded-2xl p-4">
+                  <p className="text-sm font-extrabold mb-3">{t('cart.addTip')}</p>
+                  <div className="flex gap-2">
+                    {TIP_OPTIONS.map(pct => (
+                      <button key={pct} onClick={() => setTipPercent(pct)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                          tipPercent === pct ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface-variant'
+                        }`}>
+                        {pct === 0 ? 'No tip' : `${pct}%`}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              ))}
-              <div className="flex justify-between font-extrabold text-base pt-2 border-t border-surface-container-high">
-                <span>{t('pickup.total')}</span>
-                <span className="text-primary tabular-nums">${total.toFixed(2)}</span>
-              </div>
-            </div>
+
+                {/* Promo Code */}
+                <div className="bg-surface-container rounded-2xl p-4">
+                  <p className="text-sm font-extrabold mb-2">{t('cart.promoCode')}</p>
+                  {appliedPromo ? (
+                    <div className="flex items-center justify-between bg-primary/10 rounded-xl px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-sm font-bold text-primary">{appliedPromo.code}</span>
+                        <span className="text-xs text-on-surface-variant">
+                          {t('cart.promoApplied', { value: `-$${appliedPromo.discountAmount.toFixed(2)}` })}
+                        </span>
+                      </div>
+                      <button onClick={() => setAppliedPromo(null)} className="text-xs text-error font-bold">✕</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        value={promoInput}
+                        onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(''); }}
+                        onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
+                        placeholder={t('cart.promoPlaceholder')}
+                        className="flex-1 bg-surface-container-high rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 uppercase"
+                      />
+                      <button onClick={handleApplyPromo} disabled={promoLoading || !promoInput.trim()}
+                        className="px-4 py-2.5 btn-gradient text-white rounded-xl text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
+                        <Tag className="w-3.5 h-3.5" />
+                        {t('cart.apply')}
+                      </button>
+                    </div>
+                  )}
+                  {promoError && (
+                    <p className="text-xs text-red-400 flex items-center gap-1 mt-2">
+                      <AlertCircle className="w-3 h-3 shrink-0" />{promoError}
+                    </p>
+                  )}
+                </div>
+
+                {/* Order Note */}
+                <div className="bg-surface-container rounded-2xl p-4">
+                  <p className="text-sm font-extrabold mb-2">{t('cart.kitchenInstructions')}</p>
+                  <textarea value={orderNote} onChange={e => setOrderNote(e.target.value)}
+                    placeholder={t('cart.specialRequests')} rows={2}
+                    className="w-full bg-surface-container-high rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                {/* Bill Breakdown */}
+                <div className="bg-surface-container rounded-2xl p-4 space-y-2.5">
+                  <div className="flex justify-between text-sm text-on-surface-variant">
+                    <span>{t('cart.subtotal')}</span>
+                    <span className="tabular-nums">${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-on-surface-variant">
+                    <span>{t('cart.taxService')} (10%)</span>
+                    <span className="tabular-nums">${taxAmount.toFixed(2)}</span>
+                  </div>
+                  {tipAmount > 0 && (
+                    <div className="flex justify-between text-sm text-on-surface-variant">
+                      <span>{t('cart.gratuity')} ({tipPercent}%)</span>
+                      <span className="tabular-nums">${tipAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {appliedPromo && (
+                    <div className="flex justify-between text-sm text-primary">
+                      <span>{t('cart.promo', { code: appliedPromo.code })}</span>
+                      <span className="tabular-nums">-${appliedPromo.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-extrabold text-base pt-2.5 border-t border-surface-container-high">
+                    <span>{t('cart.total')}</span>
+                    <span className="text-primary tabular-nums">${finalTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Pickup Time */}
+                <div className="bg-surface-container rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <p className="text-sm font-extrabold">{t('pickup.pickupTime')}</p>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                    {PICKUP_TIMES.map(time => (
+                      <button key={time} onClick={() => setPickupTime(time)}
+                        className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                          pickupTime === time ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface-variant'
+                        }`}>
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Order Note */}
+                <div className="bg-surface-container rounded-2xl p-4">
+                  <p className="text-sm font-extrabold mb-2">{t('pickup.orderNote')}</p>
+                  <textarea value={orderNote} onChange={e => setOrderNote(e.target.value)}
+                    placeholder={t('pickup.orderNotePlaceholder')} rows={2}
+                    className="w-full bg-surface-container-high rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                {/* Pay at Pickup */}
+                <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center shrink-0">
+                    <Bike className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-extrabold text-primary">{t('pickup.payAtPickup')}</p>
+                    <p className="text-xs text-on-surface-variant mt-0.5">{t('pickup.payAtPickupDesc')}</p>
+                  </div>
+                </div>
+
+                {/* Summary */}
+                <div className="bg-surface-container rounded-2xl p-4 space-y-2">
+                  {items.map(item => (
+                    <div key={item.id} className="flex justify-between text-xs text-on-surface-variant">
+                      <span>{item.quantity}× {item.name}</span>
+                      <span className="tabular-nums">${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between font-extrabold text-base pt-2 border-t border-surface-container-high">
+                    <span>{t('pickup.total')}</span>
+                    <span className="text-primary tabular-nums">${subtotal.toFixed(2)}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
@@ -200,7 +367,7 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
           )}
           <button onClick={handlePlace} disabled={placing}
             className="w-full btn-gradient text-white rounded-2xl py-4 font-extrabold text-base shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-98 transition-transform">
-            {placing ? '...' : `${t('pickup.placeOrder')} · $${total.toFixed(2)}`}
+            {placing ? '...' : `${t('pickup.placeOrder')} · $${finalTotal.toFixed(2)}`}
           </button>
         </div>
       )}
