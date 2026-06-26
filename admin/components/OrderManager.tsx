@@ -268,30 +268,60 @@ export const OrderManager = () => {
                 className={`group flex items-center p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
                   selectedOrder?._id === order._id ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
                 }`}>
-                <div className="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center shrink-0 me-6 group-hover:scale-110 transition-transform">
-                  <Package className={`w-6 h-6 ${order.status === 'Delivered' ? 'text-primary' : order.status === 'Preparing' ? 'text-primary' : 'text-[#303942]'}`} />
+                {/* Source icon */}
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 me-5 group-hover:scale-110 transition-transform text-white text-[10px] font-extrabold tracking-wide ${
+                  order.order_source === 'CASHIER_POS' ? 'bg-[#303942]' : order.order_source === 'QR_CODE' ? 'bg-primary' : 'bg-primary/70'
+                }`}>
+                  {SOURCE_LABEL[order.order_source ?? ''] ?? <Package className="w-5 h-5" />}
                 </div>
-                <div className="flex-1 grid grid-cols-5 gap-4">
-                  {[
-                    { labelKey: 'orders.orderId',  val: `#${order._id.slice(-6).toUpperCase()}`, mono: true },
-                    { labelKey: 'orders.table',    val: order.tableNumber || '—' },
-                    { labelKey: 'orders.customer', val: order.customerName || t('orders.guest'), truncate: true },
-                    { labelKey: 'orders.items',    val: `${order.items.length} ${t('orders.items')}` },
-                    { labelKey: 'orders.table',    val: `$${order.total.toFixed(2)}`, primary: true },
-                  ].map((col, ci) => (
-                    <div key={ci}>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t(col.labelKey)}</p>
-                      <p className={`font-bold text-sm ${col.mono ? 'font-mono' : ''} ${col.truncate ? 'truncate' : ''} ${col.primary ? 'text-primary' : ''}`}>{col.val}</p>
-                    </div>
-                  ))}
+
+                <div className="flex-1 grid grid-cols-5 gap-4 min-w-0">
+                  {/* Order ID */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.orderId')}</p>
+                    <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
+                  </div>
+
+                  {/* Table */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.table')}</p>
+                    <p className="font-bold text-sm">{order.tableNumber || '—'}</p>
+                  </div>
+
+                  {/* Customer */}
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.customer')}</p>
+                    <p className="font-bold text-sm truncate">{order.customerName || t('orders.guest')}</p>
+                  </div>
+
+                  {/* Items */}
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.items')}</p>
+                    <p className="font-semibold text-sm truncate text-on-surface-variant">
+                      {order.items.slice(0, 2).map(i => i.name).join(', ')}
+                      {order.items.length > 2 && ` +${order.items.length - 2}`}
+                    </p>
+                  </div>
+
+                  {/* Total */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.total')}</p>
+                    <p className="font-extrabold text-sm text-primary">${order.total.toFixed(2)}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 ms-6 flex-wrap justify-end">
-                  {order.order_source && <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${SOURCE_COLOR[order.order_source] ?? 'bg-gray-100 text-gray-600'}`}>{SOURCE_LABEL[order.order_source] ?? order.order_source}</span>}
-                  {order.payment_status && <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${PAYMENT_COLOR[order.payment_status] ?? 'bg-gray-100 text-gray-600'}`}>{order.payment_status.replace(/_/g, ' ')}</span>}
-                  <div className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                <div className="flex items-center gap-2 ms-5 flex-wrap justify-end shrink-0">
+                  {order.payment_status && (
+                    <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${PAYMENT_COLOR[order.payment_status] ?? 'bg-gray-100 text-gray-600'}`}>
+                      {order.payment_status.replace(/_/g, ' ')}
+                    </span>
+                  )}
+                  <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
                     order.status === 'Delivered' ? 'bg-primary/10 text-primary' :
-                    order.status === 'Preparing' ? 'bg-primary/10 text-primary' : 'bg-[#303942]/10 text-[#303942]'
-                  }`}>{order.status}</div>
+                    order.status === 'Preparing' ? 'bg-primary/10 text-primary' :
+                    order.status === 'Ready'     ? 'bg-emerald-100 text-emerald-700' :
+                    order.status === 'Cancelled' ? 'bg-red-100 text-red-600' :
+                    'bg-[#303942]/10 text-[#303942]'
+                  }`}>{order.status}</span>
                   <ChevronRight className="w-5 h-5 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
                 </div>
               </motion.div>

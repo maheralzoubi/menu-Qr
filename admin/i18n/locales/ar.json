@@ -85,6 +85,7 @@
     "table": "الطاولة",
     "customer": "العميل",
     "items": "العناصر",
+    "total": "الإجمالي",
     "guest": "ضيف",
     "toastNew": "طلب جديد #{{ref}}{{table}} وصل للتو!",
     "toastNewTable": " — طاولة {{table}}",

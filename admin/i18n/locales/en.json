@@ -85,6 +85,7 @@
     "table": "Table",
     "customer": "Customer",
     "items": "Items",
+    "total": "Total",
     "guest": "Guest",
     "toastNew": "New order #{{ref}}{{table}} just came in!",
     "toastNewTable": " — Table {{table}}",
