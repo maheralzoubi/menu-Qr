@@ -9,11 +9,12 @@ import { io } from 'socket.io-client';
 import { authFetch } from '../../src/lib/auth';
 import { OrderArchive } from './OrderArchive';
 
-interface CartItem { id: string; name: string; price: number; image: string; quantity: number; }
+interface CartItem { id: string; name: string; price: number; image: string; quantity: number; note?: string; }
 interface Order {
   _id: string; items: CartItem[]; total: number; status: string;
   customerName?: string; address?: string; tableNumber?: string; createdAt: string;
   order_source?: string; payment_status?: string; payment_method?: string; cashier_name?: string;
+  order_note?: string;
 }
 
 const SOURCE_LABEL: Record<string, string> = { CASHIER_POS: 'POS', QR_CODE: 'QR', CUSTOMER_APP: 'App' };
@@ -332,16 +333,31 @@ export const OrderManager = () => {
                   <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('orders.orderItems')}</h4>
                   <div className="space-y-3">
                     {selectedOrder.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-surface-container-lowest p-4 rounded-2xl">
-                        <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center font-bold text-xs">{item.quantity}x</span>
-                          <span className="font-semibold text-sm">{item.name}</span>
+                      <div key={idx} className="bg-surface-container-lowest p-4 rounded-2xl space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-3">
+                            <span className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center font-bold text-xs shrink-0">{item.quantity}x</span>
+                            <span className="font-semibold text-sm">{item.name}</span>
+                          </div>
+                          <span className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</span>
                         </div>
-                        <span className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</span>
+                        {item.note && (
+                          <p className="text-xs text-on-surface-variant ms-11 italic">"{item.note}"</p>
+                        )}
                       </div>
                     ))}
                   </div>
                 </section>
+                {selectedOrder.order_note && (
+                  <section className="space-y-2">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('orders.orderNote')}</h4>
+                    <div className="bg-surface-container-lowest p-4 rounded-2xl flex items-start gap-3">
+                      <ChefHat className="w-4 h-4 text-on-surface-variant shrink-0 mt-0.5" />
+                      <p className="text-sm text-on-surface-variant italic">"{selectedOrder.order_note}"</p>
+                    </div>
+                  </section>
+                )}
+
                 <section className="bg-primary/5 p-6 rounded-3xl space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-on-surface-variant font-medium">{t('orders.subtotal')}</span>
