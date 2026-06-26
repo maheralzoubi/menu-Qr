@@ -42,37 +42,40 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState('');
 
-  // Pickup-only state
-  const [pickupTime, setPickupTime] = useState('ASAP');
-
-  // Dine-in–only state
-  const [tipPercent, setTipPercent] = useState(0);
+  // Promo — shared across both modes
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
 
-  // Dine-in totals
-  const taxAmount    = isDineIn ? parseFloat((subtotal * TAX_RATE).toFixed(2)) : 0;
-  const tipAmount    = isDineIn ? parseFloat((subtotal * (tipPercent / 100)).toFixed(2)) : 0;
-  const discountAmt  = appliedPromo?.discountAmount ?? 0;
-  const finalTotal   = isDineIn
-    ? parseFloat((subtotal + taxAmount + tipAmount - discountAmt).toFixed(2))
-    : subtotal;
+  // Pickup-only
+  const [pickupTime, setPickupTime] = useState('ASAP');
+
+  // Dine-in–only
+  const [tipPercent, setTipPercent] = useState(0);
+
+  // Totals
+  const discountAmt = appliedPromo?.discountAmount ?? 0;
+  const taxAmount   = isDineIn ? parseFloat((subtotal * TAX_RATE).toFixed(2)) : 0;
+  const tipAmount   = isDineIn ? parseFloat((subtotal * (tipPercent / 100)).toFixed(2)) : 0;
+  const finalTotal  = parseFloat(
+    (subtotal + taxAmount + tipAmount - discountAmt).toFixed(2)
+  );
 
   const handleApplyPromo = async () => {
-    if (!promoInput.trim()) return;
+    const code = promoInput.trim();
+    if (!code) return;
     setPromoError(''); setPromoLoading(true);
     try {
       const res = await fetch('/api/promos/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoInput.trim(), restaurantId, subtotal }),
+        body: JSON.stringify({ code, restaurantId, subtotal }),
       });
       const data = await res.json();
       if (data.valid) {
         setAppliedPromo({
-          code: promoInput.trim().toUpperCase(),
+          code: code.toUpperCase(),
           discountAmount: data.discountAmount,
           discountType: data.discountType,
           discountValue: data.discountValue,
@@ -104,9 +107,9 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
         order_note: orderNote || undefined,
         tableNumber,
       };
-      if (isDineIn && appliedPromo) {
-        payload.discount    = appliedPromo.discountAmount;
-        payload.promoCode   = appliedPromo.code;
+      if (appliedPromo) {
+        payload.discount      = appliedPromo.discountAmount;
+        payload.promoCode     = appliedPromo.code;
         payload.discount_type = 'CODE';
       }
       const res = await fetch('/api/orders', {
@@ -126,6 +129,50 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
     } catch { setError('Network error. Please try again.'); }
     finally { setPlacing(false); }
   };
+
+  // Shared promo code block (used in both modes)
+  const promoBlock = (
+    <div className="bg-surface-container rounded-2xl p-4">
+      <p className="text-sm font-extrabold mb-2">{t('cart.promoCode')}</p>
+      {appliedPromo ? (
+        <div className="flex items-center justify-between bg-primary/10 rounded-xl px-3 py-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-sm font-bold text-primary truncate">{appliedPromo.code}</span>
+            <span className="text-xs text-on-surface-variant shrink-0">
+              -{`$${appliedPromo.discountAmount.toFixed(2)}`}
+            </span>
+          </div>
+          <button onClick={() => setAppliedPromo(null)} className="text-xs text-red-400 font-bold ps-3 shrink-0">✕</button>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center bg-surface-container-high rounded-xl overflow-hidden">
+            <input
+              value={promoInput}
+              onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(''); }}
+              onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
+              placeholder={t('cart.promoPlaceholder')}
+              className="flex-1 bg-transparent px-3 py-2.5 text-sm focus:outline-none uppercase min-w-0"
+            />
+            <button
+              onClick={handleApplyPromo}
+              disabled={promoLoading || !promoInput.trim()}
+              className="px-4 py-2.5 btn-gradient text-white text-sm font-bold disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+            >
+              <Tag className="w-3.5 h-3.5" />
+              {t('cart.apply')}
+            </button>
+          </div>
+          {promoError && (
+            <p className="text-xs text-red-400 flex items-center gap-1 mt-2">
+              <AlertCircle className="w-3 h-3 shrink-0" />{promoError}
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-screen bg-surface">
@@ -224,42 +271,7 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
                   </div>
                 </div>
 
-                {/* Promo Code */}
-                <div className="bg-surface-container rounded-2xl p-4">
-                  <p className="text-sm font-extrabold mb-2">{t('cart.promoCode')}</p>
-                  {appliedPromo ? (
-                    <div className="flex items-center justify-between bg-primary/10 rounded-xl px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary shrink-0" />
-                        <span className="text-sm font-bold text-primary">{appliedPromo.code}</span>
-                        <span className="text-xs text-on-surface-variant">
-                          {t('cart.promoApplied', { value: `-$${appliedPromo.discountAmount.toFixed(2)}` })}
-                        </span>
-                      </div>
-                      <button onClick={() => setAppliedPromo(null)} className="text-xs text-error font-bold">✕</button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <input
-                        value={promoInput}
-                        onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(''); }}
-                        onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
-                        placeholder={t('cart.promoPlaceholder')}
-                        className="flex-1 bg-surface-container-high rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 uppercase"
-                      />
-                      <button onClick={handleApplyPromo} disabled={promoLoading || !promoInput.trim()}
-                        className="px-4 py-2.5 btn-gradient text-white rounded-xl text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
-                        <Tag className="w-3.5 h-3.5" />
-                        {t('cart.apply')}
-                      </button>
-                    </div>
-                  )}
-                  {promoError && (
-                    <p className="text-xs text-red-400 flex items-center gap-1 mt-2">
-                      <AlertCircle className="w-3 h-3 shrink-0" />{promoError}
-                    </p>
-                  )}
-                </div>
+                {promoBlock}
 
                 {/* Order Note */}
                 <div className="bg-surface-container rounded-2xl p-4">
@@ -327,6 +339,8 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
                   />
                 </div>
 
+                {promoBlock}
+
                 {/* Pay at Pickup */}
                 <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center shrink-0">
@@ -346,9 +360,15 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
                       <span className="tabular-nums">${(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
+                  {appliedPromo && (
+                    <div className="flex justify-between text-sm text-primary">
+                      <span>{t('cart.promo', { code: appliedPromo.code })}</span>
+                      <span className="tabular-nums">-${appliedPromo.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-extrabold text-base pt-2 border-t border-surface-container-high">
                     <span>{t('pickup.total')}</span>
-                    <span className="text-primary tabular-nums">${subtotal.toFixed(2)}</span>
+                    <span className="text-primary tabular-nums">${finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
               </>
