@@ -25,6 +25,7 @@ interface UserProfile { email: string; role: string; name?: string; title?: stri
 export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
   const [stats, setStats] = useState<any>(null);
+  const [currency, setCurrency] = useState('USD');
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const { t } = useTranslation();
@@ -39,11 +40,13 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, meRes] = await Promise.all([
+        const [statsRes, meRes, settingsRes] = await Promise.all([
           authFetch('/api/stats'),
           authFetch('/api/auth/me'),
+          authFetch('/api/settings/restaurant'),
         ]);
         if (statsRes.ok) setStats(await statsRes.json());
+        if (settingsRes.ok) { const s = await settingsRes.json(); if (s.currency) setCurrency(s.currency); }
         if (meRes.ok) setUser(await meRes.json());
       } catch (e) {
         console.error('Dashboard fetch error:', e);
@@ -149,7 +152,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              {activeTab === 'overview'     && <StatsGrid stats={stats} />}
+              {activeTab === 'overview'     && <StatsGrid stats={stats} currency={currency} />}
               {activeTab === 'orders'       && <OrderManager />}
               {activeTab === 'menu'         && <MenuManager />}
               {activeTab === 'reservations' && <ReservationManager />}

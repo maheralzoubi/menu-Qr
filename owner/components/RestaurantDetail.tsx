@@ -3,6 +3,7 @@ import { ArrowLeft, ToggleLeft, ToggleRight, Trash2, Building2, Users, ShoppingB
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { ownerFetch as authFetch } from '../../src/lib/ownerAuth';
+import { formatCurrency } from '../../src/lib/currency';
 
 interface RestaurantFull {
   _id: string;
@@ -12,6 +13,7 @@ interface RestaurantFull {
   contactPhone?: string;
   address?: string;
   status: 'active' | 'inactive';
+  currency?: string;
   createdAt: string;
   admin?: { _id: string; name: string; email: string };
   stats?: {
@@ -122,7 +124,7 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             { labelKey: 'restaurantDetail.stats.totalOrders',   value: stats.totalOrders,        icon: <ShoppingBag className="w-5 h-5" /> },
-            { labelKey: 'restaurantDetail.stats.totalRevenue',  value: `$${stats.totalRevenue.toFixed(2)}`, icon: <DollarSign className="w-5 h-5" /> },
+            { labelKey: 'restaurantDetail.stats.totalRevenue',  value: formatCurrency(stats.totalRevenue, restaurant?.currency ?? 'USD'), icon: <DollarSign className="w-5 h-5" /> },
             { labelKey: 'restaurantDetail.stats.customers',     value: stats.totalCustomers,     icon: <Users className="w-5 h-5" /> },
             { labelKey: 'restaurantDetail.stats.menuItems',     value: stats.totalMenuItems,     icon: <Utensils className="w-5 h-5" /> },
             { labelKey: 'restaurantDetail.stats.reviews',       value: stats.totalReviews,       icon: <Star className="w-5 h-5" /> },

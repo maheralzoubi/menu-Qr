@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../src/lib/auth';
+import { formatCurrency } from '../../src/lib/currency';
 
 interface CartItem { id: string; name: string; price: number; quantity: number; }
 interface ArchivedOrder {
@@ -31,6 +32,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
+  const [currency, setCurrency]          = useState('USD');
   const [result, setResult]             = useState<ArchiveResult | null>(null);
   const [isLoading, setIsLoading]       = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<ArchivedOrder | null>(null);
@@ -60,6 +62,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
 
   useEffect(() => { fetchArchive(1); setPage(1); }, [search, status, dateFrom, dateTo, tableNumber]); // eslint-disable-line
   useEffect(() => { fetchArchive(page); }, [page]); // eslint-disable-line
+  useEffect(() => { authFetch('/api/settings/restaurant').then(r => r.ok ? r.json() : null).then(s => { if (s?.currency) setCurrency(s.currency); }); }, []);
 
   const handleExportCSV = () => {
     if (!result?.orders.length) return;
@@ -112,7 +115,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
             {[
               { labelKey: 'orderArchive.totalOrders', value: result.total.toLocaleString() },
               { labelKey: 'orderArchive.shown',       value: orders.length.toLocaleString() },
-              { labelKey: 'orderArchive.revenuePage', value: `$${totalRevenue.toFixed(2)}` },
+              { labelKey: 'orderArchive.revenuePage', value: formatCurrency(totalRevenue, currency) },
             ].map(s => (
               <div key={s.labelKey} className="bg-surface-container-low rounded-2xl p-5 shadow-sm border border-outline-variant/10">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
@@ -220,7 +223,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                     </div>
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.totalLabel')}</p>
-                      <p className="font-bold text-sm text-primary">${order.total.toFixed(2)}</p>
+                      <p className="font-bold text-sm text-primary">{formatCurrency(order.total, currency)}</p>
                     </div>
                   </div>
                   <div className="ms-4 flex items-center gap-3 shrink-0">
@@ -289,7 +292,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                           <span className="w-7 h-7 rounded-lg bg-surface-container-high flex items-center justify-center font-bold text-xs">{item.quantity}x</span>
                           <span className="font-semibold text-sm">{item.name}</span>
                         </div>
-                        <span className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-bold text-sm">{formatCurrency(item.price * item.quantity, currency)}</span>
                       </div>
                     ))}
                   </div>
@@ -297,18 +300,18 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                 <div className="bg-primary/5 p-5 rounded-2xl space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">{t('orderArchive.subtotal')}</span>
-                    <span className="font-bold">${(selectedOrder.total + (selectedOrder.discount ?? 0)).toFixed(2)}</span>
+                    <span className="font-bold">{formatCurrency(selectedOrder.total + (selectedOrder.discount ?? 0), currency)}</span>
                   </div>
                   {selectedOrder.discount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-on-surface-variant">{t('orderArchive.discount')} {selectedOrder.promoCode ? `(${selectedOrder.promoCode})` : ''}</span>
-                      <span className="font-bold text-primary">-${selectedOrder.discount.toFixed(2)}</span>
+                      <span className="font-bold text-primary">-{formatCurrency(selectedOrder.discount, currency)}</span>
                     </div>
                   )}
                   <div className="h-px bg-primary/10" />
                   <div className="flex justify-between items-center">
                     <span className="font-bold">{t('orderArchive.total')}</span>
-                    <span className="text-xl font-headline font-extrabold text-primary">${selectedOrder.total.toFixed(2)}</span>
+                    <span className="text-xl font-headline font-extrabold text-primary">{formatCurrency(selectedOrder.total, currency)}</span>
                   </div>
                 </div>
                 <div className="space-y-1.5 text-xs text-on-surface-variant">
