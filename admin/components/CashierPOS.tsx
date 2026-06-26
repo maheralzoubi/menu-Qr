@@ -216,7 +216,7 @@ export const CashierPOS = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [discountMode, setDiscountMode] = useState<DiscountMode | null>(null);
   const [discountInput, setDiscountInput] = useState('');
-  const [promoResult, setPromoResult] = useState<{ discount: number; type: string } | null>(null);
+  const [promoResult, setPromoResult] = useState<{ discountType: string; discountValue: number; discountAmount: number } | null>(null);
   const [promoError, setPromoError] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
 
@@ -275,7 +275,7 @@ export const CashierPOS = () => {
   const subtotal = useMemo(() => cart.reduce((s, c) => s + c.price * c.quantity, 0), [cart]);
 
   const discountAmount = useMemo(() => {
-    if (discountMode === 'CODE' && promoResult) return promoResult.type === 'percentage' ? subtotal * (promoResult.discount / 100) : promoResult.discount;
+    if (discountMode === 'CODE' && promoResult) return promoResult.discountAmount;
     if (discountMode === 'PERCENTAGE') return subtotal * ((parseFloat(discountInput) || 0) / 100);
     if (discountMode === 'FIXED') return Math.min(parseFloat(discountInput) || 0, subtotal);
     return 0;
@@ -287,10 +287,18 @@ export const CashierPOS = () => {
     if (!discountInput.trim()) return;
     setPromoError(''); setPromoLoading(true);
     try {
-      const res = await authFetch('/api/promos/validate', { method: 'POST', body: JSON.stringify({ code: discountInput.trim(), restaurantId: currentUser?.restaurantId }) });
-      if (res.ok) setPromoResult(await res.json());
-      else setPromoError('Invalid or expired code');
-    } finally { setPromoLoading(false); }
+      const res = await authFetch('/api/promos/validate', {
+        method: 'POST',
+        body: JSON.stringify({ code: discountInput.trim(), restaurantId: currentUser?.restaurantId, subtotal }),
+      });
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setPromoResult(data);
+      } else {
+        setPromoError(data.message || 'Invalid or expired code');
+      }
+    } catch { setPromoError('Network error. Try again.'); }
+    finally { setPromoLoading(false); }
   };
 
   const createOrder = async () => {
