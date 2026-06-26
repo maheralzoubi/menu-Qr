@@ -76,7 +76,7 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
       {/* Sticky Header */}
       <div className="bg-surface px-5 pt-12 pb-4 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <img src="/logo.svg" alt="Monar" className="h-7 w-auto" />
+          <img src="/logo-dark.svg" alt="Monar" className="h-7 w-auto" />
           <button className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center active:scale-90 transition-transform">
             <Bell className="w-5 h-5 text-on-surface-variant" />
           </button>

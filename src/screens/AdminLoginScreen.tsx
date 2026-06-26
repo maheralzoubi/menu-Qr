@@ -54,10 +54,7 @@ export const AdminLoginScreen = ({
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <picture>
-              <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
-              <img src="/logo.svg" alt="Monar" className="h-20 w-auto" />
-            </picture>
+            <img src="/logo-dark.svg" alt="Monar" className="h-20 w-auto" />
           </div>
           <h1 className="text-2xl font-headline font-extrabold">{title}</h1>
           <p className="text-sm text-on-surface-variant">{subtitle}</p>
