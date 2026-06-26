@@ -93,7 +93,7 @@ export const StatsGrid = ({ stats }: { stats: Stats | null }) => {
                     formatter={(v: number) => [`$${v.toFixed(2)}`, t('analytics.revenue')]}
                     contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Line type="monotone" dataKey="value" stroke="#9b3f25" strokeWidth={3} dot={false} animationDuration={1500} />
+                  <Line type="monotone" dataKey="value" stroke="#fe5722" strokeWidth={3} dot={false} animationDuration={1500} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (

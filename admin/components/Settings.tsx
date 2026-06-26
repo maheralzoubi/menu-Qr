@@ -35,7 +35,7 @@ const PALETTE = [
   { name: 'Yellow',     hex: '#ca8a04' },
   { name: 'Amber',      hex: '#d97706' },
   { name: 'Orange',     hex: '#ea580c' },
-  { name: 'Terracotta', hex: '#9b3f25' },
+  { name: 'Terracotta', hex: '#fe5722' },
   { name: 'Sienna',     hex: '#92400e' },
   { name: 'Bronze',     hex: '#78350f' },
   { name: 'Stone',      hex: '#57534e' },
@@ -57,7 +57,7 @@ export const Settings = () => {
   const [hours, setHours] = useState({ openTime: '', closeTime: '', prepTime: '', timezone: 'UTC' });
   const [hoursSaving, setHoursSaving] = useState(false);
   const [hoursMsg, setHoursMsg] = useState('');
-  const [selectedColor, setSelectedColor] = useState('#9b3f25');
+  const [selectedColor, setSelectedColor] = useState('#fe5722');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [brandingSaving, setBrandingSaving] = useState(false);
@@ -79,7 +79,7 @@ export const Settings = () => {
         if (brandRes.ok) {
           const data = await brandRes.json();
           setBranding(data);
-          setSelectedColor(data.primaryColor ?? '#9b3f25');
+          setSelectedColor(data.primaryColor ?? '#fe5722');
           setLogoPreview(data.logo ?? null);
           setHours({ openTime: data.openTime ?? '', closeTime: data.closeTime ?? '', prepTime: data.prepTime ?? '', timezone: data.timezone ?? 'UTC' });
         }
@@ -426,6 +426,38 @@ export const Settings = () => {
                 ))}
               </div>
 
+              {/* Custom color input */}
+              <div className="flex items-center gap-3 pt-1">
+                <label className="relative cursor-pointer shrink-0" title="Open color picker">
+                  <input
+                    type="color"
+                    value={selectedColor.match(/^#[0-9a-fA-F]{6}$/) ? selectedColor : '#fe5722'}
+                    onChange={e => setSelectedColor(e.target.value)}
+                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  />
+                  <div className="w-10 h-10 rounded-xl border-2 border-outline-variant/30 shadow-sm transition-transform hover:scale-105"
+                    style={{ background: selectedColor }} />
+                </label>
+                <input
+                  type="text"
+                  value={selectedColor}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) setSelectedColor(v);
+                  }}
+                  maxLength={7}
+                  placeholder="#fe5722"
+                  className="flex-1 font-mono text-sm bg-surface-container-low border-none rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                <button
+                  onClick={() => setSelectedColor('#fe5722')}
+                  className="px-3 py-3 rounded-2xl bg-surface-container-high text-xs font-bold text-on-surface-variant hover:bg-surface-variant transition-colors shrink-0"
+                  title="Reset to default"
+                >
+                  Reset
+                </button>
+              </div>
+
               {/* Live preview */}
               <div className="mt-4 p-5 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest space-y-3">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.branding.preview')}</p>
@@ -452,7 +484,7 @@ export const Settings = () => {
 
             <div className="flex justify-end gap-4">
               <button
-                onClick={() => { setSelectedColor(branding?.primaryColor ?? '#9b3f25'); setLogoPreview(branding?.logo ?? null); }}
+                onClick={() => { setSelectedColor(branding?.primaryColor ?? '#fe5722'); setLogoPreview(branding?.logo ?? null); }}
                 className="px-8 py-4 rounded-2xl bg-surface-container-high font-bold text-sm hover:bg-surface-variant transition-all"
               >
                 {t('settings.branding.discard')}

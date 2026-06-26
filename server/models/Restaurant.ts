@@ -21,7 +21,7 @@ const RestaurantSchema = new Schema<IRestaurant>(
   {
     name: { type: String, required: true, trim: true },
     logo: { type: String },
-    primaryColor: { type: String, default: '#9b3f25' },
+    primaryColor: { type: String, default: '#fe5722' },
     contactEmail: { type: String, trim: true, lowercase: true },
     contactPhone: { type: String, trim: true },
     address: { type: String, trim: true },

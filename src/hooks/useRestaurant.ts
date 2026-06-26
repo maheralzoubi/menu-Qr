@@ -57,7 +57,7 @@ export function useRestaurant() {
           tableName,
           restaurantName: data.name,
           logo: data.logo ?? '',
-          primaryColor: data.primaryColor ?? '#9b3f25',
+          primaryColor: data.primaryColor ?? '#fe5722',
         };
         saveToStorage(ctx);
         applyBranding(ctx.restaurantName, ctx.logo, ctx.primaryColor);
