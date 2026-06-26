@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, TrendingUp, LogOut, Shield, Users, CreditCard } from 'lucide-react';
+import { Building2, TrendingUp, LogOut, Shield, Users, CreditCard, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { RestaurantList } from './components/RestaurantList';
@@ -7,10 +7,11 @@ import { RestaurantDetail } from './components/RestaurantDetail';
 import { PlatformAnalytics } from './components/PlatformAnalytics';
 import { CustomerTable } from './components/CustomerTable';
 import { PlansManager } from './components/PlansManager';
+import { BannersManager } from './components/BannersManager';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { clearOwnerToken as clearToken, isSuperAdmin } from '../src/lib/ownerAuth';
 
-type Tab = 'restaurants' | 'analytics' | 'customers' | 'plans';
+type Tab = 'restaurants' | 'analytics' | 'customers' | 'plans' | 'banners';
 interface SelectedRestaurant { _id: string; name: string; }
 
 export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
@@ -24,10 +25,12 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     { id: 'analytics',   icon: <TrendingUp className="w-5 h-5" /> },
     { id: 'customers',   icon: <Users className="w-5 h-5" /> },
     { id: 'plans',       icon: <CreditCard className="w-5 h-5" /> },
+    { id: 'banners',     icon: <Megaphone className="w-5 h-5" /> },
   ];
 
+  const superAdminOnly = new Set<Tab>(['customers', 'plans', 'banners']);
   const visibleNavItems = navItems.filter(
-    item => (item.id !== 'customers' && item.id !== 'plans') || superAdmin
+    item => !superAdminOnly.has(item.id) || superAdmin
   );
   const handleLogout = () => { clearToken(); onLogout(); };
 
@@ -95,6 +98,7 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               {activeTab === 'analytics' && <PlatformAnalytics />}
               {activeTab === 'customers' && <CustomerTable isSuperAdmin={superAdmin} />}
               {activeTab === 'plans' && <PlansManager />}
+              {activeTab === 'banners' && <BannersManager />}
             </motion.div>
           </AnimatePresence>
         </div>

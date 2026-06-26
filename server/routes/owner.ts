@@ -9,6 +9,7 @@ import {
   getSubscription, checkoutSubscription,
 } from '../controllers/ownerController';
 import { getAdminPlans, updatePlan } from '../controllers/planController';
+import { getAdminBanners, createBanner, updateBanner, deleteBanner } from '../controllers/bannerController';
 
 const router = Router();
 router.use(requireOwnerAccess);
@@ -39,5 +40,11 @@ router.post('/subscription/checkout', checkoutSubscription);
 // Plan config management — superadmin only
 router.get('/plans', requireSuperAdmin, getAdminPlans);
 router.patch('/plans/:key', requireSuperAdmin, updatePlan);
+
+// Home-screen banner management — superadmin only
+router.get('/banners', requireSuperAdmin, getAdminBanners);
+router.post('/banners', requireSuperAdmin, createBanner);
+router.patch('/banners/:id', requireSuperAdmin, updateBanner);
+router.delete('/banners/:id', requireSuperAdmin, deleteBanner);
 
 export default router;

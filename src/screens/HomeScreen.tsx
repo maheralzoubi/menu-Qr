@@ -32,10 +32,10 @@ const FOOD_CATEGORIES = [
   { key: 'Healthy',   emoji: '🌿' },
 ];
 
-const PROMOS = [
-  { label: 'Free Pickup',   sub: 'All orders this week' },
-  { label: '20% Off Mains', sub: 'On orders over $30'   },
-  { label: 'New Arrivals',  sub: 'Try our latest menu'  },
+const FALLBACK_PROMOS = [
+  { title: 'Free Pickup',   subtitle: 'All orders this week', emoji: '🛍️' },
+  { title: '20% Off Mains', subtitle: 'On orders over $30',   emoji: '🎉' },
+  { title: 'New Arrivals',  subtitle: 'Try our latest menu',  emoji: '✨' },
 ];
 
 const PREP_TIMES = ['10–15', '15–20', '20–25', '25–30'];
@@ -49,12 +49,21 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [promoIdx, setPromoIdx] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [banners, setBanners] = useState<{ title: string; subtitle: string; emoji: string }[]>([]);
 
   useEffect(() => {
     fetch('/api/restaurants/public')
       .then(r => r.ok ? r.json() : [])
       .then(data => { setRestaurants(data); setLoading(false); })
       .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/banners/public')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { if (data.length) setBanners(data); })
+      .catch(() => { /* keep fallback */ });
   }, []);
 
   useEffect(() => {
@@ -66,10 +75,18 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
     } catch { /* ignore */ }
   }, []);
 
+  const slides = banners.length ? banners : FALLBACK_PROMOS;
   useEffect(() => {
-    const timer = setInterval(() => setPromoIdx(i => (i + 1) % PROMOS.length), 3500);
+    if (slides.length <= 1) return;
+    const timer = setInterval(() => setPromoIdx(i => (i + 1) % slides.length), 3500);
     return () => clearInterval(timer);
-  }, []);
+  }, [slides.length]);
+
+  const filteredRestaurants = restaurants.filter(r => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return r.name.toLowerCase().includes(q) || r.address?.toLowerCase().includes(q);
+  });
 
   return (
     <div className="bg-surface min-h-screen pb-4">
@@ -81,10 +98,19 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
             <Bell className="w-5 h-5 text-on-surface-variant" />
           </button>
         </div>
-        <button className="w-full flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-3 text-on-surface-variant">
+        <div className="flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-3 text-on-surface-variant">
           <Search className="w-4 h-4 shrink-0" />
-          <span className="text-sm">{t('app.searchPlaceholder')}</span>
-        </button>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={t('app.searchPlaceholder')}
+            className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="text-on-surface-variant text-xs font-bold">✕</button>
+          )}
+        </div>
       </div>
 
       <div className="px-5 pt-5 space-y-6">
@@ -95,19 +121,19 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
               className="flex transition-transform duration-500"
               style={{ transform: `translateX(${isRTL ? '' : '-'}${promoIdx * 100}%)` }}
             >
-              {PROMOS.map((p, i) => (
+              {slides.map((p, i) => (
                 <div key={i} className="min-w-full bg-gradient-to-r from-primary to-primary-container rounded-2xl p-5 flex items-center justify-between">
                   <div className="text-white">
-                    <p className="text-xl font-extrabold">{p.label}</p>
-                    <p className="text-sm opacity-80 mt-0.5">{p.sub}</p>
+                    <p className="text-xl font-extrabold">{p.title}</p>
+                    {p.subtitle && <p className="text-sm opacity-80 mt-0.5">{p.subtitle}</p>}
                   </div>
-                  <span className="text-5xl">🛍️</span>
+                  <span className="text-5xl">{p.emoji}</span>
                 </div>
               ))}
             </div>
           </div>
           <div className="flex justify-center gap-1.5 mt-2.5">
-            {PROMOS.map((_, i) => (
+            {(banners.length ? banners : FALLBACK_PROMOS).map((_, i) => (
               <button key={i} onClick={() => setPromoIdx(i)}
                 className={`h-1.5 rounded-full transition-all ${i === promoIdx ? 'w-5 bg-primary' : 'w-1.5 bg-surface-container-high'}`} />
             ))}
@@ -167,18 +193,18 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-extrabold">{t('app.nearYou')}</h2>
-            <span className="text-xs text-on-surface-variant">{restaurants.length} {t('app.available')}</span>
+            <span className="text-xs text-on-surface-variant">{filteredRestaurants.length} {t('app.available')}</span>
           </div>
 
           {loading ? (
             <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-surface-container rounded-2xl h-24 animate-pulse" />)}</div>
-          ) : restaurants.length === 0 ? (
+          ) : filteredRestaurants.length === 0 ? (
             <div className="text-center py-16 text-on-surface-variant">
-              <p className="text-4xl mb-3">🍽️</p><p className="text-sm">{t('app.noRestaurants')}</p>
+              <p className="text-4xl mb-3">🍽️</p><p className="text-sm">{searchQuery ? t('restaurantList.noFound') : t('app.noRestaurants')}</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {restaurants.map((r, idx) => {
+              {filteredRestaurants.map((r, idx) => {
                 const isOpen = r.status !== 'inactive';
                 return (
                   <motion.button key={r._id}

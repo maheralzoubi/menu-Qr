@@ -9,6 +9,7 @@ import * as reservationsController from '../controllers/reservationsController';
 import * as categoriesController from '../controllers/categoriesController';
 import * as tablesController from '../controllers/tablesController';
 import * as promoCodeController from '../controllers/promoCodeController';
+import { getPublicBanners } from '../controllers/bannerController';
 import { requireAuth, optionalAuth, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createMenuItemSchema, updateMenuItemSchema } from '../schemas/menu.schema';
@@ -138,5 +139,8 @@ router.post('/reservations', validate(createReservationSchema), reservationsCont
 router.get('/reservations', requireAuth, reservationsController.getReservations);
 router.patch('/reservations/:id/status', requireAuth, validate(updateReservationStatusSchema), reservationsController.updateStatus);
 router.delete('/reservations/:id', requireAuth, reservationsController.deleteReservation);
+
+// Banners — public read
+router.get('/banners/public', getPublicBanners);
 
 export default router;
