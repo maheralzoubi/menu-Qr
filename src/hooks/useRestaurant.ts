@@ -9,6 +9,7 @@ export interface RestaurantContext {
   restaurantName: string;
   logo: string;
   primaryColor: string;
+  currency: string;
 }
 
 function readFromStorage(): RestaurantContext | null {
@@ -58,6 +59,7 @@ export function useRestaurant() {
           restaurantName: data.name,
           logo: data.logo ?? '',
           primaryColor: data.primaryColor ?? '#fe5722',
+          currency: data.currency ?? 'USD',
         };
         saveToStorage(ctx);
         applyBranding(ctx.restaurantName, ctx.logo, ctx.primaryColor);

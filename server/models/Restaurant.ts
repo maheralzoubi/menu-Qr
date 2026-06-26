@@ -9,6 +9,7 @@ export interface IRestaurant extends Document {
   address?: string;
   status: 'active' | 'inactive';
   cuisine: string[];
+  currency?: string;
   openTime?: string;
   closeTime?: string;
   prepTime?: string;
@@ -27,6 +28,7 @@ const RestaurantSchema = new Schema<IRestaurant>(
     address: { type: String, trim: true },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     cuisine:   { type: [String], default: [] },
+    currency:  { type: String, default: 'USD' },
     openTime:  { type: String },
     closeTime: { type: String },
     prepTime:  { type: String },

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { io } from 'socket.io-client';
 import { authFetch } from '../../src/lib/auth';
 import { OrderArchive } from './OrderArchive';
+import { formatCurrency } from '../../src/lib/currency';
 
 interface CartItem { id: string; name: string; price: number; image: string; quantity: number; note?: string; }
 interface Order {
@@ -46,6 +47,7 @@ export const OrderManager = () => {
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [archiveMsg, setArchiveMsg] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
+  const [currency, setCurrency] = useState('USD');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,8 +63,12 @@ export const OrderManager = () => {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await authFetch('/api/orders');
-      if (res.ok) setOrders(await res.json());
+      const [ordersRes, settingsRes] = await Promise.all([
+        authFetch('/api/orders'),
+        authFetch('/api/settings/restaurant'),
+      ]);
+      if (ordersRes.ok) setOrders(await ordersRes.json());
+      if (settingsRes.ok) { const s = await settingsRes.json(); if (s.currency) setCurrency(s.currency); }
     } catch (error) { console.error('Failed to fetch orders:', error); }
     finally { setIsLoading(false); }
   }, []);
@@ -306,7 +312,7 @@ export const OrderManager = () => {
                   {/* Total */}
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.total')}</p>
-                    <p className="font-extrabold text-sm text-primary">${order.total.toFixed(2)}</p>
+                    <p className="font-extrabold text-sm text-primary">{formatCurrency(order.total, currency)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ms-5 flex-wrap justify-end shrink-0">
@@ -369,7 +375,7 @@ export const OrderManager = () => {
                             <span className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center font-bold text-xs shrink-0">{item.quantity}x</span>
                             <span className="font-semibold text-sm">{item.name}</span>
                           </div>
-                          <span className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</span>
+                          <span className="font-bold text-sm">{formatCurrency(item.price * item.quantity, currency)}</span>
                         </div>
                         {item.note && (
                           <p className="text-xs text-on-surface-variant ms-11 italic">"{item.note}"</p>
@@ -391,12 +397,12 @@ export const OrderManager = () => {
                 <section className="bg-primary/5 p-6 rounded-3xl space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-on-surface-variant font-medium">{t('orders.subtotal')}</span>
-                    <span className="font-bold">${selectedOrder.total.toFixed(2)}</span>
+                    <span className="font-bold">{formatCurrency(selectedOrder.total, currency)}</span>
                   </div>
                   <div className="h-[1px] bg-primary/10 w-full" />
                   <div className="flex justify-between items-end">
                     <span className="text-lg font-bold">{t('orders.total')}</span>
-                    <span className="text-2xl font-headline font-extrabold text-primary">${selectedOrder.total.toFixed(2)}</span>
+                    <span className="text-2xl font-headline font-extrabold text-primary">{formatCurrency(selectedOrder.total, currency)}</span>
                   </div>
                 </section>
               </div>

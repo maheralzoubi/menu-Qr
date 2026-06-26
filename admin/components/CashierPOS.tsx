@@ -7,6 +7,7 @@ import {
   Package
 } from 'lucide-react';
 import { authFetch } from '../../src/lib/auth';
+import { formatCurrency } from '../../src/lib/currency';
 
 interface Category { _id: string; name: string; }
 interface MenuItem { _id: string; name: string; category: string; price: number; description: string; image: string; featured: boolean; ingredients: string[]; allergens: string[]; }
@@ -52,8 +53,9 @@ const CAT_ICONS: Record<string, string> = {
 const ProductCard: React.FC<{
   item: MenuItem;
   cartQty: number;
+  currency: string;
   onAdd: (item: MenuItem) => void;
-}> = ({ item, cartQty, onAdd }) => (
+}> = ({ item, cartQty, currency, onAdd }) => (
   <button
     onClick={() => onAdd(item)}
     className="group relative bg-surface rounded-2xl overflow-hidden text-left hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-200 active:scale-95 border border-surface-container"
@@ -79,7 +81,7 @@ const ProductCard: React.FC<{
     <div className="px-3 py-2.5">
       <p className="text-sm font-semibold text-on-surface leading-tight line-clamp-1">{item.name}</p>
       <div className="flex items-center justify-between mt-1.5">
-        <span className="text-base font-extrabold text-primary">${item.price.toFixed(2)}</span>
+        <span className="text-base font-extrabold text-primary">{formatCurrency(item.price, currency)}</span>
         <span className="w-7 h-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
           <Plus className="w-4 h-4" />
         </span>
@@ -90,13 +92,14 @@ const ProductCard: React.FC<{
 
 interface CartItemRowProps {
   item: CartItem;
+  currency: string;
   onUpdateQty: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
   onNote: (id: string, note: string) => void;
   noteOpen: boolean;
   onToggleNote: () => void;
 }
-const CartItemRow: React.FC<CartItemRowProps> = ({ item, onUpdateQty, onRemove, onNote, noteOpen, onToggleNote }) => (
+const CartItemRow: React.FC<CartItemRowProps> = ({ item, currency, onUpdateQty, onRemove, onNote, noteOpen, onToggleNote }) => (
   <div className="space-y-1.5">
     <div className="flex items-center gap-2">
       {/* Image thumbnail */}
@@ -109,7 +112,7 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, onUpdateQty, onRemove, 
       {/* Name + price */}
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold text-on-surface truncate">{item.name}</p>
-        <p className="text-xs text-on-surface-variant">${(item.price * item.quantity).toFixed(2)}</p>
+        <p className="text-xs text-on-surface-variant">{formatCurrency(item.price * item.quantity, currency)}</p>
       </div>
       {/* Controls */}
       <div className="flex items-center gap-1 shrink-0">
@@ -140,7 +143,7 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, onUpdateQty, onRemove, 
   </div>
 );
 
-const ReceiptModal: React.FC<{ order: any; onClose: () => void; onPrint: () => void }> = ({ order, onClose, onPrint }) => (
+const ReceiptModal: React.FC<{ order: any; currency: string; onClose: () => void; onPrint: () => void }> = ({ order, currency, onClose, onPrint }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
     <div className="bg-surface rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
       {/* Header */}
@@ -160,7 +163,7 @@ const ReceiptModal: React.FC<{ order: any; onClose: () => void; onPrint: () => v
               {item.quantity}× {item.name}
               {item.note ? <span className="text-xs italic text-on-surface-variant/60 ml-1">({item.note})</span> : ''}
             </span>
-            <span className="font-semibold tabular-nums">${(item.price * item.quantity).toFixed(2)}</span>
+            <span className="font-semibold tabular-nums">{formatCurrency(item.price * item.quantity, currency)}</span>
           </div>
         ))}
       </div>
@@ -169,11 +172,11 @@ const ReceiptModal: React.FC<{ order: any; onClose: () => void; onPrint: () => v
       <div className="px-6 pb-2 border-t border-surface-container space-y-2 pt-3">
         {order.discount > 0 && (
           <div className="flex justify-between text-sm text-primary">
-            <span>Discount</span><span>-${order.discount.toFixed(2)}</span>
+            <span>Discount</span><span>-{formatCurrency(order.discount, currency)}</span>
           </div>
         )}
         <div className="flex justify-between font-extrabold text-lg">
-          <span>Total</span><span>${order.total.toFixed(2)}</span>
+          <span>Total</span><span>{formatCurrency(order.total, currency)}</span>
         </div>
         <div className="flex flex-wrap gap-1.5 pt-1">
           {[order.payment_method, order.order_type, order.tableNumber && `Table ${order.tableNumber}`, order.cashier_name && `By ${order.cashier_name}`].filter(Boolean).map((tag, i) => (
@@ -200,6 +203,7 @@ export const CashierPOS = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [currency, setCurrency] = useState('USD');
   const [loading, setLoading] = useState(true);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -230,11 +234,13 @@ export const CashierPOS = () => {
       authFetch('/api/menu'),
       authFetch('/api/tables'),
       authFetch('/api/auth/me'),
-    ]).then(async ([catRes, menuRes, tableRes, meRes]) => {
+      authFetch('/api/settings/restaurant'),
+    ]).then(async ([catRes, menuRes, tableRes, meRes, settingsRes]) => {
       if (catRes.ok) setCategories(await catRes.json());
       if (menuRes.ok) setMenuItems(await menuRes.json());
       if (tableRes.ok) setTables(await tableRes.json());
       if (meRes.ok) setCurrentUser(await meRes.json());
+      if (settingsRes.ok) { const s = await settingsRes.json(); if (s.currency) setCurrency(s.currency); }
       setLoading(false);
     });
   }, []);
@@ -394,7 +400,7 @@ export const CashierPOS = () => {
           ) : (
             <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
               {filteredItems.map(item => (
-                <ProductCard key={item._id} item={item} cartQty={cartQtyMap[item._id] || 0} onAdd={addToCart} />
+                <ProductCard key={item._id} item={item} cartQty={cartQtyMap[item._id] || 0} currency={currency} onAdd={addToCart} />
               ))}
             </div>
           )}
@@ -430,7 +436,7 @@ export const CashierPOS = () => {
               </div>
             ) : (
               cart.map(item => (
-                <CartItemRow key={item.id} item={item}
+                <CartItemRow key={item.id} item={item} currency={currency}
                   onUpdateQty={updateQty} onRemove={removeFromCart}
                   onNote={setItemNote} noteOpen={activeNote === item.id}
                   onToggleNote={() => setActiveNote(activeNote === item.id ? null : item.id)}
@@ -483,7 +489,7 @@ export const CashierPOS = () => {
                   )}
                 </div>
               )}
-              {promoResult && <p className="text-[10px] text-primary flex items-center gap-1"><Check className="w-3 h-3" /> Applied — save ${discountAmount.toFixed(2)}</p>}
+              {promoResult && <p className="text-[10px] text-primary flex items-center gap-1"><Check className="w-3 h-3" /> Applied — save {formatCurrency(discountAmount, currency)}</p>}
               {promoError && <p className="text-[10px] text-red-500">{promoError}</p>}
             </div>
 
@@ -503,15 +509,15 @@ export const CashierPOS = () => {
           <div className="px-4 pb-4 pt-2 border-t border-surface-container space-y-2.5 shrink-0">
             <div className="space-y-1">
               <div className="flex justify-between text-xs text-on-surface-variant">
-                <span>Subtotal</span><span className="tabular-nums">${subtotal.toFixed(2)}</span>
+                <span>Subtotal</span><span className="tabular-nums">{formatCurrency(subtotal, currency)}</span>
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-xs text-primary font-medium">
-                  <span>Discount</span><span className="tabular-nums">-${discountAmount.toFixed(2)}</span>
+                  <span>Discount</span><span className="tabular-nums">-{formatCurrency(discountAmount, currency)}</span>
                 </div>
               )}
               <div className="flex justify-between font-extrabold text-base pt-0.5">
-                <span>Total</span><span className="tabular-nums">${total.toFixed(2)}</span>
+                <span>Total</span><span className="tabular-nums">{formatCurrency(total, currency)}</span>
               </div>
             </div>
 
@@ -525,14 +531,14 @@ export const CashierPOS = () => {
               className="w-full btn-gradient text-white py-3.5 rounded-2xl font-extrabold text-sm disabled:opacity-40 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-opacity">
               {creating
                 ? <><RefreshCw className="w-4 h-4 animate-spin" /> Creating...</>
-                : <><Receipt className="w-4 h-4" /> Create Order · ${total.toFixed(2)}</>
+                : <><Receipt className="w-4 h-4" /> Create Order · {formatCurrency(total, currency)}</>
               }
             </button>
           </div>
         </div>
       </div>
 
-      {receipt && <ReceiptModal order={receipt} onClose={resetOrder} onPrint={() => window.print()} />}
+      {receipt && <ReceiptModal order={receipt} currency={currency} onClose={resetOrder} onPrint={() => window.print()} />}
     </div>
   );
 };

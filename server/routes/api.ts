@@ -27,7 +27,7 @@ const router = Router();
 // All restaurants — public (for restaurant discovery list)
 router.get('/restaurants/public', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const restaurants = await Restaurant.find().select('name logo address status cuisine openTime closeTime prepTime timezone').sort({ name: 1 });
+    const restaurants = await Restaurant.find().select('name logo address status cuisine currency openTime closeTime prepTime timezone').sort({ name: 1 });
 
     const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
     const now = new Date();
@@ -47,7 +47,7 @@ router.get('/restaurants/public', async (_req: Request, res: Response, next: Nex
         ? nowMins >= toMins(r.openTime) && nowMins <= toMins(r.closeTime)
         : true;
       const isOpen = r.status === 'active' && withinHours;
-      return { _id: r._id, name: r.name, logo: r.logo, address: r.address, status: r.status, cuisine: r.cuisine ?? [], isOpen, prepTime: r.prepTime ?? null, openTime: r.openTime ?? null, closeTime: r.closeTime ?? null, timezone: r.timezone ?? 'UTC', averageRating };
+      return { _id: r._id, name: r.name, logo: r.logo, address: r.address, status: r.status, cuisine: r.cuisine ?? [], currency: r.currency ?? 'USD', isOpen, prepTime: r.prepTime ?? null, openTime: r.openTime ?? null, closeTime: r.closeTime ?? null, timezone: r.timezone ?? 'UTC', averageRating };
     }));
 
     res.json(results);
@@ -57,10 +57,10 @@ router.get('/restaurants/public', async (_req: Request, res: Response, next: Nex
 // Restaurant info — public (for customer app)
 router.get('/restaurants/:id/info', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const r = await Restaurant.findById(req.params.id).select('name logo status primaryColor');
+    const r = await Restaurant.findById(req.params.id).select('name logo status primaryColor currency');
     if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
     if (r.status === 'inactive') { res.status(403).json({ message: 'Restaurant is currently unavailable.' }); return; }
-    res.json({ name: r.name, logo: r.logo, status: r.status, primaryColor: r.primaryColor ?? '#9b3f25' });
+    res.json({ name: r.name, logo: r.logo, status: r.status, primaryColor: r.primaryColor ?? '#fe5722', currency: r.currency ?? 'USD' });
   } catch (e) { next(e); }
 });
 
@@ -69,7 +69,7 @@ router.get('/settings/restaurant', requireAuth, async (req: Request, res: Respon
   try {
     const { restaurantId } = (req as AuthRequest).user!;
     if (!restaurantId) { res.status(403).json({ message: 'No restaurant linked to this account' }); return; }
-    const r = await Restaurant.findById(restaurantId).select('name logo primaryColor address contactEmail contactPhone openTime closeTime prepTime timezone');
+    const r = await Restaurant.findById(restaurantId).select('name logo primaryColor address contactEmail contactPhone currency openTime closeTime prepTime timezone');
     if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
     res.json(r);
   } catch (e) { next(e); }
@@ -79,7 +79,7 @@ router.patch('/settings/restaurant', requireAuth, async (req: Request, res: Resp
   try {
     const { restaurantId } = (req as AuthRequest).user!;
     if (!restaurantId) { res.status(403).json({ message: 'No restaurant linked to this account' }); return; }
-    const allowed = ['logo', 'primaryColor', 'name', 'address', 'contactEmail', 'contactPhone', 'openTime', 'closeTime', 'prepTime', 'timezone'];
+    const allowed = ['logo', 'primaryColor', 'name', 'address', 'contactEmail', 'contactPhone', 'currency', 'openTime', 'closeTime', 'prepTime', 'timezone'];
     const update: Record<string, string> = {};
     for (const key of allowed) {
       if (req.body[key] !== undefined) update[key] = req.body[key];

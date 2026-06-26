@@ -54,7 +54,7 @@ export const Settings = () => {
 
   const [branding, setBranding] = useState<{ logo?: string; primaryColor: string } | null>(null);
 
-  const [restaurantInfo, setRestaurantInfo] = useState({ name: '', address: '', contactEmail: '', contactPhone: '' });
+  const [restaurantInfo, setRestaurantInfo] = useState({ name: '', address: '', contactEmail: '', contactPhone: '', currency: 'USD' });
   const [infoSaving, setInfoSaving] = useState(false);
   const [infoMsg, setInfoMsg] = useState('');
 
@@ -86,7 +86,7 @@ export const Settings = () => {
           setSelectedColor(data.primaryColor ?? '#fe5722');
           setLogoPreview(data.logo ?? null);
           setHours({ openTime: data.openTime ?? '', closeTime: data.closeTime ?? '', prepTime: data.prepTime ?? '', timezone: data.timezone ?? 'UTC' });
-          setRestaurantInfo({ name: data.name ?? '', address: data.address ?? '', contactEmail: data.contactEmail ?? '', contactPhone: data.contactPhone ?? '' });
+          setRestaurantInfo({ name: data.name ?? '', address: data.address ?? '', contactEmail: data.contactEmail ?? '', contactPhone: data.contactPhone ?? '', currency: data.currency ?? 'USD' });
         }
       } catch (e) {
         console.error('Failed to fetch settings:', e);
@@ -397,6 +397,35 @@ export const Settings = () => {
                   />
                 </div>
               ))}
+
+              {/* Currency */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Currency</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { code: 'USD', symbol: '$',   label: 'US Dollar',         sub: 'USD' },
+                    { code: 'JOD', symbol: 'JD',  label: 'Jordanian Dinar',   sub: 'JOD' },
+                    { code: 'SAR', symbol: 'SR',  label: 'Saudi Riyal',       sub: 'SAR' },
+                    { code: 'AED', symbol: 'AED', label: 'UAE Dirham',        sub: 'AED' },
+                    { code: 'EUR', symbol: '€',   label: 'Euro',              sub: 'EUR' },
+                    { code: 'GBP', symbol: '£',   label: 'British Pound',     sub: 'GBP' },
+                  ].map(cur => (
+                    <button key={cur.code} type="button"
+                      onClick={() => setRestaurantInfo(r => ({ ...r, currency: cur.code }))}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-start ${
+                        restaurantInfo.currency === cur.code
+                          ? 'border-primary bg-primary/5'
+                          : 'border-outline-variant/20 bg-surface-container-low hover:border-primary/30'
+                      }`}>
+                      <span className={`text-lg font-extrabold w-8 text-center ${restaurantInfo.currency === cur.code ? 'text-primary' : 'text-on-surface-variant'}`}>{cur.symbol}</span>
+                      <div>
+                        <p className={`text-sm font-bold ${restaurantInfo.currency === cur.code ? 'text-primary' : 'text-on-surface'}`}>{cur.label}</p>
+                        <p className="text-[10px] text-on-surface-variant">{cur.sub}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </section>
 
             {infoMsg && <p className="text-sm font-bold text-primary">{infoMsg}</p>}

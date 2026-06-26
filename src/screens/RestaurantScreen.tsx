@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useCart } from '../contexts/CartContext';
 import { ProductDetailModal } from '../components/ProductDetailModal';
 import { applyPrimaryColor } from '../lib/branding';
+import { formatCurrency } from '../lib/currency';
 import type { MenuItem, Category } from '../types';
 
 interface Props {
@@ -22,6 +23,7 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [allItems, setAllItems] = useState<MenuItem[]>([]);
+  const [currency, setCurrency] = useState('USD');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -40,6 +42,17 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
       setAllItems(items);
       setCategories(cats);
       if (info?.primaryColor) applyPrimaryColor(info.primaryColor);
+      if (info?.currency) {
+        setCurrency(info.currency);
+        // Update localStorage context so CartScreen picks it up
+        try {
+          const raw = localStorage.getItem('restaurant_context');
+          const ctx = raw ? JSON.parse(raw) : {};
+          if (ctx.restaurantId === restaurantId) {
+            localStorage.setItem('restaurant_context', JSON.stringify({ ...ctx, currency: info.currency }));
+          }
+        } catch { /* ignore */ }
+      }
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [restaurantId]);
@@ -159,7 +172,7 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
                   )}
                   <div className="space-y-3">
                     {itemsByCategory[cat].map(item => (
-                      <MenuItemCard key={item.id} item={item}
+                      <MenuItemCard key={item.id} item={item} currency={currency}
                         onSelect={() => setSelectedItem(item)}
                         onQuickAdd={() => addItem(item, restaurantId, restaurantName, restaurantLogo)}
                       />
@@ -189,7 +202,7 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
                 <span className="bg-white/20 text-white text-xs font-extrabold w-6 h-6 rounded-lg flex items-center justify-center">{itemCount}</span>
                 <span className="font-extrabold text-sm">{t('restaurantPage.viewCart')}</span>
               </div>
-              <span className="font-extrabold text-sm">${total.toFixed(2)}</span>
+              <span className="font-extrabold text-sm">{formatCurrency(total, currency)}</span>
             </button>
           </motion.div>
         )}
@@ -212,7 +225,7 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
   );
 };
 
-const MenuItemCard: React.FC<{ item: MenuItem; onSelect: () => void; onQuickAdd: () => void }> = ({ item, onSelect, onQuickAdd }) => (
+const MenuItemCard: React.FC<{ item: MenuItem; currency: string; onSelect: () => void; onQuickAdd: () => void }> = ({ item, currency, onSelect, onQuickAdd }) => (
   <motion.div whileTap={{ scale: 0.98 }}
     className="bg-surface rounded-2xl p-3.5 flex items-center gap-3 shadow-sm border border-surface-container active:shadow-none">
     <button onClick={onSelect} className="flex-1 flex items-center gap-3 text-left min-w-0">
@@ -222,7 +235,7 @@ const MenuItemCard: React.FC<{ item: MenuItem; onSelect: () => void; onQuickAdd:
       <div className="flex-1 min-w-0">
         <p className="font-bold text-sm text-on-surface">{item.name}</p>
         {item.description && <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-2">{item.description}</p>}
-        <p className="text-sm font-extrabold text-primary mt-1.5">${item.price.toFixed(2)}</p>
+        <p className="text-sm font-extrabold text-primary mt-1.5">{formatCurrency(item.price, currency)}</p>
       </div>
     </button>
     <button onClick={e => { e.stopPropagation(); onQuickAdd(); }}

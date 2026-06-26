@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../contexts/CartContext';
 import { applyPrimaryColor } from '../lib/branding';
+import { formatCurrency } from '../lib/currency';
 
 interface Props {
   onBack: () => void;
@@ -26,13 +27,18 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
   const isRTL = i18n.language === 'ar';
   const { items, restaurantName, restaurantId, updateQty, removeItem, updateNote, clearCart, total: subtotal } = useCart();
 
-  // Apply restaurant brand color (persists from RestaurantScreen → CartScreen)
-  useEffect(() => {
-    try {
-      const ctx = JSON.parse(localStorage.getItem('restaurant_context') || 'null');
-      if (ctx?.primaryColor && ctx?.restaurantId === restaurantId) applyPrimaryColor(ctx.primaryColor);
-    } catch { /* ignore */ }
+  // Read restaurant context (branding + currency)
+  const restaurantCtx = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('restaurant_context') || 'null'); } catch { return null; }
   }, [restaurantId]);
+
+  const currency = restaurantCtx?.currency ?? 'USD';
+
+  useEffect(() => {
+    if (restaurantCtx?.primaryColor && restaurantCtx?.restaurantId === restaurantId) {
+      applyPrimaryColor(restaurantCtx.primaryColor);
+    }
+  }, [restaurantId, restaurantCtx]);
 
   // Detect dine-in mode (arrived via QR code with a table context)
   const { isDineIn, tableNumber } = useMemo(() => {
@@ -149,7 +155,7 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
             <CheckCircle className="w-4 h-4 text-primary shrink-0" />
             <span className="text-sm font-bold text-primary truncate">{appliedPromo.code}</span>
             <span className="text-xs text-on-surface-variant shrink-0">
-              -{`$${appliedPromo.discountAmount.toFixed(2)}`}
+              -{formatCurrency(appliedPromo.discountAmount, currency)}
             </span>
           </div>
           <button onClick={() => setAppliedPromo(null)} className="text-xs text-red-400 font-bold ps-3 shrink-0">✕</button>
@@ -229,7 +235,7 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm">{item.name}</p>
-                        <p className="text-sm font-extrabold text-primary mt-0.5">${(item.price * item.quantity).toFixed(2)}</p>
+                        <p className="text-sm font-extrabold text-primary mt-0.5">{formatCurrency(item.price * item.quantity, currency)}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button onClick={() => updateQty(item.id, item.quantity - 1)} className="w-7 h-7 rounded-lg bg-surface-container-high flex items-center justify-center active:scale-90">
@@ -295,27 +301,27 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
                 <div className="bg-surface-container rounded-2xl p-4 space-y-2.5">
                   <div className="flex justify-between text-sm text-on-surface-variant">
                     <span>{t('cart.subtotal')}</span>
-                    <span className="tabular-nums">${subtotal.toFixed(2)}</span>
+                    <span className="tabular-nums">{formatCurrency(subtotal, currency)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-on-surface-variant">
                     <span>{t('cart.taxService')} (10%)</span>
-                    <span className="tabular-nums">${taxAmount.toFixed(2)}</span>
+                    <span className="tabular-nums">{formatCurrency(taxAmount, currency)}</span>
                   </div>
                   {tipAmount > 0 && (
                     <div className="flex justify-between text-sm text-on-surface-variant">
                       <span>{t('cart.gratuity')} ({tipPercent}%)</span>
-                      <span className="tabular-nums">${tipAmount.toFixed(2)}</span>
+                      <span className="tabular-nums">{formatCurrency(tipAmount, currency)}</span>
                     </div>
                   )}
                   {appliedPromo && (
                     <div className="flex justify-between text-sm text-primary">
                       <span>{t('cart.promo', { code: appliedPromo.code })}</span>
-                      <span className="tabular-nums">-${appliedPromo.discountAmount.toFixed(2)}</span>
+                      <span className="tabular-nums">-{formatCurrency(appliedPromo.discountAmount, currency)}</span>
                     </div>
                   )}
                   <div className="flex justify-between font-extrabold text-base pt-2.5 border-t border-surface-container-high">
                     <span>{t('cart.total')}</span>
-                    <span className="text-primary tabular-nums">${finalTotal.toFixed(2)}</span>
+                    <span className="text-primary tabular-nums">{formatCurrency(finalTotal, currency)}</span>
                   </div>
                 </div>
               </>
@@ -372,12 +378,12 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
                   {appliedPromo && (
                     <div className="flex justify-between text-sm text-primary">
                       <span>{t('cart.promo', { code: appliedPromo.code })}</span>
-                      <span className="tabular-nums">-${appliedPromo.discountAmount.toFixed(2)}</span>
+                      <span className="tabular-nums">-{formatCurrency(appliedPromo.discountAmount, currency)}</span>
                     </div>
                   )}
                   <div className="flex justify-between font-extrabold text-base pt-2 border-t border-surface-container-high">
                     <span>{t('pickup.total')}</span>
-                    <span className="text-primary tabular-nums">${finalTotal.toFixed(2)}</span>
+                    <span className="text-primary tabular-nums">{formatCurrency(finalTotal, currency)}</span>
                   </div>
                 </div>
               </>
@@ -396,7 +402,7 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
           )}
           <button onClick={handlePlace} disabled={placing}
             className="w-full btn-gradient text-white rounded-2xl py-4 font-extrabold text-base shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-98 transition-transform">
-            {placing ? '...' : `${t('pickup.placeOrder')} · $${finalTotal.toFixed(2)}`}
+            {placing ? '...' : `${t('pickup.placeOrder')} · ${formatCurrency(finalTotal, currency)}`}
           </button>
         </div>
       )}
