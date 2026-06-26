@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../contexts/CartContext';
 import { ProductDetailModal } from '../components/ProductDetailModal';
-import { applyPrimaryColor, restoreDefaultColor } from '../lib/branding';
+import { applyPrimaryColor } from '../lib/branding';
 import type { MenuItem, Category } from '../types';
 
 interface Props {
@@ -42,8 +42,6 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
       if (info?.primaryColor) applyPrimaryColor(info.primaryColor);
       setLoading(false);
     }).catch(() => setLoading(false));
-
-    return () => { restoreDefaultColor(); };
   }, [restaurantId]);
 
   const handleScroll = useCallback(() => {

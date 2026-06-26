@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MessageSquare, Clock, AlertCircle, Bike, Tag, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../contexts/CartContext';
+import { applyPrimaryColor } from '../lib/branding';
 
 interface Props {
   onBack: () => void;
@@ -24,6 +25,14 @@ export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
   const { items, restaurantName, restaurantId, updateQty, removeItem, updateNote, clearCart, total: subtotal } = useCart();
+
+  // Apply restaurant brand color (persists from RestaurantScreen → CartScreen)
+  useEffect(() => {
+    try {
+      const ctx = JSON.parse(localStorage.getItem('restaurant_context') || 'null');
+      if (ctx?.primaryColor && ctx?.restaurantId === restaurantId) applyPrimaryColor(ctx.primaryColor);
+    } catch { /* ignore */ }
+  }, [restaurantId]);
 
   // Detect dine-in mode (arrived via QR code with a table context)
   const { isDineIn, tableNumber } = useMemo(() => {

@@ -10,6 +10,7 @@ import { OrdersScreen } from './screens/OrdersScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { BottomNav } from './components/BottomNav';
 import { useRestaurant } from './hooks/useRestaurant';
+import { restoreDefaultColor } from './lib/branding';
 
 export type MainTab = 'home' | 'orders' | 'profile';
 export type Overlay =
@@ -46,7 +47,7 @@ export default function App() {
 
   const openCart = useCallback(() => setOverlay({ type: 'cart' }), []);
   const openTracking = useCallback((orderId: string) => setOverlay({ type: 'tracking', orderId }), []);
-  const closeOverlay = useCallback(() => setOverlay(null), []);
+  const closeOverlay = useCallback(() => { setOverlay(null); restoreDefaultColor(); }, []);
 
   const handleOrderPlaced = useCallback((orderId: string) => {
     setOverlay(null);
