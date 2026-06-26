@@ -42,17 +42,22 @@ export const RestaurantScreen = ({ restaurantId, restaurantName, restaurantLogo,
       setAllItems(items);
       setCategories(cats);
       if (info?.primaryColor) applyPrimaryColor(info.primaryColor);
-      if (info?.currency) {
-        setCurrency(info.currency);
-        // Update localStorage context so CartScreen picks it up
-        try {
-          const raw = localStorage.getItem('restaurant_context');
-          const ctx = raw ? JSON.parse(raw) : {};
-          if (ctx.restaurantId === restaurantId) {
-            localStorage.setItem('restaurant_context', JSON.stringify({ ...ctx, currency: info.currency }));
-          }
-        } catch { /* ignore */ }
-      }
+      if (info?.currency) setCurrency(info.currency);
+      // Always write currency + branding to localStorage so CartScreen
+      // picks them up regardless of whether this was a QR or home-screen flow
+      try {
+        const raw = localStorage.getItem('restaurant_context');
+        const existing = raw ? JSON.parse(raw) : {};
+        // If context belongs to a different restaurant, start fresh for this one
+        const base = existing.restaurantId === restaurantId ? existing : { restaurantId, tableName: '' };
+        localStorage.setItem('restaurant_context', JSON.stringify({
+          ...base,
+          restaurantName: info?.name ?? restaurantName,
+          logo: info?.logo ?? restaurantLogo ?? '',
+          primaryColor: info?.primaryColor ?? '#fe5722',
+          currency: info?.currency ?? 'USD',
+        }));
+      } catch { /* ignore */ }
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [restaurantId]);
