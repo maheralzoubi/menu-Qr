@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Bell, Shield, User, Globe, Clock,
+  Bell, Shield, User, Globe, Clock, Building2,
   Save, Lock, Palette, Upload, CheckCircle2, Image as ImageIcon
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -54,6 +54,10 @@ export const Settings = () => {
 
   const [branding, setBranding] = useState<{ logo?: string; primaryColor: string } | null>(null);
 
+  const [restaurantInfo, setRestaurantInfo] = useState({ name: '', address: '', contactEmail: '', contactPhone: '' });
+  const [infoSaving, setInfoSaving] = useState(false);
+  const [infoMsg, setInfoMsg] = useState('');
+
   const [hours, setHours] = useState({ openTime: '', closeTime: '', prepTime: '', timezone: 'UTC' });
   const [hoursSaving, setHoursSaving] = useState(false);
   const [hoursMsg, setHoursMsg] = useState('');
@@ -82,6 +86,7 @@ export const Settings = () => {
           setSelectedColor(data.primaryColor ?? '#fe5722');
           setLogoPreview(data.logo ?? null);
           setHours({ openTime: data.openTime ?? '', closeTime: data.closeTime ?? '', prepTime: data.prepTime ?? '', timezone: data.timezone ?? 'UTC' });
+          setRestaurantInfo({ name: data.name ?? '', address: data.address ?? '', contactEmail: data.contactEmail ?? '', contactPhone: data.contactPhone ?? '' });
         }
       } catch (e) {
         console.error('Failed to fetch settings:', e);
@@ -159,6 +164,18 @@ export const Settings = () => {
     }
   };
 
+  const handleSaveInfo = async () => {
+    setInfoSaving(true); setInfoMsg('');
+    try {
+      const res = await authFetch('/api/settings/restaurant', {
+        method: 'PATCH',
+        body: JSON.stringify(restaurantInfo),
+      });
+      setInfoMsg(res.ok ? 'Saved!' : 'Failed to save.');
+    } catch { setInfoMsg('Network error.'); }
+    finally { setInfoSaving(false); setTimeout(() => setInfoMsg(''), 3000); }
+  };
+
   const handleSaveHours = async () => {
     setHoursSaving(true); setHoursMsg('');
     try {
@@ -172,12 +189,13 @@ export const Settings = () => {
   };
 
   const sections = [
-    { id: 'profile',       icon: User    },
-    { id: 'branding',      icon: Palette },
-    { id: 'hours',         icon: Clock   },
-    { id: 'notifications', icon: Bell    },
-    { id: 'security',      icon: Shield  },
-    { id: 'preferences',   icon: Globe   },
+    { id: 'profile',       icon: User      },
+    { id: 'restaurant',    icon: Building2 },
+    { id: 'branding',      icon: Palette   },
+    { id: 'hours',         icon: Clock     },
+    { id: 'notifications', icon: Bell      },
+    { id: 'security',      icon: Shield    },
+    { id: 'preferences',   icon: Globe     },
   ];
 
   const notificationItems = [
@@ -350,6 +368,45 @@ export const Settings = () => {
                   </label>
                 </div>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {activeSection === 'restaurant' && (
+          <motion.div key="restaurant" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+            <div>
+              <h3 className="text-2xl font-headline font-extrabold mb-1">Restaurant Information</h3>
+              <p className="text-on-surface-variant font-medium">Edit the public details shown to customers.</p>
+            </div>
+
+            <section className="p-6 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest space-y-5">
+              {[
+                { label: 'Restaurant Name', key: 'name',         type: 'text',  placeholder: 'The Artisan Kitchen' },
+                { label: 'Address',         key: 'address',      type: 'text',  placeholder: '123 Main St, City' },
+                { label: 'Contact Email',   key: 'contactEmail', type: 'email', placeholder: 'contact@restaurant.com' },
+                { label: 'Phone Number',    key: 'contactPhone', type: 'tel',   placeholder: '+1 555 000 0000' },
+              ].map(({ label, key, type, placeholder }) => (
+                <div key={key} className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{label}</label>
+                  <input
+                    type={type}
+                    value={(restaurantInfo as any)[key]}
+                    onChange={e => setRestaurantInfo(r => ({ ...r, [key]: e.target.value }))}
+                    placeholder={placeholder}
+                    className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+              ))}
+            </section>
+
+            {infoMsg && <p className="text-sm font-bold text-primary">{infoMsg}</p>}
+
+            <div className="flex justify-end">
+              <button onClick={handleSaveInfo} disabled={infoSaving}
+                className="px-8 py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 flex items-center gap-2 disabled:opacity-60">
+                <Save className="w-4 h-4" />
+                {infoSaving ? 'Saving…' : 'Save Changes'}
+              </button>
             </div>
           </motion.div>
         )}
@@ -568,7 +625,7 @@ export const Settings = () => {
           </motion.div>
         )}
 
-        {activeSection !== 'profile' && activeSection !== 'notifications' && activeSection !== 'branding' && activeSection !== 'hours' && (
+        {activeSection !== 'profile' && activeSection !== 'restaurant' && activeSection !== 'notifications' && activeSection !== 'branding' && activeSection !== 'hours' && (
           <div className="h-full flex flex-col items-center justify-center text-center p-12 opacity-40">
             <Shield className="w-16 h-16 mb-4" />
             <p className="font-bold">{t('settings.comingSoon')}</p>

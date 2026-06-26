@@ -331,6 +331,7 @@
     "subtext": "Configure your workspace preferences.",
     "sections": {
       "profile":       { "label": "Profile Settings",    "desc": "Manage your personal information." },
+      "restaurant":    { "label": "Restaurant Info",      "desc": "Name, address and contact details." },
       "branding":      { "label": "Restaurant Branding",  "desc": "Logo and accent color for customers." },
       "hours":         { "label": "Business Hours",       "desc": "Opening times and prep time." },
       "notifications": { "label": "Notifications",        "desc": "Configure alerts and updates." },
