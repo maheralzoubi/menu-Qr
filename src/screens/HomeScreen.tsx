@@ -173,15 +173,33 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
         <div>
           <h2 className="text-base font-extrabold mb-3">{t('app.craving')}</h2>
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {FOOD_CATEGORIES.map(cat => (
-              <button key={cat.key} onClick={() => setSelectedCategory(cat.key)}
-                className={`flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl transition-all active:scale-95 ${
-                  selectedCategory === cat.key ? 'bg-primary text-white shadow-md shadow-primary/25' : 'bg-surface-container text-on-surface-variant'
-                }`}>
-                <span className="text-xl">{cat.emoji}</span>
-                <span className="text-[10px] font-bold">{cat.key}</span>
-              </button>
-            ))}
+            {FOOD_CATEGORIES.map(cat => {
+              const count = cat.key === 'All'
+                ? restaurants.length
+                : restaurants.filter(r => (r.cuisine ?? []).includes(cat.key)).length;
+              const active = selectedCategory === cat.key;
+              if (cat.key !== 'All' && count === 0) return null;
+              return (
+                <motion.button
+                  key={cat.key}
+                  onClick={() => setSelectedCategory(cat.key)}
+                  whileTap={{ scale: 0.92 }}
+                  className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl transition-colors ${
+                    active
+                      ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                      : 'bg-surface-container text-on-surface-variant'
+                  }`}
+                >
+                  <span className="text-2xl leading-none">{cat.emoji}</span>
+                  <span className="text-[10px] font-extrabold tracking-wide leading-none">{cat.key}</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                    active ? 'bg-white/20 text-white' : 'bg-surface-container-high text-on-surface-variant'
+                  }`}>
+                    {count}
+                  </span>
+                </motion.button>
+              );
+            })}
           </div>
         </div>
 
@@ -226,54 +244,98 @@ export const HomeScreen = ({ onOpenRestaurant, onOpenTracking }: Props) => {
           </div>
 
           {loading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-surface-container rounded-2xl h-24 animate-pulse" />)}</div>
-          ) : filteredRestaurants.length === 0 ? (
-            <div className="text-center py-16 text-on-surface-variant">
-              <p className="text-4xl mb-3">🍽️</p><p className="text-sm">{searchQuery ? t('restaurantList.noFound') : t('app.noRestaurants')}</p>
+            <div className="space-y-3">
+              {[1,2,3].map(i => (
+                <div key={i} className="bg-surface-container rounded-2xl h-28 animate-pulse flex gap-4 p-4">
+                  <div className="w-20 h-20 rounded-2xl bg-surface-container-high shrink-0" />
+                  <div className="flex-1 space-y-2 pt-1">
+                    <div className="h-3 bg-surface-container-high rounded-full w-2/3" />
+                    <div className="h-2.5 bg-surface-container-high rounded-full w-1/2" />
+                    <div className="h-2 bg-surface-container-high rounded-full w-1/3" />
+                  </div>
+                </div>
+              ))}
             </div>
+          ) : filteredRestaurants.length === 0 ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16 text-on-surface-variant">
+              <p className="text-5xl mb-4">🍽️</p>
+              <p className="text-sm font-medium">{searchQuery || selectedCategory !== 'All' ? t('restaurantList.noFound') : t('app.noRestaurants')}</p>
+              {selectedCategory !== 'All' && (
+                <button onClick={() => setSelectedCategory('All')} className="mt-3 text-xs text-primary font-bold">
+                  Clear filter
+                </button>
+              )}
+            </motion.div>
           ) : (
             <div className="space-y-3">
-              {filteredRestaurants.map((r, idx) => {
-                const isOpen = r.status !== 'inactive';
-                return (
-                  <motion.button key={r._id}
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => isOpen && onOpenRestaurant(r._id, r.name, r.logo)}
-                    className={`w-full bg-surface-container rounded-2xl overflow-hidden text-start flex items-center gap-4 p-4 ${!isOpen ? 'opacity-60' : ''}`}>
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-surface-container-high shrink-0 flex items-center justify-center">
-                      {r.logo ? <img src={r.logo} alt={r.name} className="w-full h-full object-cover" /> : <span className="text-3xl">🍽️</span>}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="font-extrabold text-sm truncate">{r.name}</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${isOpen ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
-                          {isOpen ? t('common.open') : t('common.closed')}
-                        </span>
+              <AnimatePresence mode="popLayout">
+                {filteredRestaurants.map((r, idx) => {
+                  const isOpen = r.status !== 'inactive';
+                  return (
+                    <motion.button
+                      key={r._id}
+                      layout
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      transition={{ delay: idx * 0.03, duration: 0.2 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => isOpen && onOpenRestaurant(r._id, r.name, r.logo)}
+                      className={`w-full bg-surface-container rounded-2xl overflow-hidden text-start flex items-center gap-4 p-4 ${!isOpen ? 'opacity-50' : ''}`}
+                    >
+                      {/* Logo */}
+                      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-surface-container-high shrink-0 flex items-center justify-center">
+                        {r.logo
+                          ? <img src={r.logo} alt={r.name} className="w-full h-full object-cover" />
+                          : <span className="text-4xl">🍽️</span>}
                       </div>
-                      {r.address && (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3 h-3 text-on-surface-variant shrink-0" />
-                          <p className="text-xs text-on-surface-variant truncate">{r.address}</p>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <p className="font-extrabold text-sm leading-tight truncate">{r.name}</p>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${isOpen ? 'bg-primary/15 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
+                            {isOpen ? t('common.open') : t('common.closed')}
+                          </span>
                         </div>
-                      )}
-                      <div className="flex items-center gap-3 mt-1.5">
-                        {r.averageRating > 0 && (
-                          <div className="flex items-center gap-1">
-                            <Star className="w-3 h-3 text-primary fill-primary" />
-                            <span className="text-xs font-bold">{r.averageRating}</span>
+
+                        {r.address && (
+                          <div className="flex items-center gap-1 mb-1.5">
+                            <MapPin className="w-3 h-3 text-on-surface-variant shrink-0" />
+                            <p className="text-xs text-on-surface-variant truncate">{r.address}</p>
                           </div>
                         )}
-                        <div className="flex items-center gap-1 text-on-surface-variant">
-                          <Clock className="w-3 h-3" />
-                          <span className="text-xs">{PREP_TIMES[idx % PREP_TIMES.length]} {t('common.min')}</span>
+
+                        {/* Cuisine tags */}
+                        {r.cuisine?.length > 0 && (
+                          <div className="flex gap-1 flex-wrap mb-1.5">
+                            {r.cuisine.slice(0, 3).map(c => (
+                              <span key={c} className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant">
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-3">
+                          {r.averageRating > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3 h-3 text-primary fill-primary" />
+                              <span className="text-xs font-extrabold">{r.averageRating}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 text-on-surface-variant">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-xs">{PREP_TIMES[idx % PREP_TIMES.length]} {t('common.min')}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <ChevronRight className={`w-4 h-4 text-on-surface-variant/40 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
-                  </motion.button>
-                );
-              })}
+
+                      <ChevronRight className={`w-4 h-4 text-on-surface-variant/30 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
+                    </motion.button>
+                  );
+                })}
+              </AnimatePresence>
             </div>
           )}
         </div>
