@@ -6,7 +6,7 @@ export const ProfileScreen = () => {
     <div className="bg-surface min-h-screen">
       {/* Logo */}
       <div className="flex justify-center pt-16 pb-8">
-        <img src="/favicon.svg" alt="Monar" className="w-24 h-24 object-contain" />
+        <img src="/logo-dark.svg" alt="Monar" className="h-10 w-auto" />
       </div>
 
       <div className="px-5 space-y-4">
