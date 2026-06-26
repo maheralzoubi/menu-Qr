@@ -30,9 +30,10 @@ export const OrdersScreen = ({ onOpenTracking }: Props) => {
 
   useEffect(() => {
     try {
-      const history: string[] = JSON.parse(localStorage.getItem('order_history') || '[]');
+      const raw = JSON.parse(localStorage.getItem('order_history') || '[]');
+      const history = raw.map((e: any) => typeof e === 'string' ? e : (e._id ?? e.id)).filter(Boolean);
       if (!history.length) { setLoading(false); return; }
-      Promise.all(history.slice(0, 20).map(id => fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null)))
+      Promise.all(history.slice(0, 20).map((id: string) => fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null)))
         .then(results => { setOrders(results.filter(Boolean)); setLoading(false); })
         .catch(() => setLoading(false));
     } catch { setLoading(false); }

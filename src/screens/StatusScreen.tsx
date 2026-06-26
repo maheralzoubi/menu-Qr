@@ -62,7 +62,7 @@ export const StatusScreen = ({ orderId }: { orderId: string | null }) => {
         if (data.status === 'Delivered') localStorage.removeItem('pending_order');
         setHistory(prev => {
           const key = data._id ?? data.id;
-          const filtered = prev.filter(o => (o._id ?? o.id) !== key);
+          const filtered = prev.filter(o => (typeof o === 'string' ? o : (o._id ?? o.id)) !== key);
           const updated = [data, ...filtered].slice(0, 20);
           localStorage.setItem('order_history', JSON.stringify(updated));
           return updated;
