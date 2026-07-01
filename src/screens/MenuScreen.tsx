@@ -5,8 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { Category, MenuItem } from '../types';
 import { Skeleton } from '../components/Skeleton';
 import { ItemDetailsModal } from '../components/ItemDetailsModal';
-import { SpinWheelModal } from '../components/SpinWheelModal';
-
 export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: MenuItem) => void; restaurantId: string }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
@@ -17,7 +15,6 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showSpinWheel, setShowSpinWheel] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -211,42 +208,12 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
         )}
       </div>
 
-      {/* Floating Spin the Wheel button */}
-      {!isLoading && menuItems.length > 0 && (
-        <motion.button
-          onClick={() => setShowSpinWheel(true)}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.4, type: 'spring', stiffness: 260, damping: 20 }}
-          whileTap={{ scale: 0.88 }}
-          className={`fixed bottom-[5.5rem] z-40 w-14 h-14 rounded-full bg-signature-gradient shadow-xl shadow-primary/35 flex items-center justify-center text-2xl ${isRTL ? 'left-5' : 'right-5'}`}
-          aria-label={t('spinWheel.title')}
-        >
-          🎡
-        </motion.button>
-      )}
-
       <AnimatePresence>
         {selectedItem && (
           <ItemDetailsModal
             item={selectedItem}
             onClose={() => setSelectedItem(null)}
             onAddToCart={() => addToCart(selectedItem)}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showSpinWheel && (
-          <SpinWheelModal
-            items={menuItems}
-            categories={categories}
-            onClose={() => setShowSpinWheel(false)}
-            onAddToCart={addToCart}
-            onViewDetails={(item) => {
-              setShowSpinWheel(false);
-              setSelectedItem(item);
-            }}
           />
         )}
       </AnimatePresence>
