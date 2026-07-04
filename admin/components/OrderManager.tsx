@@ -36,11 +36,18 @@ const PAYMENT_COLOR: Record<string, string> = {
 type OrderView = 'feed' | 'kds' | 'archive';
 interface Toast { id: number; type: 'new' | 'preparing' | 'delivered'; orderRef: string; table?: string; }
 
+function parseOrderNav(search: string): { view: OrderView; orderId: string | null } {
+  const params = new URLSearchParams(search);
+  const rawView = params.get('orderView');
+  const view: OrderView = rawView === 'kds' || rawView === 'archive' ? rawView : 'feed';
+  return { view, orderId: params.get('orderId') };
+}
+
 export const OrderManager = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
-  const [view, setView] = useState<OrderView>('feed');
+  const [view, setView] = useState<OrderView>(() => parseOrderNav(window.location.search).view);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
   const [archiving, setArchiving] = useState(false);
@@ -49,9 +56,36 @@ export const OrderManager = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [currency, setCurrency] = useState('USD');
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(() => parseOrderNav(window.location.search).orderId);
+  const selectedOrder = orders.find(o => o._id === selectedOrderId) ?? null;
   const [searchQuery, setSearchQuery] = useState('');
   const [tableFilter, setTableFilter] = useState<string>('all');
+
+  useEffect(() => {
+    const onPopState = () => {
+      const next = parseOrderNav(window.location.search);
+      setView(next.view);
+      setSelectedOrderId(next.orderId);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const setNavParam = useCallback((key: 'orderView' | 'orderId', value: string | null) => {
+    const url = new URL(window.location.href);
+    if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
+    window.history.replaceState(window.history.state, '', url);
+  }, []);
+
+  const changeView = useCallback((v: OrderView) => {
+    setView(v);
+    setNavParam('orderView', v === 'feed' ? null : v);
+  }, [setNavParam]);
+
+  const selectOrder = useCallback((id: string | null) => {
+    setSelectedOrderId(id);
+    setNavParam('orderId', id);
+  }, [setNavParam]);
 
   const tableNames = ['all', ...Array.from(new Set(orders.map(o => o.tableNumber).filter(Boolean) as string[]))].sort();
 
@@ -80,7 +114,6 @@ export const OrderManager = () => {
     socket.on('order:new', (order: Order) => { setOrders(prev => [order, ...prev]); pushToast('new', order._id.slice(-4).toUpperCase(), order.tableNumber); });
     socket.on('order:status', ({ id, status }: { id: string; status: string }) => {
       setOrders(prev => prev.map(o => o._id === id ? { ...o, status } : o));
-      setSelectedOrder(prev => prev?._id === id ? { ...prev, status } : prev);
     });
     return () => { socket.disconnect(); };
   }, [fetchOrders]);
@@ -116,7 +149,7 @@ export const OrderManager = () => {
   const pendingOrders  = orders.filter(o => o.status === 'Pending');
   const dismissToast   = (id: number) => setToasts(prev => prev.filter(t => t.id !== id));
 
-  if (view === 'archive') return <OrderArchive onBack={() => setView('feed')} />;
+  if (view === 'archive') return <OrderArchive onBack={() => changeView('feed')} />;
 
   if (view === 'kds') {
     return (
@@ -132,7 +165,7 @@ export const OrderManager = () => {
                 <ChefHat className="w-4 h-4 text-primary" />
                 <span>{t('orders.preparingCount', { count: preparingOrders.length })}</span>
               </div>
-              <button onClick={() => setView('feed')}
+              <button onClick={() => changeView('feed')}
                 className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
                 {t('orders.backToFeed')}
               </button>
@@ -207,11 +240,11 @@ export const OrderManager = () => {
               className="bg-surface-container-high border-none rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none">
               {tableNames.map(tb => <option key={tb} value={tb}>{tb === 'all' ? t('orders.allTables') : tb}</option>)}
             </select>
-            <button onClick={() => setView('kds')}
+            <button onClick={() => changeView('kds')}
               className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <ChefHat className="w-4 h-4" /> {t('orders.kdsView')}
             </button>
-            <button onClick={() => setView('archive')}
+            <button onClick={() => changeView('archive')}
               className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <Archive className="w-4 h-4" /> {t('orders.archive')}
             </button>
@@ -270,7 +303,7 @@ export const OrderManager = () => {
           <AnimatePresence mode="popLayout">
             {filteredOrders.map((order, i) => (
               <motion.div key={order._id} layout initial={{ opacity: 0, x: isRTL ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                onClick={() => setSelectedOrder(order)}
+                onClick={() => selectOrder(order._id)}
                 className={`group flex items-center p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
                   selectedOrder?._id === order._id ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
                 }`}>
@@ -348,7 +381,7 @@ export const OrderManager = () => {
                   <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('orders.detailHeading')}</h3>
                   <p className="text-on-surface-variant font-mono text-sm mt-1">#{selectedOrder._id.toUpperCase()}</p>
                 </div>
-                <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+                <button onClick={() => selectOrder(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
                   <XIcon className="w-6 h-6" />
                 </button>
               </div>

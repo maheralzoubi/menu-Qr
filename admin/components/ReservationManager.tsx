@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Calendar, Users, Clock, XCircle, Trash2, Mail,
   User, ChevronRight, Search, Map as MapIcon, CalendarDays, Phone
@@ -22,6 +22,12 @@ interface Reservation {
 
 type ResView = 'list' | 'map';
 
+function parseResNav(search: string): { view: ResView; resId: string | null } {
+  const params = new URLSearchParams(search);
+  const view: ResView = params.get('resView') === 'map' ? 'map' : 'list';
+  return { view, resId: params.get('resId') };
+}
+
 const tables = [
   { id: 'T1', capacity: 2, x: 20, y: 20 }, { id: 'T2', capacity: 4, x: 50, y: 20 },
   { id: 'T3', capacity: 2, x: 80, y: 20 }, { id: 'T4', capacity: 6, x: 35, y: 50 },
@@ -33,11 +39,38 @@ export const ReservationManager = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
-  const [view, setView] = useState<ResView>('list');
+  const [view, setView] = useState<ResView>(() => parseResNav(window.location.search).view);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedRes, setSelectedRes] = useState<Reservation | null>(null);
+  const [selectedResId, setSelectedResId] = useState<string | null>(() => parseResNav(window.location.search).resId);
+  const selectedRes = reservations.find(r => (r._id ?? r.id ?? '') === selectedResId) ?? null;
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const onPopState = () => {
+      const next = parseResNav(window.location.search);
+      setView(next.view);
+      setSelectedResId(next.resId);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const setNavParam = useCallback((key: 'resView' | 'resId', value: string | null) => {
+    const url = new URL(window.location.href);
+    if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
+    window.history.replaceState(window.history.state, '', url);
+  }, []);
+
+  const changeView = useCallback((v: ResView) => {
+    setView(v);
+    setNavParam('resView', v === 'list' ? null : v);
+  }, [setNavParam]);
+
+  const selectRes = useCallback((id: string | null) => {
+    setSelectedResId(id);
+    setNavParam('resId', id);
+  }, [setNavParam]);
 
   const fetchReservations = async () => {
     try {
@@ -55,7 +88,6 @@ export const ReservationManager = () => {
       if (res.ok) {
         const updated: Reservation = await res.json();
         setReservations(prev => prev.map(r => resKey(r) === id ? { ...r, status: updated.status } : r));
-        setSelectedRes(prev => prev && resKey(prev) === id ? { ...prev, status: updated.status } : prev);
       }
     } catch (error) { console.error('Failed to update status:', error); }
   };
@@ -64,7 +96,7 @@ export const ReservationManager = () => {
     if (!confirm(t('reservations.deleteConfirm'))) return;
     try {
       const res = await authFetch(`/api/reservations/${id}`, { method: 'DELETE' });
-      if (res.ok) { setReservations(prev => prev.filter(r => resKey(r) !== id)); setSelectedRes(null); }
+      if (res.ok) { setReservations(prev => prev.filter(r => resKey(r) !== id)); selectRes(null); }
     } catch (error) { console.error('Failed to delete reservation:', error); }
   };
 
@@ -97,7 +129,7 @@ export const ReservationManager = () => {
               {t('reservations.confirmedToday', { count: todayConfirmed })}
             </p>
           </div>
-          <button onClick={() => setView('list')} className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+          <button onClick={() => changeView('list')} className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
             {t('reservations.backToList')}
           </button>
         </div>
@@ -143,7 +175,7 @@ export const ReservationManager = () => {
                 className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <button onClick={() => setView('map')} className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+            <button onClick={() => changeView('map')} className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <MapIcon className="w-4 h-4" /> {t('reservations.tableMap')}
             </button>
           </div>
@@ -156,7 +188,7 @@ export const ReservationManager = () => {
             <AnimatePresence mode="popLayout">
               {filteredReservations.map((res, i) => (
                 <motion.div key={resKey(res)} layout initial={{ opacity: 0, x: isRTL ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                  onClick={() => setSelectedRes(res)}
+                  onClick={() => selectRes(resKey(res))}
                   className={`group flex items-center p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
                     selectedRes && resKey(selectedRes) === resKey(res) ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
                   }`}>
@@ -209,7 +241,7 @@ export const ReservationManager = () => {
                   <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('reservations.detailHeading')}</h3>
                   <p className="text-on-surface-variant font-mono text-sm mt-1">#{resKey(selectedRes).slice(-6).toUpperCase()}</p>
                 </div>
-                <button onClick={() => setSelectedRes(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+                <button onClick={() => selectRes(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
                   <XCircle className="w-6 h-6" />
                 </button>
               </div>

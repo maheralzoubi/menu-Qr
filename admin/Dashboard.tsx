@@ -20,10 +20,17 @@ import { LanguageSwitcher } from './components/LanguageSwitcher';
 
 export type DashboardTab = 'overview' | 'orders' | 'menu' | 'reservations' | 'reviews' | 'analytics' | 'qr' | 'promos' | 'cashier' | 'settings';
 
+const DASHBOARD_TABS: DashboardTab[] = ['overview', 'orders', 'menu', 'reservations', 'reviews', 'analytics', 'qr', 'promos', 'cashier', 'settings'];
+
+function parseTab(search: string): DashboardTab {
+  const tab = new URLSearchParams(search).get('tab');
+  return DASHBOARD_TABS.includes(tab as DashboardTab) ? (tab as DashboardTab) : 'overview';
+}
+
 interface UserProfile { email: string; role: string; name?: string; title?: string; avatar?: string; restaurantId?: string; }
 
 export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
-  const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
+  const [activeTab, setActiveTab] = useState<DashboardTab>(() => parseTab(window.location.search));
   const [stats, setStats] = useState<any>(null);
   const [currency, setCurrency] = useState('USD');
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -36,6 +43,27 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  // Attach nav state to the current history entry without touching the URL on first load.
+  useEffect(() => {
+    window.history.replaceState({ tab: activeTab }, '', window.location.href);
+  }, []);
+
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      const state = e.state as { tab: DashboardTab } | null;
+      setActiveTab(state?.tab ?? parseTab(window.location.search));
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const changeTab = (tab: DashboardTab) => {
+    setActiveTab(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    window.history.replaceState({ tab }, '', url);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -102,7 +130,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           {navItems.map(item => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as DashboardTab)}
+              onClick={() => changeTab(item.id as DashboardTab)}
               className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-xl ${
                 activeTab === item.id
                   ? 'text-white font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-white/10'

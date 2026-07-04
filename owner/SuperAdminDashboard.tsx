@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Building2, TrendingUp, LogOut, Shield, Users, CreditCard, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
@@ -13,12 +13,80 @@ import { clearOwnerToken as clearToken, isSuperAdmin } from '../src/lib/ownerAut
 
 type Tab = 'restaurants' | 'analytics' | 'customers' | 'plans' | 'banners';
 interface SelectedRestaurant { _id: string; name: string; }
+type NavState = { tab: Tab; restaurant: SelectedRestaurant | null };
+
+const TABS: Tab[] = ['restaurants', 'analytics', 'customers', 'plans', 'banners'];
+
+function parseNav(search: string): NavState {
+  const params = new URLSearchParams(search);
+  const rawTab = params.get('tab');
+  const tab = TABS.includes(rawTab as Tab) ? (rawTab as Tab) : 'restaurants';
+  const rid = params.get('rid');
+  const rname = params.get('rname');
+  const restaurant = rid && rname ? { _id: rid, name: rname } : null;
+  return { tab, restaurant };
+}
+
+function buildNavSearch(state: NavState): string {
+  const params = new URLSearchParams(window.location.search);
+  params.set('tab', state.tab);
+  if (state.restaurant) {
+    params.set('rid', state.restaurant._id);
+    params.set('rname', state.restaurant.name);
+  } else {
+    params.delete('rid');
+    params.delete('rname');
+  }
+  return `?${params.toString()}`;
+}
 
 export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  const [activeTab, setActiveTab] = useState<Tab>('restaurants');
-  const [selectedRestaurant, setSelectedRestaurant] = useState<SelectedRestaurant | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>(() => parseNav(window.location.search).tab);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<SelectedRestaurant | null>(
+    () => parseNav(window.location.search).restaurant
+  );
   const superAdmin = isSuperAdmin();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    window.history.replaceState({ tab: activeTab, restaurant: selectedRestaurant } satisfies NavState, '', window.location.href);
+  }, []);
+
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      const state = (e.state as NavState | null) ?? parseNav(window.location.search);
+      setActiveTab(state.tab);
+      setSelectedRestaurant(state.restaurant);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const pushNav = useCallback((next: NavState, replace: boolean) => {
+    const url = buildNavSearch(next);
+    if (replace) window.history.replaceState(next, '', url);
+    else window.history.pushState(next, '', url);
+  }, []);
+
+  const changeTab = useCallback((tab: Tab) => {
+    setActiveTab(tab);
+    setSelectedRestaurant(null);
+    pushNav({ tab, restaurant: null }, true);
+  }, [pushNav]);
+
+  const selectRestaurant = useCallback((r: SelectedRestaurant) => {
+    setSelectedRestaurant(r);
+    pushNav({ tab: 'restaurants', restaurant: r }, false);
+  }, [pushNav]);
+
+  const backToList = useCallback(() => {
+    window.history.back();
+  }, []);
+
+  const restaurantDeleted = useCallback(() => {
+    setSelectedRestaurant(null);
+    pushNav({ tab: 'restaurants', restaurant: null }, true);
+  }, [pushNav]);
 
   const navItems: { id: Tab; icon: React.ReactNode }[] = [
     { id: 'restaurants', icon: <Building2 className="w-5 h-5" /> },
@@ -44,7 +112,7 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
 
         <nav className="flex-1 px-4 space-y-1">
           {visibleNavItems.map(item => (
-            <button key={item.id} onClick={() => { setActiveTab(item.id); setSelectedRestaurant(null); }}
+            <button key={item.id} onClick={() => changeTab(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-xl ${
                 activeTab === item.id
                   ? 'text-white font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-white/10'
@@ -86,13 +154,13 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
 
               {activeTab === 'restaurants' && !selectedRestaurant && (
-                <RestaurantList onSelect={r => setSelectedRestaurant(r)} />
+                <RestaurantList onSelect={selectRestaurant} />
               )}
               {activeTab === 'restaurants' && selectedRestaurant && (
                 <RestaurantDetail
                   restaurantId={selectedRestaurant._id}
-                  onBack={() => setSelectedRestaurant(null)}
-                  onDeleted={() => setSelectedRestaurant(null)}
+                  onBack={backToList}
+                  onDeleted={restaurantDeleted}
                 />
               )}
               {activeTab === 'analytics' && <PlatformAnalytics />}
