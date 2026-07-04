@@ -1,0 +1,466 @@
+{
+  "common": {
+    "search": "بحث...",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "locked": "مقفل",
+    "admin": "مشرف",
+    "staff": "موظف",
+    "monthly": "شهري",
+    "annual": "سنوي",
+    "creating": "جاري الإنشاء...",
+    "saving": "جاري الحفظ...",
+    "noResults": "لا توجد نتائج",
+    "switchLanguage": "التبديل إلى الإنجليزية"
+  },
+  "nav": {
+    "restaurants": "المطاعم",
+    "analytics": "التحليلات",
+    "customers": "العملاء",
+    "plans": "الخطط",
+    "banners": "البانرات",
+    "logout": "تسجيل الخروج"
+  },
+  "sidebar": {
+    "ownerPanel": "لوحة المالك",
+    "appManagement": "إدارة التطبيق"
+  },
+  "header": {
+    "ownerDashboard": "لوحة تحكم المالك",
+    "superAdmin": "مدير عام",
+    "appOwner": "مالك التطبيق"
+  },
+  "login": {
+    "title": "صلاحية المالك",
+    "subtitle": "سجّل دخولك إلى لوحة تحكم المالك",
+    "emailLabel": "البريد الإلكتروني",
+    "passwordLabel": "كلمة المرور",
+    "signIn": "تسجيل الدخول",
+    "signingIn": "جارٍ تسجيل الدخول...",
+    "errors": {
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+      "restaurantInactive": "حساب المطعم غير نشط. يرجى التواصل مع مالك المنصة.",
+      "accountLocked": "تم قفل حسابك. يرجى التواصل مع الدعم.",
+      "validation": "يرجى التحقق من البريد الإلكتروني وكلمة المرور والمحاولة مرة أخرى.",
+      "network": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+      "generic": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+      "emailNotVerified": "يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول."
+    },
+    "resendVerification": "إعادة إرسال رسالة التأكيد",
+    "resendSent": "تم إرسال رابط تأكيد جديد إلى بريدك الإلكتروني."
+  },
+  "forgotPassword": {
+    "link": "هل نسيت كلمة المرور؟",
+    "heading": "إعادة تعيين كلمة المرور",
+    "emailSubtext": "أدخل بريدك الإلكتروني وسنرسل لك رمز إعادة التعيين.",
+    "sendCodeButton": "إرسال رمز إعادة التعيين",
+    "codeSubtext": "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى {{email}}",
+    "newPasswordLabel": "كلمة المرور الجديدة",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "resetButton": "إعادة تعيين كلمة المرور",
+    "resendButton": "إعادة إرسال الرمز",
+    "resendSent": "تم إرسال رمز جديد إلى بريدك الإلكتروني.",
+    "doneHeading": "تمت إعادة تعيين كلمة المرور.",
+    "doneBody": "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.",
+    "backToSignIn": "العودة إلى تسجيل الدخول",
+    "errors": {
+      "invalidCode": "رمز غير صحيح. يرجى المحاولة مرة أخرى.",
+      "expiredCode": "انتهت صلاحية هذا الرمز. يرجى طلب رمز جديد.",
+      "tooManyAttempts": "عدد كبير جداً من المحاولات الخاطئة. يرجى طلب رمز جديد.",
+      "weakPassword": "يجب أن تكون كلمة المرور 6 أحرف على الأقل.",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+      "emailNotFound": "لم يتم العثور على حساب بهذا البريد الإلكتروني.",
+      "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "landing": {
+    "signIn": "تسجيل الدخول",
+    "heroTag": "منصة المطاعم",
+    "heroHeading1": "أدر مطعمك",
+    "heroHeading2": "بذكاء مع Monar",
+    "heroSubtext": "قوائم رقمية، وإدارة الطلبات الفورية، والتحليلات، ودعم تعدد الفروع — كل ذلك في مكان واحد.",
+    "startTrial": "ابدأ التجربة المجانية",
+    "featuresHeading": "كل ما تحتاجه للنمو",
+    "featuresSubtext": "مصمم لعمليات المطاعم الحديثة، من طاولة واحدة إلى ألف طاولة.",
+    "pricingHeading": "أسعار بسيطة وشفافة",
+    "pricingSubtext": "لا رسوم خفية. لا عقود. يمكنك الترقية أو التخفيض في أي وقت.",
+    "save20": "وفّر 20%",
+    "mostPopular": "الأكثر شعبية",
+    "getStarted": "ابدأ الآن",
+    "perMonth": "/شهر",
+    "billedYearly": "يُحسب ${{amount}} / سنة",
+    "securePayments": "مدفوعات آمنة",
+    "pciCompliant": "متوافق مع PCI",
+    "cancelAnytime": "إلغاء في أي وقت",
+    "alreadyHaveAccount": "هل لديك حساب؟",
+    "signInLink": "سجّل دخولك",
+    "copyright": "© {{year}} Monar · جميع الحقوق محفوظة",
+    "features": {
+      "qrMenus": {
+        "title": "قوائم QR الذكية",
+        "desc": "قوائم رقمية جميلة بتحديثات فورية. لا حاجة للطباعة."
+      },
+      "orderManagement": {
+        "title": "إدارة الطلبات الفورية",
+        "desc": "تظهر الطلبات فوراً على لوحة التحكم مع تنبيهات صوتية."
+      },
+      "analytics": {
+        "title": "تحليلات معمّقة",
+        "desc": "الإيرادات، الأصناف الأكثر مبيعاً، أوقات الذروة — كل ما تحتاجه للنمو."
+      },
+      "multiLocation": {
+        "title": "جاهز لتعدد الفروع",
+        "desc": "أدر جميع فروعك من لوحة تحكم موحدة."
+      }
+    }
+  },
+  "checkout": {
+    "backToPlans": "العودة إلى الخطط",
+    "orderSummary": "ملخص الطلب",
+    "monthlyBilling": "فاتورة شهرية",
+    "annualBilling": "فاتورة سنوية",
+    "subtotal": "المجموع الجزئي",
+    "annualDiscount": "خصم سنوي",
+    "totalDueToday": "الإجمالي المستحق اليوم",
+    "chargedAnnually": "يُحسب سنوياً",
+    "chargedMonthly": "يُحسب شهرياً",
+    "renewsAuto": "· يتجدد تلقائياً",
+    "paymentDetails": "تفاصيل الدفع",
+    "orPayWithCard": "أو ادفع بالبطاقة",
+    "accepted": "البطاقات المقبولة:",
+    "allMajorCards": "· جميع البطاقات الرئيسية",
+    "cardNumber": "رقم البطاقة",
+    "cardholderName": "اسم حامل البطاقة",
+    "expiry": "تاريخ الانتهاء",
+    "cvv": "رمز الأمان",
+    "processing": "جاري المعالجة...",
+    "pay": "ادفع ${{amount}}",
+    "sslNote": "تشفير 256-bit SSL · نحن لا نحفظ بياناتك المصرفية",
+    "alreadyHaveAccount": "هل لديك حساب؟",
+    "signIn": "سجّل دخولك",
+    "paymentFailed": "فشل الدفع. يرجى المحاولة مرة أخرى.",
+    "paymentNotCompleted": "تعذّر إتمام الدفع. يرجى المحاولة مرة أخرى.",
+    "verifyingPayment": "جاري التحقق من الدفع...",
+    "accountCreateFailed": "فشل إنشاء الحساب. يرجى التواصل مع الدعم."
+  },
+  "setup": {
+    "stepPayment": "الدفع",
+    "stepSetup": "إعداد الحساب",
+    "heading": "أعدّ حسابك",
+    "subtext": "أنشئ بيانات تسجيل الدخول الخاصة بك لمنصة Monar {{plan}}.",
+    "fullName": "الاسم الكامل",
+    "emailAddress": "عنوان البريد الإلكتروني",
+    "restaurantName": "اسم المطعم",
+    "password": "كلمة المرور",
+    "passwordPlaceholder": "8 أحرف على الأقل",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أعد كتابة كلمة المرور",
+    "show": "إظهار",
+    "hide": "إخفاء",
+    "creating": "جاري إنشاء الحساب...",
+    "createAccount": "إنشاء حسابي",
+    "processing": "جاري الإعداد...",
+    "continueToPayment": "المتابعة للدفع",
+    "backToSetup": "العودة لإعداد الحساب",
+    "errorName": "الاسم الكامل مطلوب.",
+    "errorEmail": "أدخل عنوان بريد إلكتروني صحيحاً.",
+    "errorRestaurant": "اسم المطعم مطلوب.",
+    "errorPassword": "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
+    "errorMatch": "كلمتا المرور غير متطابقتين.",
+    "errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "errorNetwork": "خطأ في الشبكة. يرجى المحاولة مرة أخرى."
+  },
+  "success": {
+    "badge": "تم إنشاء الحساب",
+    "heading": "أنت جاهز!",
+    "description": "تم إنشاء حسابك في Monar {{plan}}.",
+    "emailSent": "تم تأكيد بريدك الإلكتروني.",
+    "goToSignIn": "الذهاب إلى تسجيل الدخول"
+  },
+  "verify": {
+    "heading": "تأكيد بريدك الإلكتروني",
+    "subtext": "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى {{email}}",
+    "codePlaceholder": "000000",
+    "verifyButton": "تأكيد",
+    "verifying": "جاري التأكيد...",
+    "resendButton": "إعادة إرسال الرمز",
+    "resendSent": "تم إرسال رمز جديد إلى بريدك الإلكتروني.",
+    "errors": {
+      "invalidCode": "رمز غير صحيح. يرجى المحاولة مرة أخرى.",
+      "expiredCode": "انتهت صلاحية هذا الرمز. يرجى طلب رمز جديد.",
+      "tooManyAttempts": "عدد كبير جداً من المحاولات الخاطئة. يرجى طلب رمز جديد.",
+      "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "plans": {
+    "manager": {
+      "heading": "خطط الاشتراك",
+      "subtext": "تعديل الأسعار والميزات والحدود لكل خطة. تظهر التغييرات مباشرة على صفحة الهبوط.",
+      "editPlan": "تعديل خطة {{name}}",
+      "planName": "اسم الخطة",
+      "planNameAr": "اسم الخطة (بالعربية)",
+      "description": "الوصف",
+      "descriptionAr": "الوصف (بالعربية)",
+      "monthlyPrice": "السعر الشهري / شهر",
+      "annualPrice": "السعر السنوي / شهر",
+      "priceNote": "تغييرات السعر تنشئ سعراً جديداً في Stripe وتُطبَّق على الاشتراكات الجديدة فقط. يحتفظ المشتركون الحاليون بسعرهم الحالي.",
+      "restaurantLimit": "حد المطاعم",
+      "limitHint": "استخدم -1 للمطاعم غير المحدودة.",
+      "mostPopular": "الأكثر شعبية",
+      "active": "نشط",
+      "features": "الميزات",
+      "featuresAr": "الميزات (بالعربية)",
+      "addFeaturePlaceholder": "أضف ميزة واضغط Enter…",
+      "addFeaturePlaceholderAr": "أضف ميزة بالعربية واضغط Enter…",
+      "restaurantsAllowed": "{{count}} مطعم مسموح",
+      "unlimited": "غير محدود",
+      "save": "حفظ التغييرات",
+      "saveFailed": "فشل حفظ الخطة. يرجى المحاولة مرة أخرى.",
+      "networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+      "loadFailed": "فشل تحميل الخطط.",
+      "loading": "جاري تحميل الخطط…",
+      "retry": "إعادة المحاولة",
+      "timeout": "انتهت مهلة الطلب. يرجى التحقق من الخادم والمحاولة مرة أخرى."
+    },
+    "starter": {
+      "name": "مبتدئ",
+      "description": "مثالي للمطاعم ذات الفرع الواحد.",
+      "features": [
+        "مطعم واحد",
+        "500 طلب / شهر",
+        "قوائم رمز QR",
+        "تحليلات أساسية",
+        "دعم عبر البريد الإلكتروني"
+      ]
+    },
+    "pro": {
+      "name": "احترافي",
+      "description": "للعلامات التجارية المتنامية ذات المواقع المتعددة.",
+      "features": [
+        "حتى 5 مطاعم",
+        "طلبات غير محدودة",
+        "تحليلات متقدمة",
+        "علامة تجارية مخصصة",
+        "رموز ترويجية",
+        "وحدة الحجوزات",
+        "دعم ذو أولوية"
+      ]
+    },
+    "enterprise": {
+      "name": "مؤسسي",
+      "description": "نطاق غير محدود لمجموعات الأغذية الكبرى.",
+      "features": [
+        "مطاعم غير محدودة",
+        "كل مزايا الخطة الاحترافية",
+        "خيار العلامة البيضاء",
+        "تكاملات مخصصة",
+        "مدير حساب مخصص",
+        "ضمان 99.9% SLA"
+      ]
+    }
+  },
+  "restaurants": {
+    "heading": "المطاعم",
+    "subtext": "إدارة جميع عملاء المطاعم على المنصة.",
+    "search": "بحث...",
+    "addRestaurant": "إضافة مطعم",
+    "plan": "الخطة",
+    "usageCount": "{{used}} / {{total}} مطعم مستخدم",
+    "limitReached": "تم الوصول إلى حد المطاعم — قم بترقية خطتك لإضافة المزيد",
+    "upgradePlan": "ترقية الخطة",
+    "total": "الإجمالي",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "tableHeaders": {
+      "restaurant": "المطعم",
+      "status": "الحالة",
+      "customers": "العملاء",
+      "orders": "الطلبات",
+      "revenue": "الإيرادات",
+      "created": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    },
+    "noRestaurants": "لا توجد مطاعم بعد",
+    "noResults": "لا توجد نتائج",
+    "addFirst": "أضف أول مطعم",
+    "viewDetails": "عرض التفاصيل",
+    "deactivate": "تعطيل",
+    "activate": "تفعيل",
+    "deleteConfirm": "حذف هذا المطعم وجميع بياناته؟ لا يمكن التراجع عن هذا الإجراء.",
+    "panel": {
+      "title": "إضافة مطعم",
+      "restaurantInfo": "معلومات المطعم",
+      "restaurantName": "اسم المطعم",
+      "contactEmail": "البريد الإلكتروني للتواصل",
+      "phone": "رقم الهاتف",
+      "address": "العنوان",
+      "logoUrl": "رابط الشعار (اختياري)",
+      "adminAccount": "حساب المشرف",
+      "adminAccountNote": "سيتمكن هذا الشخص من تسجيل الدخول إلى لوحة تحكم المطعم",
+      "adminName": "الاسم الكامل للمشرف",
+      "adminEmail": "البريد الإلكتروني للمشرف",
+      "adminPassword": "كلمة مرور المشرف",
+      "passwordPlaceholder": "6 أحرف على الأقل",
+      "cancel": "إلغاء",
+      "create": "إنشاء المطعم",
+      "creating": "جاري الإنشاء...",
+      "createFailed": "فشل إنشاء المطعم",
+      "networkError": "خطأ في الشبكة.",
+      "cuisineTypes": "أنواع المطبخ",
+      "cuisineLabels": {
+        "Coffee": "قهوة",
+        "Burgers": "برغر",
+        "Pizza": "بيتزا",
+        "Pasta": "باستا",
+        "Shawarma": "شاورما",
+        "Salads": "سلطات",
+        "Desserts": "حلويات",
+        "Drinks": "مشروبات",
+        "Breakfast": "إفطار",
+        "Chicken": "دجاج",
+        "Healthy": "صحي"
+      }
+    }
+  },
+  "restaurantDetail": {
+    "allRestaurants": "جميع المطاعم",
+    "deactivate": "تعطيل",
+    "activate": "تفعيل",
+    "delete": "حذف",
+    "notFound": "المطعم غير موجود",
+    "stats": {
+      "totalOrders": "إجمالي الطلبات",
+      "totalRevenue": "إجمالي الإيرادات",
+      "customers": "العملاء",
+      "menuItems": "عناصر القائمة",
+      "reviews": "التقييمات",
+      "reservations": "الحجوزات"
+    },
+    "adminAccount": "حساب المشرف",
+    "deleteConfirm": "حذف هذا المطعم وجميع بياناته؟ لا يمكن التراجع عن هذا الإجراء."
+  },
+  "analytics": {
+    "heading": "تحليلات المنصة",
+    "subtext": "مقاييس فورية عبر جميع المطاعم.",
+    "kpis": {
+      "totalRestaurants": "إجمالي المطاعم",
+      "activeRestaurants": "المطاعم النشطة",
+      "totalCustomers": "إجمالي العملاء",
+      "totalRevenue": "إجمالي الإيرادات"
+    },
+    "newRestaurantsChart": "المطاعم الجديدة — آخر 6 أشهر",
+    "restaurantsLabel": "المطاعم",
+    "perRestaurant": "تفصيل لكل مطعم",
+    "tableHeaders": {
+      "restaurant": "المطعم",
+      "status": "الحالة",
+      "customers": "العملاء",
+      "orders": "الطلبات",
+      "revenue": "الإيرادات"
+    },
+    "noRestaurants": "لا توجد مطاعم بعد"
+  },
+  "customers": {
+    "heading": "المشتركون",
+    "subtext": "جميع مشتركي منصة Monar.",
+    "search": "ابحث بالاسم، البريد، أو المطعم...",
+    "stats": {
+      "total": "الإجمالي",
+      "active": "نشط",
+      "locked": "مقفل"
+    },
+    "tableHeaders": {
+      "subscriber": "المشترك",
+      "restaurant": "المطعم",
+      "plan": "الخطة",
+      "joined": "تاريخ الانضمام",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "noSubscribers": "لا يوجد مشتركون بعد",
+    "noResults": "لا توجد نتائج",
+    "actions": {
+      "plan": "الخطة",
+      "lock": "قفل",
+      "unlock": "فتح",
+      "delete": "حذف"
+    },
+    "deleteConfirm": "حذف هذا المشترك؟ لا يمكن التراجع عن هذا الإجراء.",
+    "modal": {
+      "title": "تغيير الخطة",
+      "subtitle": "تحديث الاشتراك لـ {{name}}",
+      "selectPlan": "اختر الخطة",
+      "billing": "الفاتورة:",
+      "cancel": "إلغاء",
+      "save": "حفظ التغييرات",
+      "saving": "جاري الحفظ..."
+    }
+  },
+  "admins": {
+    "heading": "مشرفو المطاعم",
+    "subtext": "إدارة الحسابات التي يمكنها تسجيل الدخول إلى لوحة تحكم المطعم.",
+    "search": "بحث...",
+    "addAdmin": "إضافة مشرف",
+    "bannerTitle": "صلاحية لوحة التحكم",
+    "bannerText": "يمكن للحسابات التي تم إنشاؤها هنا تسجيل الدخول إلى لوحة إدارة المطاعم باستخدام بريدهم الإلكتروني وكلمة المرور.",
+    "stats": {
+      "totalAdmins": "إجمالي المشرفين",
+      "staff": "الموظفون"
+    },
+    "tableHeaders": {
+      "admin": "المشرف",
+      "role": "الدور",
+      "created": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    },
+    "noAdmins": "لا توجد حسابات مشرف بعد",
+    "noResults": "لا توجد نتائج",
+    "createFirst": "إنشاء أول مشرف",
+    "deleteConfirm": "حذف حساب المشرف هذا؟",
+    "panel": {
+      "title": "إضافة مشرف للمطعم",
+      "note": "سيتمكن هذا الحساب من تسجيل الدخول إلى لوحة تحكم المطاعم",
+      "fullName": "الاسم الكامل",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "jobTitle": "المسمى الوظيفي (اختياري)",
+      "role": "الدور",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "6 أحرف على الأقل",
+      "cancel": "إلغاء",
+      "create": "إنشاء مشرف",
+      "creating": "جاري الإنشاء...",
+      "createFailed": "فشل إنشاء المشرف",
+      "networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "banners": {
+    "heading": "بانرات الصفحة الرئيسية",
+    "subtext": "إدارة السلايدر الترويجي الظاهر في الصفحة الرئيسية لتطبيق العملاء.",
+    "addBanner": "إضافة بانر",
+    "loadFailed": "فشل تحميل البانرات.",
+    "livePreview": "معاينة مباشرة",
+    "noBanners": "لا توجد بانرات بعد. أضف أول بانر.",
+    "active": "نشط",
+    "hidden": "مخفي",
+    "hide": "إخفاء",
+    "show": "إظهار",
+    "editBanner": "تعديل البانر",
+    "newBanner": "بانر جديد",
+    "titleLabel": "العنوان *",
+    "titlePlaceholder": "مثال: استلام مجاني",
+    "subtitleLabel": "العنوان الفرعي",
+    "subtitlePlaceholder": "مثال: على جميع الطلبات هذا الأسبوع",
+    "emojiLabel": "الرمز التعبيري",
+    "orderLabel": "الترتيب",
+    "showOnHome": "إظهار في الصفحة الرئيسية",
+    "saveChanges": "حفظ التغييرات",
+    "createBanner": "إنشاء البانر",
+    "saveFailed": "فشل الحفظ. يرجى المحاولة مرة أخرى.",
+    "updateFailed": "فشل التحديث.",
+    "deleteFailed": "فشل الحذف.",
+    "deleteConfirmTitle": "حذف البانر؟",
+    "deleteConfirmBody": "سيؤدي هذا إلى إزالة البانر من الصفحة الرئيسية فوراً."
+  }
+}
