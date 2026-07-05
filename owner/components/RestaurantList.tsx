@@ -3,6 +3,8 @@ import { Plus, X, Eye, EyeOff, Loader, ToggleLeft, ToggleRight, Trash2, Search, 
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { ownerFetch as authFetch, isSuperAdmin } from '../../src/lib/ownerAuth';
+import { PhoneInput } from './PhoneInput';
+import { CUISINE_OPTIONS } from '../lib/cuisineOptions';
 
 interface Restaurant {
   _id: string;
@@ -24,11 +26,6 @@ interface Subscription {
 }
 
 interface Props { onSelect: (r: Restaurant) => void; }
-
-const CUISINE_OPTIONS = [
-  'Coffee', 'Burgers', 'Pizza', 'Pasta', 'Shawarma',
-  'Salads', 'Desserts', 'Drinks', 'Breakfast', 'Chicken', 'Healthy',
-];
 
 const emptyForm = () => ({
   name: '', logo: '', contactEmail: '', contactPhone: '', address: '',
@@ -289,7 +286,19 @@ export const RestaurantList = ({ onSelect }: Props) => {
                   {[
                     { labelKey: 'restaurants.panel.restaurantName', key: 'name', type: 'text', required: true, placeholder: 'The Artisan Kitchen' },
                     { labelKey: 'restaurants.panel.contactEmail', key: 'contactEmail', type: 'email', required: false, placeholder: 'contact@restaurant.com' },
-                    { labelKey: 'restaurants.panel.phone', key: 'contactPhone', type: 'tel', required: false, placeholder: '+1 555 000 0000' },
+                  ].map(({ labelKey, key, type, required, placeholder }) => (
+                    <div key={key} className="space-y-1.5 mb-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t(labelKey)}</label>
+                      <input type={type} required={required} value={(form as any)[key]}
+                        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
+                        className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                    </div>
+                  ))}
+                  <div className="space-y-1.5 mb-4">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.phone')}</label>
+                    <PhoneInput value={form.contactPhone} onChange={v => setForm(f => ({ ...f, contactPhone: v }))} placeholder="555 000 0000" />
+                  </div>
+                  {[
                     { labelKey: 'restaurants.panel.address', key: 'address', type: 'text', required: false, placeholder: '123 Main St, City' },
                     { labelKey: 'restaurants.panel.logoUrl', key: 'logo', type: 'url', required: false, placeholder: 'https://...' },
                   ].map(({ labelKey, key, type, required, placeholder }) => (

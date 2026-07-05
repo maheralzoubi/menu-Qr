@@ -261,11 +261,11 @@ export const ReservationManager = () => {
                   </div>
                   <div className="space-y-2 text-sm pt-2 border-t border-outline-variant/10">
                     <div className="flex items-center gap-2 text-on-surface-variant">
-                      <Mail className="w-4 h-4 shrink-0" /><span>{selectedRes.email}</span>
+                      <Mail className="w-4 h-4 shrink-0" /><span dir="ltr">{selectedRes.email}</span>
                     </div>
                     {selectedRes.phone && (
                       <div className="flex items-center gap-2 text-on-surface-variant">
-                        <Phone className="w-4 h-4 shrink-0" /><span>{selectedRes.phone}</span>
+                        <Phone className="w-4 h-4 shrink-0" /><span dir="ltr">{selectedRes.phone}</span>
                       </div>
                     )}
                   </div>

@@ -65,6 +65,7 @@ export const CustomerRegisterScreen = ({ onSuccess, onBack, onLoginClick, restau
               <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{label}</label>
               <input
                 type={type}
+                dir={type === 'tel' || type === 'email' ? 'ltr' : undefined}
                 required={key !== 'phone'}
                 value={(form as any)[key]}
                 onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}

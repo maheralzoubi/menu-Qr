@@ -45,7 +45,6 @@ interface ApiPlan {
 interface SetupForm {
   fullName: string;
   email: string;
-  restaurantName: string;
   password: string;
   confirmPassword: string;
 }
@@ -53,7 +52,6 @@ interface SetupForm {
 interface PendingAccount {
   name: string;
   email: string;
-  restaurantName: string;
   password: string;
   plan: PlanId;
   billing: Billing;
@@ -182,7 +180,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
   }, []);
 
   const [setup, setSetup] = useState<SetupForm>({
-    fullName: '', email: '', restaurantName: '', password: '', confirmPassword: '',
+    fullName: '', email: '', password: '', confirmPassword: '',
   });
   const [setupLoading, setSetupLoading] = useState(false);
   const [setupError, setSetupError]     = useState('');
@@ -282,7 +280,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
   const openSetup = (plan: PlanDef) => {
     setSelected(plan);
-    setSetup({ fullName: '', email: '', restaurantName: '', password: '', confirmPassword: '' });
+    setSetup({ fullName: '', email: '', password: '', confirmPassword: '' });
     setSetupError('');
     setStep('setup');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -293,7 +291,6 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     setSetupError('');
     if (!setup.fullName.trim())            { setSetupError(t('setup.errorName'));     return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(setup.email)) { setSetupError(t('setup.errorEmail'));    return; }
-    if (!setup.restaurantName.trim())      { setSetupError(t('setup.errorRestaurant')); return; }
     if (setup.password.length < 8)         { setSetupError(t('setup.errorPassword')); return; }
     if (setup.password !== setup.confirmPassword) { setSetupError(t('setup.errorMatch')); return; }
 
@@ -307,7 +304,6 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
           billing,
           name:           setup.fullName.trim(),
           email:          setup.email.trim(),
-          restaurantName: setup.restaurantName.trim(),
         }),
       });
       const data = await res.json();
@@ -317,7 +313,6 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       setPending({
         name:           setup.fullName.trim(),
         email:          setup.email.trim(),
-        restaurantName: setup.restaurantName.trim(),
         password:       setup.password,
         plan:           selected!.id,
         billing,
@@ -341,7 +336,6 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
           name:           data.name,
           email:          data.email,
           password:       data.password,
-          restaurantName: data.restaurantName,
           plan:           data.plan,
           billing:        data.billing,
           subscriptionId: data.subscriptionId,
@@ -577,9 +571,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
               <form onSubmit={handleSetup} className="space-y-4">
                 {[
-                  { key: 'fullName',       label: t('setup.fullName'),       type: 'text',     placeholder: 'Jane Smith',        value: setup.fullName,        field: 'fullName' },
-                  { key: 'email',          label: t('setup.emailAddress'),   type: 'email',    placeholder: 'you@example.com',   value: setup.email,           field: 'email' },
-                  { key: 'restaurantName', label: t('setup.restaurantName'), type: 'text',     placeholder: 'e.g. Bella Cucina', value: setup.restaurantName,  field: 'restaurantName' },
+                  { key: 'fullName', label: t('setup.fullName'),     type: 'text',  placeholder: 'Jane Smith',      value: setup.fullName, field: 'fullName' },
+                  { key: 'email',    label: t('setup.emailAddress'), type: 'email', placeholder: 'you@example.com', value: setup.email,    field: 'email' },
                 ].map(item => (
                   <div key={item.key}>
                     <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{item.label}</label>

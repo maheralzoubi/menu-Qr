@@ -114,8 +114,8 @@ export const updateMe = async (req: AuthRequest, res: Response, next: NextFuncti
 // Called after Stripe payment confirms — verifies subscription then creates owner account
 export const subscribe = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, email, password, restaurantName, plan, billing, subscriptionId } = req.body;
-    if (!name?.trim() || !email?.trim() || !password || !restaurantName?.trim() || !plan) {
+    const { name, email, password, plan, billing, subscriptionId } = req.body;
+    if (!name?.trim() || !email?.trim() || !password || !plan) {
       res.status(400).json({ message: 'All fields are required.' });
       return;
     }
@@ -151,7 +151,6 @@ export const subscribe = async (req: Request, res: Response, next: NextFunction)
       name: name.trim(),
       email: normalizedEmail,
       password,
-      restaurantName: restaurantName.trim(),
       role: 'owner',
       plan,
       planBilling: billing ?? 'monthly',
@@ -161,6 +160,7 @@ export const subscribe = async (req: Request, res: Response, next: NextFunction)
       stripeSubscriptionId,
       emailVerified: false,
     });
+
     await issueVerificationCode(normalizedEmail);
     res.status(201).json({ message: 'Account created. Check your email for a verification code.', email });
   } catch (e) { next(e); }

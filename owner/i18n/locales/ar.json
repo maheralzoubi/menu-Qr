@@ -3,6 +3,7 @@
     "search": "بحث...",
     "cancel": "إلغاء",
     "delete": "حذف",
+    "edit": "تعديل",
     "active": "نشط",
     "inactive": "غير نشط",
     "locked": "مقفل",
@@ -152,7 +153,6 @@
     "subtext": "أنشئ بيانات تسجيل الدخول الخاصة بك لمنصة Monar {{plan}}.",
     "fullName": "الاسم الكامل",
     "emailAddress": "عنوان البريد الإلكتروني",
-    "restaurantName": "اسم المطعم",
     "password": "كلمة المرور",
     "passwordPlaceholder": "8 أحرف على الأقل",
     "confirmPassword": "تأكيد كلمة المرور",
@@ -166,7 +166,6 @@
     "backToSetup": "العودة لإعداد الحساب",
     "errorName": "الاسم الكامل مطلوب.",
     "errorEmail": "أدخل عنوان بريد إلكتروني صحيحاً.",
-    "errorRestaurant": "اسم المطعم مطلوب.",
     "errorPassword": "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
     "errorMatch": "كلمتا المرور غير متطابقتين.",
     "errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
@@ -306,6 +305,7 @@
       "cancel": "إلغاء",
       "create": "إنشاء المطعم",
       "creating": "جاري الإنشاء...",
+      "saveChanges": "حفظ التغييرات",
       "createFailed": "فشل إنشاء المطعم",
       "networkError": "خطأ في الشبكة.",
       "cuisineTypes": "أنواع المطبخ",
@@ -326,6 +326,9 @@
   },
   "restaurantDetail": {
     "allRestaurants": "جميع المطاعم",
+    "edit": "تعديل",
+    "editTitle": "تعديل المطعم",
+    "editFailed": "فشل حفظ التغييرات. يرجى المحاولة مرة أخرى.",
     "deactivate": "تعطيل",
     "activate": "تفعيل",
     "delete": "حذف",
@@ -338,7 +341,6 @@
       "reviews": "التقييمات",
       "reservations": "الحجوزات"
     },
-    "adminAccount": "حساب المشرف",
     "deleteConfirm": "حذف هذا المطعم وجميع بياناته؟ لا يمكن التراجع عن هذا الإجراء."
   },
   "analytics": {
@@ -373,7 +375,6 @@
     },
     "tableHeaders": {
       "subscriber": "المشترك",
-      "restaurant": "المطعم",
       "plan": "الخطة",
       "joined": "تاريخ الانضمام",
       "status": "الحالة",
@@ -421,15 +422,18 @@
     "deleteConfirm": "حذف حساب المشرف هذا؟",
     "panel": {
       "title": "إضافة مشرف للمطعم",
+      "editTitle": "تعديل المشرف",
       "note": "سيتمكن هذا الحساب من تسجيل الدخول إلى لوحة تحكم المطاعم",
       "fullName": "الاسم الكامل",
       "emailAddress": "عنوان البريد الإلكتروني",
       "jobTitle": "المسمى الوظيفي (اختياري)",
       "role": "الدور",
       "password": "كلمة المرور",
+      "newPasswordOptional": "كلمة مرور جديدة (اختياري)",
       "passwordPlaceholder": "6 أحرف على الأقل",
       "cancel": "إلغاء",
       "create": "إنشاء مشرف",
+      "save": "حفظ التغييرات",
       "creating": "جاري الإنشاء...",
       "createFailed": "فشل إنشاء المشرف",
       "networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى."

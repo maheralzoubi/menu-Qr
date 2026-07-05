@@ -3,6 +3,7 @@
     "search": "Search...",
     "cancel": "Cancel",
     "delete": "Delete",
+    "edit": "Edit",
     "active": "Active",
     "inactive": "Inactive",
     "locked": "Locked",
@@ -152,7 +153,6 @@
     "subtext": "Create your login credentials for the Monar {{plan}} owner panel.",
     "fullName": "Full Name",
     "emailAddress": "Email Address",
-    "restaurantName": "Restaurant Name",
     "password": "Password",
     "passwordPlaceholder": "Min. 8 characters",
     "confirmPassword": "Confirm Password",
@@ -166,7 +166,6 @@
     "backToSetup": "Back to account setup",
     "errorName": "Full name is required.",
     "errorEmail": "Enter a valid email address.",
-    "errorRestaurant": "Restaurant name is required.",
     "errorPassword": "Password must be at least 8 characters.",
     "errorMatch": "Passwords do not match.",
     "errorGeneric": "Something went wrong. Please try again.",
@@ -306,6 +305,7 @@
       "cancel": "Cancel",
       "create": "Create Restaurant",
       "creating": "Creating...",
+      "saveChanges": "Save Changes",
       "createFailed": "Failed to create restaurant",
       "networkError": "Network error.",
       "cuisineTypes": "Cuisine Types",
@@ -326,6 +326,9 @@
   },
   "restaurantDetail": {
     "allRestaurants": "All Restaurants",
+    "edit": "Edit",
+    "editTitle": "Edit Restaurant",
+    "editFailed": "Failed to save changes. Please try again.",
     "deactivate": "Deactivate",
     "activate": "Activate",
     "delete": "Delete",
@@ -338,7 +341,6 @@
       "reviews": "Reviews",
       "reservations": "Reservations"
     },
-    "adminAccount": "Admin Account",
     "deleteConfirm": "Delete this restaurant and ALL its data? This cannot be undone."
   },
   "analytics": {
@@ -373,7 +375,6 @@
     },
     "tableHeaders": {
       "subscriber": "Subscriber",
-      "restaurant": "Restaurant",
       "plan": "Plan",
       "joined": "Joined",
       "status": "Status",
@@ -421,15 +422,18 @@
     "deleteConfirm": "Delete this admin account?",
     "panel": {
       "title": "Add Restaurant Admin",
+      "editTitle": "Edit Admin",
       "note": "This account will be able to log in to the restaurant admin dashboard",
       "fullName": "Full Name",
       "emailAddress": "Email Address",
       "jobTitle": "Job Title (optional)",
       "role": "Role",
       "password": "Password",
+      "newPasswordOptional": "New Password (optional)",
       "passwordPlaceholder": "Min 6 characters",
       "cancel": "Cancel",
       "create": "Create Admin",
+      "save": "Save Changes",
       "creating": "Creating...",
       "createFailed": "Failed to create admin",
       "networkError": "Network error. Please try again."
