@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Building2, TrendingUp, LogOut, Shield, Users, CreditCard, Megaphone } from 'lucide-react';
+import { Building2, TrendingUp, LogOut, Shield, Users, CreditCard, Megaphone, UserCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { RestaurantList } from './components/RestaurantList';
@@ -9,6 +9,7 @@ import { CustomerTable } from './components/CustomerTable';
 import { PlansManager } from './components/PlansManager';
 import { BannersManager } from './components/BannersManager';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { MyAccountModal } from './components/MyAccountModal';
 import { clearOwnerToken as clearToken, isSuperAdmin } from '../src/lib/ownerAuth';
 
 type Tab = 'restaurants' | 'analytics' | 'customers' | 'plans' | 'banners';
@@ -47,6 +48,7 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   );
   const superAdmin = isSuperAdmin();
   const { t } = useTranslation();
+  const [showAccount, setShowAccount] = useState(false);
 
   useEffect(() => {
     window.history.replaceState({ tab: activeTab, restaurant: selectedRestaurant } satisfies NavState, '', window.location.href);
@@ -140,11 +142,18 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           <span className="text-xl font-bold font-headline">
             {selectedRestaurant ? selectedRestaurant.name : t('header.ownerDashboard')}
           </span>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full">
-            <Shield className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-widest">
-              {superAdmin ? t('header.superAdmin') : t('header.appOwner')}
-            </span>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowAccount(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-surface-container text-on-surface-variant rounded-full hover:bg-surface-container-high transition-colors">
+              <UserCircle className="w-4 h-4" />
+              <span className="text-xs font-bold">{t('account.title')}</span>
+            </button>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full">
+              <Shield className="w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-widest">
+                {superAdmin ? t('header.superAdmin') : t('header.appOwner')}
+              </span>
+            </div>
           </div>
         </header>
 
@@ -171,6 +180,10 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           </AnimatePresence>
         </div>
       </main>
+
+      <AnimatePresence>
+        {showAccount && <MyAccountModal onClose={() => setShowAccount(false)} />}
+      </AnimatePresence>
     </div>
   );
 };

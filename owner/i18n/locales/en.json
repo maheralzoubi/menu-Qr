@@ -33,6 +33,19 @@
     "superAdmin": "Super Admin",
     "appOwner": "App Owner"
   },
+  "account": {
+    "title": "My Account",
+    "loading": "Loading…",
+    "fullName": "Full Name",
+    "emailAddress": "Email Address",
+    "phoneNumber": "Phone Number",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Leave blank to keep current password",
+    "save": "Save Changes",
+    "saved": "Your account has been updated.",
+    "saveFailed": "Failed to save changes. Please try again.",
+    "networkError": "Network error. Please try again."
+  },
   "login": {
     "title": "Owner Access",
     "subtitle": "Sign in to the App Owner Panel",
@@ -175,7 +188,7 @@
     "badge": "Account Created",
     "heading": "You're all set!",
     "description": "Your Monar {{plan}} account has been created.",
-    "emailSent": "Your email has been verified.",
+    "ready": "Your account is ready. Sign in to get started.",
     "goToSignIn": "Go to Sign In"
   },
   "verify": {
@@ -389,6 +402,7 @@
       "delete": "Delete"
     },
     "deleteConfirm": "Delete this subscriber? This cannot be undone.",
+    "deleteFailed": "Failed to delete subscriber. Please try again.",
     "modal": {
       "title": "Change Plan",
       "subtitle": "Update subscription for {{name}}",

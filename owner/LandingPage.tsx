@@ -296,34 +296,59 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
     setSetupLoading(true);
     try {
-      const res = await fetch('/api/stripe/create-intent', {
+      const res = await fetch('/api/auth/signup-start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan:           selected!.id,
+          plan:     selected!.id,
           billing,
-          name:           setup.fullName.trim(),
-          email:          setup.email.trim(),
+          name:     setup.fullName.trim(),
+          email:    setup.email.trim(),
+          password: setup.password,
         }),
       });
       const data = await res.json();
       if (!res.ok) { setSetupError(data.message ?? t('setup.errorGeneric')); return; }
 
-      setClientSecret(data.clientSecret);
       setPending({
         name:           setup.fullName.trim(),
         email:          setup.email.trim(),
         password:       setup.password,
         plan:           selected!.id,
         billing,
-        subscriptionId: data.subscriptionId,
+        subscriptionId: '',
       });
-      setPayError('');
-      setStep('checkout');
+      setStep('verify');
     } catch {
       setSetupError(t('setup.errorNetwork'));
     } finally {
       setSetupLoading(false);
+    }
+  };
+
+  // Called once the email code is confirmed — starts the Stripe payment intent, then moves to checkout
+  const handleVerified = async () => {
+    if (!pending || !selected) return;
+    try {
+      const res = await fetch('/api/stripe/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan:    pending.plan,
+          billing: pending.billing,
+          name:    pending.name,
+          email:   pending.email,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message ?? t('setup.errorGeneric'));
+
+      setClientSecret(data.clientSecret);
+      setPending(p => p ? { ...p, subscriptionId: data.subscriptionId } : p);
+      setPayError('');
+      setStep('checkout');
+    } catch (err) {
+      throw err instanceof Error ? err : new Error(t('setup.errorGeneric'));
     }
   };
 
@@ -333,11 +358,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name:           data.name,
           email:          data.email,
-          password:       data.password,
-          plan:           data.plan,
-          billing:        data.billing,
           subscriptionId: data.subscriptionId,
         }),
       });
@@ -345,7 +366,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       if (!res.ok) { setPayError(body.message ?? t('checkout.accountCreateFailed')); return; }
       sessionStorage.removeItem('monar_pending');
       sessionStorage.removeItem('monar_checkout');
-      setStep('verify');
+      setStep('success');
     } catch {
       setPayError(t('setup.errorNetwork'));
     } finally {
@@ -625,6 +646,11 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     );
   }
 
+  // ── VERIFY — email code, before payment ─────────────────────────────────────
+  if (step === 'verify' && pending) {
+    return <VerifyEmailScreen email={pending.email} onVerified={handleVerified} />;
+  }
+
   // ── CHECKOUT — Stripe Elements (step 2) ────────────────────────────────────
   if (step === 'checkout' && selected && clientSecret && pending) {
     const totalDue = billing === 'annual' ? planPrice(selected) * 12 : planPrice(selected);
@@ -753,11 +779,6 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     );
   }
 
-  // ── VERIFY ─────────────────────────────────────────────────────────────────
-  if (step === 'verify' && pending) {
-    return <VerifyEmailScreen email={pending.email} onVerified={() => setStep('success')} />;
-  }
-
   // ── SUCCESS ────────────────────────────────────────────────────────────────
   if (step === 'success' && selected) {
     return (
@@ -776,7 +797,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
           <p className="text-on-surface-variant max-w-sm mx-auto mb-2">
             {t('success.description', { plan: t(`plans.${selected.id}.name`) })}
           </p>
-          <p className="text-sm text-on-surface-variant mb-10">{t('success.emailSent')}</p>
+          <p className="text-sm text-on-surface-variant mb-10">{t('success.ready')}</p>
 
           <button onClick={onLoginClick}
             className="btn-gradient text-white px-10 py-4 rounded-2xl font-bold text-base shadow-lg shadow-primary/20 hover:opacity-95 transition-all flex items-center gap-2 mx-auto">

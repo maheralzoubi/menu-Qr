@@ -150,8 +150,12 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
     if (!confirm(t('customers.deleteConfirm'))) return;
     try {
       const res = await authFetch(`/api/owner/customers/${id}`, { method: 'DELETE' });
-      if (res.ok) setSubscribers(prev => prev.filter(s => s._id !== id));
-    } catch (e) { console.error(e); }
+      if (res.ok) { setSubscribers(prev => prev.filter(s => s._id !== id)); return; }
+      const data = await res.json().catch(() => ({}));
+      alert(data.message ?? t('customers.deleteFailed'));
+    } catch {
+      alert(t('customers.deleteFailed'));
+    }
   };
 
   const handlePlanUpdated = (updated: Subscriber) => {

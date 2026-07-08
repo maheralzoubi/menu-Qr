@@ -326,8 +326,36 @@ export const updateCustomerStatus = async (req: Request, res: Response, next: Ne
 
 export const deleteCustomer = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const deleted = await User.findByIdAndDelete(req.params.id);
-    if (!deleted) { res.status(404).json({ message: 'Subscriber not found' }); return; }
+    const owner = await User.findById(req.params.id);
+    if (!owner) { res.status(404).json({ message: 'Subscriber not found' }); return; }
+
+    // Cancel their Stripe subscription so deleting the account doesn't leave it billing forever
+    if (owner.stripeSubscriptionId) {
+      const { stripe } = await import('../services/stripe.js');
+      if (stripe) {
+        await stripe.subscriptions.cancel(owner.stripeSubscriptionId).catch(() => {
+          // Already canceled / doesn't exist — fine, proceed with account deletion regardless
+        });
+      }
+    }
+
+    // Cascade-delete every restaurant this owner created, and everything tied to them
+    const restaurants = await Restaurant.find({ ownerId: owner._id });
+    for (const r of restaurants) {
+      const rid = r._id;
+      await Promise.all([
+        User.deleteMany({ restaurantId: rid }),
+        Customer.deleteMany({ restaurantId: rid }),
+        Order.deleteMany({ restaurantId: rid }),
+        MenuItem.deleteMany({ restaurantId: rid }),
+        Category.deleteMany({ restaurantId: rid }),
+        Review.deleteMany({ restaurantId: rid }),
+        Reservation.deleteMany({ restaurantId: rid }),
+        Restaurant.findByIdAndDelete(rid),
+      ]);
+    }
+
+    await User.findByIdAndDelete(owner._id);
     res.status(204).send();
   } catch (e) { next(e); }
 };

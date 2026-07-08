@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 interface Props {
   email: string;
-  onVerified: () => void;
+  /** Called after the code is accepted. May perform further async work (e.g. starting checkout) — throw to show an error and stay on this screen. */
+  onVerified: () => void | Promise<void>;
 }
 
 const ERROR_CODE_KEYS: Record<string, string> = {
@@ -38,9 +39,9 @@ export const VerifyEmailScreen = ({ email, onVerified }: Props) => {
         setError(key ? t(key) : t('verify.errors.generic'));
         return;
       }
-      onVerified();
-    } catch {
-      setError(t('verify.errors.generic'));
+      await onVerified();
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : t('verify.errors.generic'));
     } finally {
       setIsSubmitting(false);
     }
