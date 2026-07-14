@@ -171,8 +171,8 @@ export const Settings = () => {
         method: 'PATCH',
         body: JSON.stringify(restaurantInfo),
       });
-      setInfoMsg(res.ok ? 'Saved!' : 'Failed to save.');
-    } catch { setInfoMsg('Network error.'); }
+      setInfoMsg(res.ok ? t('settings.restaurantInfo.saved') : t('settings.restaurantInfo.saveFailed'));
+    } catch { setInfoMsg(t('settings.restaurantInfo.networkError')); }
     finally { setInfoSaving(false); setTimeout(() => setInfoMsg(''), 3000); }
   };
 
@@ -183,8 +183,8 @@ export const Settings = () => {
         method: 'PATCH',
         body: JSON.stringify({ openTime: hours.openTime, closeTime: hours.closeTime, prepTime: hours.prepTime, timezone: hours.timezone }),
       });
-      setHoursMsg(res.ok ? 'Saved!' : 'Failed to save.');
-    } catch { setHoursMsg('Network error.'); }
+      setHoursMsg(res.ok ? t('settings.hours.saved') : t('settings.hours.saveFailed'));
+    } catch { setHoursMsg(t('settings.hours.networkError')); }
     finally { setHoursSaving(false); setTimeout(() => setHoursMsg(''), 3000); }
   };
 
@@ -377,25 +377,25 @@ export const Settings = () => {
         {activeSection === 'restaurant' && (
           <motion.div key="restaurant" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             <div>
-              <h3 className="text-2xl font-headline font-extrabold mb-1">Restaurant Information</h3>
-              <p className="text-on-surface-variant font-medium">Edit the public details shown to customers.</p>
+              <h3 className="text-2xl font-headline font-extrabold mb-1">{t('settings.restaurantInfo.heading')}</h3>
+              <p className="text-on-surface-variant font-medium">{t('settings.restaurantInfo.subtext')}</p>
             </div>
 
             <section className="p-6 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest space-y-5">
               {[
-                { label: 'Restaurant Name', key: 'name',         type: 'text',  placeholder: 'The Artisan Kitchen' },
-                { label: 'Address',         key: 'address',      type: 'text',  placeholder: '123 Main St, City' },
-                { label: 'Contact Email',   key: 'contactEmail', type: 'email', placeholder: 'contact@restaurant.com' },
-                { label: 'Phone Number',    key: 'contactPhone', type: 'tel',   placeholder: '+1 555 000 0000' },
-              ].map(({ label, key, type, placeholder }) => (
+                { labelKey: 'name',         key: 'name',         type: 'text'  },
+                { labelKey: 'address',      key: 'address',      type: 'text'  },
+                { labelKey: 'contactEmail', key: 'contactEmail', type: 'email' },
+                { labelKey: 'contactPhone', key: 'contactPhone', type: 'tel'   },
+              ].map(({ labelKey, key, type }) => (
                 <div key={key} className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{label}</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t(`settings.restaurantInfo.fields.${labelKey}`)}</label>
                   <input
                     type={type}
                     dir={type === 'tel' || type === 'email' ? 'ltr' : undefined}
                     value={(restaurantInfo as any)[key]}
                     onChange={e => setRestaurantInfo(r => ({ ...r, [key]: e.target.value }))}
-                    placeholder={placeholder}
+                    placeholder={t(`settings.restaurantInfo.placeholders.${labelKey}`)}
                     className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                   />
                 </div>
@@ -403,15 +403,15 @@ export const Settings = () => {
 
               {/* Currency */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Currency</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.restaurantInfo.currency')}</label>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { code: 'USD', symbol: '$',   label: 'US Dollar',         sub: 'USD' },
-                    { code: 'JOD', symbol: 'JD',  label: 'Jordanian Dinar',   sub: 'JOD' },
-                    { code: 'SAR', symbol: 'SR',  label: 'Saudi Riyal',       sub: 'SAR' },
-                    { code: 'AED', symbol: 'AED', label: 'UAE Dirham',        sub: 'AED' },
-                    { code: 'EUR', symbol: '€',   label: 'Euro',              sub: 'EUR' },
-                    { code: 'GBP', symbol: '£',   label: 'British Pound',     sub: 'GBP' },
+                    { code: 'USD', symbol: '$'   },
+                    { code: 'JOD', symbol: 'JD'  },
+                    { code: 'SAR', symbol: 'SR'  },
+                    { code: 'AED', symbol: 'AED' },
+                    { code: 'EUR', symbol: '€'   },
+                    { code: 'GBP', symbol: '£'   },
                   ].map(cur => (
                     <button key={cur.code} type="button"
                       onClick={() => setRestaurantInfo(r => ({ ...r, currency: cur.code }))}
@@ -422,8 +422,8 @@ export const Settings = () => {
                       }`}>
                       <span className={`text-lg font-extrabold w-8 text-center ${restaurantInfo.currency === cur.code ? 'text-primary' : 'text-on-surface-variant'}`}>{cur.symbol}</span>
                       <div>
-                        <p className={`text-sm font-bold ${restaurantInfo.currency === cur.code ? 'text-primary' : 'text-on-surface'}`}>{cur.label}</p>
-                        <p className="text-[10px] text-on-surface-variant">{cur.sub}</p>
+                        <p className={`text-sm font-bold ${restaurantInfo.currency === cur.code ? 'text-primary' : 'text-on-surface'}`}>{t(`settings.restaurantInfo.currencies.${cur.code}`)}</p>
+                        <p className="text-[10px] text-on-surface-variant">{cur.code}</p>
                       </div>
                     </button>
                   ))}
@@ -437,7 +437,7 @@ export const Settings = () => {
               <button onClick={handleSaveInfo} disabled={infoSaving}
                 className="px-8 py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 flex items-center gap-2 disabled:opacity-60">
                 <Save className="w-4 h-4" />
-                {infoSaving ? 'Saving…' : 'Save Changes'}
+                {infoSaving ? t('settings.restaurantInfo.saving') : t('settings.restaurantInfo.saveChanges')}
               </button>
             </div>
           </motion.div>
@@ -517,7 +517,7 @@ export const Settings = () => {
 
               {/* Custom color input */}
               <div className="flex items-center gap-3 pt-1">
-                <label className="relative cursor-pointer shrink-0" title="Open color picker">
+                <label className="relative cursor-pointer shrink-0" title={t('settings.branding.colorPickerTitle')}>
                   <input
                     type="color"
                     value={selectedColor.match(/^#[0-9a-fA-F]{6}$/) ? selectedColor : '#fe5722'}
@@ -541,9 +541,9 @@ export const Settings = () => {
                 <button
                   onClick={() => setSelectedColor('#fe5722')}
                   className="px-3 py-3 rounded-2xl bg-surface-container-high text-xs font-bold text-on-surface-variant hover:bg-surface-variant transition-colors shrink-0"
-                  title="Reset to default"
+                  title={t('settings.branding.resetTitle')}
                 >
-                  Reset
+                  {t('settings.branding.reset')}
                 </button>
               </div>
 
@@ -593,31 +593,31 @@ export const Settings = () => {
         {activeSection === 'hours' && (
           <motion.div key="hours" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             <div>
-              <h3 className="text-2xl font-headline font-extrabold mb-1">Business Hours</h3>
-              <p className="text-on-surface-variant font-medium">Set your opening times and average prep time shown to customers.</p>
+              <h3 className="text-2xl font-headline font-extrabold mb-1">{t('settings.hours.heading')}</h3>
+              <p className="text-on-surface-variant font-medium">{t('settings.hours.subtext')}</p>
             </div>
 
             <section className="p-6 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest space-y-5">
               <div className="flex gap-4">
                 <div className="flex-1 space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Opens at</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.hours.opensAt')}</label>
                   <input type="time" value={hours.openTime} onChange={e => setHours(h => ({ ...h, openTime: e.target.value }))}
                     className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
                 </div>
                 <div className="flex-1 space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Closes at</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.hours.closesAt')}</label>
                   <input type="time" value={hours.closeTime} onChange={e => setHours(h => ({ ...h, closeTime: e.target.value }))}
                     className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Timezone</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.hours.timezone')}</label>
                 <input
                   list="tz-list"
                   value={hours.timezone}
                   onChange={e => setHours(h => ({ ...h, timezone: e.target.value }))}
-                  placeholder="e.g. Asia/Amman"
+                  placeholder={t('settings.hours.timezonePlaceholder')}
                   className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 <datalist id="tz-list">
@@ -626,21 +626,21 @@ export const Settings = () => {
                     : ['UTC','Asia/Amman','Asia/Dubai','Asia/Riyadh','Asia/Kuwait','Asia/Beirut','Europe/London','Europe/Paris','America/New_York','America/Chicago','America/Los_Angeles','Asia/Tokyo','Asia/Shanghai']
                   ).map((tz: string) => <option key={tz} value={tz} />)}
                 </datalist>
-                <p className="text-xs text-on-surface-variant px-1">IANA timezone — used to decide open/closed status. Current: <strong>{hours.timezone}</strong></p>
+                <p className="text-xs text-on-surface-variant px-1">{t('settings.hours.timezoneHint')}<strong>{hours.timezone}</strong></p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Prep Time (shown to customers)</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.hours.prepTime')}</label>
                 <input type="text" value={hours.prepTime} onChange={e => setHours(h => ({ ...h, prepTime: e.target.value }))}
-                  placeholder="e.g. 15–25"
+                  placeholder={t('settings.hours.prepTimePlaceholder')}
                   className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
-                <p className="text-xs text-on-surface-variant px-1">Displayed as "15–25 min" on the customer app.</p>
+                <p className="text-xs text-on-surface-variant px-1">{t('settings.hours.prepTimeHint')}</p>
               </div>
 
               {hours.openTime && hours.closeTime && (
                 <div className="flex items-center gap-2 px-4 py-3 bg-primary/10 rounded-2xl">
                   <Clock className="w-4 h-4 text-primary shrink-0" />
-                  <p className="text-sm font-bold text-primary">Open {hours.openTime} – {hours.closeTime}</p>
+                  <p className="text-sm font-bold text-primary">{t('settings.hours.openStatus', { open: hours.openTime, close: hours.closeTime })}</p>
                 </div>
               )}
             </section>
@@ -651,7 +651,7 @@ export const Settings = () => {
               <button onClick={handleSaveHours} disabled={hoursSaving}
                 className="px-8 py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 flex items-center gap-2 disabled:opacity-60">
                 <Save className="w-4 h-4" />
-                {hoursSaving ? 'Saving…' : 'Save Hours'}
+                {hoursSaving ? t('settings.hours.saving') : t('settings.hours.saveHours')}
               </button>
             </div>
           </motion.div>

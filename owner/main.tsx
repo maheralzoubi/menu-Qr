@@ -86,6 +86,7 @@ function OwnerApp() {
         onBack={handleBackToLanding}
         onTokenSave={setOwnerToken}
         onNeedsVerification={goToVerify}
+        appId="owner"
         title={t('login.title')}
         subtitle={t('login.subtitle')}
         icon="shield"

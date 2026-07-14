@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../src/lib/auth';
+import { pushNavParam, goBack } from '../lib/navHistory';
 
 interface Reservation {
   _id: string;
@@ -56,21 +57,19 @@ export const ReservationManager = () => {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const setNavParam = useCallback((key: 'resView' | 'resId', value: string | null) => {
-    const url = new URL(window.location.href);
-    if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
-    window.history.replaceState(window.history.state, '', url);
+  const enterView = useCallback((v: ResView) => {
+    setView(v);
+    pushNavParam('resView', v);
   }, []);
 
-  const changeView = useCallback((v: ResView) => {
-    setView(v);
-    setNavParam('resView', v === 'list' ? null : v);
-  }, [setNavParam]);
+  const backToListView = useCallback(() => { goBack(); }, []);
 
-  const selectRes = useCallback((id: string | null) => {
+  const selectRes = useCallback((id: string) => {
     setSelectedResId(id);
-    setNavParam('resId', id);
-  }, [setNavParam]);
+    pushNavParam('resId', id);
+  }, []);
+
+  const closeRes = useCallback(() => { goBack(); }, []);
 
   const fetchReservations = async () => {
     try {
@@ -96,7 +95,7 @@ export const ReservationManager = () => {
     if (!confirm(t('reservations.deleteConfirm'))) return;
     try {
       const res = await authFetch(`/api/reservations/${id}`, { method: 'DELETE' });
-      if (res.ok) { setReservations(prev => prev.filter(r => resKey(r) !== id)); selectRes(null); }
+      if (res.ok) { setReservations(prev => prev.filter(r => resKey(r) !== id)); closeRes(); }
     } catch (error) { console.error('Failed to delete reservation:', error); }
   };
 
@@ -129,7 +128,7 @@ export const ReservationManager = () => {
               {t('reservations.confirmedToday', { count: todayConfirmed })}
             </p>
           </div>
-          <button onClick={() => changeView('list')} className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+          <button onClick={backToListView} className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
             {t('reservations.backToList')}
           </button>
         </div>
@@ -175,7 +174,7 @@ export const ReservationManager = () => {
                 className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <button onClick={() => changeView('map')} className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+            <button onClick={() => enterView('map')} className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <MapIcon className="w-4 h-4" /> {t('reservations.tableMap')}
             </button>
           </div>
@@ -241,7 +240,7 @@ export const ReservationManager = () => {
                   <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('reservations.detailHeading')}</h3>
                   <p className="text-on-surface-variant font-mono text-sm mt-1">#{resKey(selectedRes).slice(-6).toUpperCase()}</p>
                 </div>
-                <button onClick={() => selectRes(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+                <button onClick={closeRes} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
                   <XCircle className="w-6 h-6" />
                 </button>
               </div>

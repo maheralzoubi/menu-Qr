@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../src/lib/auth';
+import { pushNavParam } from './lib/navHistory';
 import { StatsGrid } from './components/StatsGrid';
 import { MenuManager } from './components/MenuManager';
 import { OrderManager } from './components/OrderManager';
@@ -60,9 +61,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
 
   const changeTab = (tab: DashboardTab) => {
     setActiveTab(tab);
-    const url = new URL(window.location.href);
-    url.searchParams.set('tab', tab);
-    window.history.replaceState({ tab }, '', url);
+    pushNavParam('tab', tab);
   };
 
   useEffect(() => {
@@ -96,8 +95,8 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     { id: 'settings',     icon: <SettingsIcon className="w-5 h-5" /> },
   ];
 
-  const displayName = user?.name || user?.email || 'Admin';
-  const displayTitle = user?.title || user?.role || 'Manager';
+  const displayName = user?.name || user?.email || t('dashboard.defaultName');
+  const displayTitle = user?.title || user?.role || t('dashboard.defaultTitle');
   const initials = displayName.slice(0, 2).toUpperCase();
   const restaurantId = user?.restaurantId ?? '';
 
@@ -162,7 +161,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
               <p className="text-[10px] text-on-surface-variant uppercase tracking-tighter">{displayTitle}</p>
             </div>
             {user?.avatar ? (
-              <img alt="Profile" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10" src={user.avatar} />
+              <img alt={t('dashboard.profileAlt')} className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10" src={user.avatar} />
             ) : (
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm ring-2 ring-primary/10">
                 {initials}

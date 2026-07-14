@@ -9,6 +9,7 @@ import { io } from 'socket.io-client';
 import { authFetch } from '../../src/lib/auth';
 import { OrderArchive } from './OrderArchive';
 import { formatCurrency } from '../../src/lib/currency';
+import { pushNavParam, goBack } from '../lib/navHistory';
 
 interface CartItem { id: string; name: string; price: number; image: string; quantity: number; note?: string; }
 interface Order {
@@ -18,7 +19,8 @@ interface Order {
   order_note?: string;
 }
 
-const SOURCE_LABEL: Record<string, string> = { CASHIER_POS: 'POS', QR_CODE: 'QR', CUSTOMER_APP: 'App' };
+const SOURCE_LABEL_KEY: Record<string, string> = { CASHIER_POS: 'CASHIER_POS', QR_CODE: 'QR_CODE', CUSTOMER_APP: 'CUSTOMER_APP' };
+const STATUS_LABEL_KEY: Record<string, string> = { Pending: 'pending', Preparing: 'preparing', Ready: 'ready', Delivered: 'delivered', Cancelled: 'cancelled' };
 const SOURCE_COLOR: Record<string, string> = {
   CASHIER_POS: 'bg-[#303942] text-white',
   QR_CODE:     'bg-primary/10 text-primary',
@@ -47,6 +49,10 @@ export const OrderManager = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
+  const sourceLabel = (source?: string) => (source && SOURCE_LABEL_KEY[source]) ? t(`orders.sourceLabel.${SOURCE_LABEL_KEY[source]}`) : source;
+  const statusLabel = (status: string) => STATUS_LABEL_KEY[status] ? t(`orders.${STATUS_LABEL_KEY[status]}`) : status;
+  const paymentStatusLabel = (ps?: string) => ps ? t(`orders.paymentStatus.${ps}`, { defaultValue: ps.replace(/_/g, ' ') }) : ps;
+
   const [view, setView] = useState<OrderView>(() => parseOrderNav(window.location.search).view);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
@@ -71,21 +77,22 @@ export const OrderManager = () => {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const setNavParam = useCallback((key: 'orderView' | 'orderId', value: string | null) => {
-    const url = new URL(window.location.href);
-    if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
-    window.history.replaceState(window.history.state, '', url);
+  // Entering a sub-view/detail pushes a real history entry so the browser
+  // back button steps out of it instead of leaving the app; closing it
+  // (backToFeed/closeOrder) undoes that via a normal back navigation.
+  const enterView = useCallback((v: OrderView) => {
+    setView(v);
+    pushNavParam('orderView', v);
   }, []);
 
-  const changeView = useCallback((v: OrderView) => {
-    setView(v);
-    setNavParam('orderView', v === 'feed' ? null : v);
-  }, [setNavParam]);
+  const backToFeed = useCallback(() => { goBack(); }, []);
 
-  const selectOrder = useCallback((id: string | null) => {
+  const selectOrder = useCallback((id: string) => {
     setSelectedOrderId(id);
-    setNavParam('orderId', id);
-  }, [setNavParam]);
+    pushNavParam('orderId', id);
+  }, []);
+
+  const closeOrder = useCallback(() => { goBack(); }, []);
 
   const tableNames = ['all', ...Array.from(new Set(orders.map(o => o.tableNumber).filter(Boolean) as string[]))].sort();
 
@@ -131,8 +138,8 @@ export const OrderManager = () => {
     setArchiving(true); setArchiveMsg('');
     try {
       const res = await authFetch('/api/orders/archive-today', { method: 'POST' });
-      if (res.ok) { const { archived } = await res.json(); setArchiveMsg(`${archived} order${archived !== 1 ? 's' : ''} archived.`); await fetchOrders(); }
-    } catch { setArchiveMsg('Failed to archive. Try again.'); }
+      if (res.ok) { const { archived } = await res.json(); setArchiveMsg(t('orders.archivedSuccess', { count: archived })); await fetchOrders(); }
+    } catch { setArchiveMsg(t('orders.archiveFailed')); }
     finally { setArchiving(false); setArchiveConfirm(false); setTimeout(() => setArchiveMsg(''), 4000); }
   };
 
@@ -149,7 +156,7 @@ export const OrderManager = () => {
   const pendingOrders  = orders.filter(o => o.status === 'Pending');
   const dismissToast   = (id: number) => setToasts(prev => prev.filter(t => t.id !== id));
 
-  if (view === 'archive') return <OrderArchive onBack={() => changeView('feed')} />;
+  if (view === 'archive') return <OrderArchive onBack={backToFeed} />;
 
   if (view === 'kds') {
     return (
@@ -165,7 +172,7 @@ export const OrderManager = () => {
                 <ChefHat className="w-4 h-4 text-primary" />
                 <span>{t('orders.preparingCount', { count: preparingOrders.length })}</span>
               </div>
-              <button onClick={() => changeView('feed')}
+              <button onClick={backToFeed}
                 className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
                 {t('orders.backToFeed')}
               </button>
@@ -187,8 +194,8 @@ export const OrderManager = () => {
                       <Timer className="w-3 h-3" />
                       <span>{Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000)}m</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">{order.status}</span>
-                    {order.order_source && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${SOURCE_COLOR[order.order_source] ?? 'bg-gray-100 text-gray-600'}`}>{SOURCE_LABEL[order.order_source] ?? order.order_source}</span>}
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">{statusLabel(order.status)}</span>
+                    {order.order_source && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${SOURCE_COLOR[order.order_source] ?? 'bg-gray-100 text-gray-600'}`}>{sourceLabel(order.order_source)}</span>}
                   </div>
                 </div>
                 <div className="p-5 flex-1 space-y-4 overflow-y-auto no-scrollbar">
@@ -240,11 +247,11 @@ export const OrderManager = () => {
               className="bg-surface-container-high border-none rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none">
               {tableNames.map(tb => <option key={tb} value={tb}>{tb === 'all' ? t('orders.allTables') : tb}</option>)}
             </select>
-            <button onClick={() => changeView('kds')}
+            <button onClick={() => enterView('kds')}
               className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <ChefHat className="w-4 h-4" /> {t('orders.kdsView')}
             </button>
-            <button onClick={() => changeView('archive')}
+            <button onClick={() => enterView('archive')}
               className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <Archive className="w-4 h-4" /> {t('orders.archive')}
             </button>
@@ -311,7 +318,7 @@ export const OrderManager = () => {
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 me-5 group-hover:scale-110 transition-transform text-white text-[10px] font-extrabold tracking-wide ${
                   order.order_source === 'CASHIER_POS' ? 'bg-[#303942]' : order.order_source === 'QR_CODE' ? 'bg-primary' : 'bg-primary/70'
                 }`}>
-                  {SOURCE_LABEL[order.order_source ?? ''] ?? <Package className="w-5 h-5" />}
+                  {order.order_source ? sourceLabel(order.order_source) : <Package className="w-5 h-5" />}
                 </div>
 
                 <div className="flex-1 grid grid-cols-5 gap-4 min-w-0">
@@ -351,7 +358,7 @@ export const OrderManager = () => {
                 <div className="flex items-center gap-2 ms-5 flex-wrap justify-end shrink-0">
                   {order.payment_status && (
                     <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${PAYMENT_COLOR[order.payment_status] ?? 'bg-gray-100 text-gray-600'}`}>
-                      {order.payment_status.replace(/_/g, ' ')}
+                      {paymentStatusLabel(order.payment_status)}
                     </span>
                   )}
                   <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
@@ -360,7 +367,7 @@ export const OrderManager = () => {
                     order.status === 'Ready'     ? 'bg-emerald-100 text-emerald-700' :
                     order.status === 'Cancelled' ? 'bg-red-100 text-red-600' :
                     'bg-[#303942]/10 text-[#303942]'
-                  }`}>{order.status}</span>
+                  }`}>{statusLabel(order.status)}</span>
                   <ChevronRight className="w-5 h-5 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
                 </div>
               </motion.div>
@@ -381,7 +388,7 @@ export const OrderManager = () => {
                   <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('orders.detailHeading')}</h3>
                   <p className="text-on-surface-variant font-mono text-sm mt-1">#{selectedOrder._id.toUpperCase()}</p>
                 </div>
-                <button onClick={() => selectOrder(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+                <button onClick={closeOrder} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
                   <XIcon className="w-6 h-6" />
                 </button>
               </div>

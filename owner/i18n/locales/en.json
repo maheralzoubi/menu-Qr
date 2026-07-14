@@ -60,7 +60,8 @@
       "validation": "Please check your email and password and try again.",
       "network": "Network error. Please try again.",
       "generic": "Login failed. Please try again.",
-      "emailNotVerified": "Please verify your email address before signing in."
+      "emailNotVerified": "Please verify your email address before signing in.",
+      "wrongApp": "This account isn't an owner account. Please sign in from the restaurant admin dashboard instead."
     },
     "resendVerification": "Resend verification email",
     "resendSent": "A new verification link has been sent to your inbox."

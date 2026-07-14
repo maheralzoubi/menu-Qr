@@ -1,0 +1,64 @@
+/* ── Admin theme: #FE5722 orange + #303942 dark ───────────────────────────
+   Surfaces use the #303942 dark scale.
+   Primary accent = #FE5722.
+────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Surfaces — dark #303942 scale */
+  --color-surface:                   #303942;
+  --color-surface-dim:               #252c36;
+  --color-surface-bright:            #3f4a5c;
+  --color-surface-container-lowest:  #1e242e;
+  --color-surface-container-low:     #272e39;
+  --color-surface-container:         #353e4e;
+  --color-surface-container-high:    #3e4859;
+  --color-surface-container-highest: #485264;
+
+  /* Text */
+  --color-on-surface:         #ffffff;
+  --color-on-surface-variant: #9aa3b2;
+
+  /* Brand */
+  --color-primary:           #FE5722;
+  --color-primary-container: #D94A1C;
+  --color-on-primary:        #ffffff;
+
+  /* Tertiary → brand dark */
+  --color-tertiary:           #303942;
+  --color-tertiary-container: #3f4a5c;
+
+  /* Borders */
+  --color-outline:         #5a6475;
+  --color-outline-variant: #404a5a;
+
+  /* Error */
+  --color-error: #ff6b6b;
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #FE5722 0%, #D94A1C 100%) !important;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #FE5722, #D94A1C) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* Cashier/POS invoice — only #invoice-print renders on paper; everything else in
+   the app (including the on-screen receipt modal) is hidden while printing. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #invoice-print,
+  #invoice-print * {
+    visibility: visible;
+  }
+  #invoice-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}

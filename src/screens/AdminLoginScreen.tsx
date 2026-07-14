@@ -11,6 +11,8 @@ interface Props {
   onTokenSave: (token: string) => void;
   /** If provided, resending a verification code navigates to a code-entry screen instead of showing inline confirmation */
   onNeedsVerification?: (email: string) => void;
+  /** Which app is authenticating — the server rejects accounts whose role doesn't belong here */
+  appId?: 'admin' | 'owner';
   title?: string;
   subtitle?: string;
   icon?: 'utensils' | 'shield';
@@ -22,6 +24,8 @@ const ERROR_CODE_KEYS: Record<string, string> = {
   ACCOUNT_LOCKED: 'login.errors.accountLocked',
   VALIDATION_ERROR: 'login.errors.validation',
   EMAIL_NOT_VERIFIED: 'login.errors.emailNotVerified',
+  WRONG_APP: 'login.errors.wrongApp',
+  NO_RESTAURANT: 'login.errors.noRestaurant',
 };
 
 export const AdminLoginScreen = ({
@@ -29,6 +33,7 @@ export const AdminLoginScreen = ({
   onBack,
   onTokenSave,
   onNeedsVerification,
+  appId,
   title,
   subtitle,
 }: Props) => {
@@ -58,7 +63,7 @@ export const AdminLoginScreen = ({
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: email.trim(), password, app: appId }),
       });
       const data = await res.json();
       if (!res.ok) {

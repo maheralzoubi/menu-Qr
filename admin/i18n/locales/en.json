@@ -13,7 +13,8 @@
       "validation": "Please check your email and password and try again.",
       "network": "Network error. Please try again.",
       "generic": "Login failed. Please try again.",
-      "emailNotVerified": "Please verify your email address before signing in."
+      "emailNotVerified": "Please verify your email address before signing in.",
+      "wrongApp": "This account isn't a restaurant staff account. Please sign in from the Owner Panel instead."
     },
     "resendVerification": "Resend verification email",
     "resendSent": "A new verification link has been sent to your inbox."
@@ -61,7 +62,10 @@
     "headerTitle": "Dashboard",
     "desktopOnly": "Desktop Only",
     "desktopOnlyMsg": "The Admin Dashboard is optimized for desktop and tablet devices.",
-    "backToApp": "Back to App"
+    "backToApp": "Back to App",
+    "defaultName": "Admin",
+    "defaultTitle": "Manager",
+    "profileAlt": "Profile"
   },
   "stats": {
     "heading": "Insight Dashboard",
@@ -110,6 +114,23 @@
     "preparing": "Preparing",
     "ready": "Ready",
     "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "sourceLabel": {
+      "CASHIER_POS": "POS",
+      "QR_CODE": "QR",
+      "CUSTOMER_APP": "App"
+    },
+    "paymentStatus": {
+      "PAID": "Paid",
+      "UNPAID": "Unpaid",
+      "PENDING_CASH": "Pending Cash",
+      "PENDING_CARD_PAYMENT": "Pending Card Payment",
+      "PENDING_CLIQ_VERIFICATION": "Pending CliQ Verification",
+      "REFUNDED": "Refunded"
+    },
+    "archivedSuccess_one": "{{count}} order archived.",
+    "archivedSuccess_other": "{{count}} orders archived.",
+    "archiveFailed": "Failed to archive. Try again.",
     "detailHeading": "Order Details",
     "guestInfo": "Guest Information",
     "orderItems": "Order Items",
@@ -165,7 +186,8 @@
     "tableLabel": "Table",
     "customerLabel": "Customer",
     "itemsLabel": "Items",
-    "totalLabel": "Total"
+    "totalLabel": "Total",
+    "statusLabel": "Status"
   },
   "menu": {
     "breadcrumbMenu": "Menu",
@@ -256,7 +278,14 @@
     "usesWithMax": "{{count}}/{{max}} uses",
     "expires": "Expires {{date}}",
     "deactivate": "Deactivate",
-    "activate": "Activate"
+    "activate": "Activate",
+    "errors": {
+      "required": "Code and discount value are required",
+      "positiveNumber": "Discount value must be a positive number",
+      "percentageMax": "Percentage discount cannot exceed 100",
+      "createFailed": "Failed to create promo code",
+      "network": "Network error"
+    }
   },
   "reservations": {
     "heading": "Reservations",
@@ -363,7 +392,91 @@
     "useBrandLogo": "Use restaurant logo",
     "uploadCustomLogo": "Upload custom",
     "removeLogo": "Remove",
-    "presets": "Presets"
+    "presets": "Presets",
+    "presetNames": {
+      "Classic": "Classic",
+      "Noir": "Noir",
+      "Slate": "Slate",
+      "Forest": "Forest",
+      "Berry": "Berry",
+      "Ocean": "Ocean"
+    },
+    "logoSet": "Logo set",
+    "uploading": "Uploading…",
+    "altQrFor": "QR for {{table}}",
+    "altPreview": "QR Preview",
+    "altLogo": "Logo",
+    "altBrandLogo": "Brand logo"
+  },
+  "pos": {
+    "searchPlaceholder": "Search menu...",
+    "itemNotePlaceholder": "Item note...",
+    "orderNotePlaceholder": "Order note...",
+    "orderTypes": {
+      "dineIn": "Dine In",
+      "takeaway": "Takeaway",
+      "pickup": "Pickup",
+      "delivery": "Delivery"
+    },
+    "paymentMethods": {
+      "cash": "Cash",
+      "card": "Card",
+      "cliq": "CliQ",
+      "unpaid": "Unpaid",
+      "payLater": "Pay Later"
+    },
+    "categoryItemCount": "{{count}} items",
+    "noProducts": "No products found",
+    "cart": "Cart",
+    "clear": "Clear",
+    "emptyCartHint": "Tap any product to add to cart",
+    "selectTableOption": "— Select table *",
+    "discountModes": {
+      "code": "Code",
+      "percentage": "%",
+      "fixed": "Fixed"
+    },
+    "promoCodePlaceholder": "Promo code",
+    "percentagePlaceholder": "e.g. 10",
+    "fixedPlaceholder": "e.g. 5.00",
+    "apply": "Apply",
+    "applied": "Applied — save {{amount}}",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "total": "Total",
+    "creating": "Creating...",
+    "createOrder": "Create Order · {{total}}",
+    "loading": "Loading POS...",
+    "errors": {
+      "invalidPromo": "Invalid or expired code",
+      "promoNetworkError": "Network error. Try again.",
+      "emptyCart": "Add at least one item to the cart",
+      "selectTable": "Please select a table for Dine-In orders",
+      "createFailed": "Failed to create order",
+      "createNetworkError": "Network error. Please try again."
+    },
+    "receipt": {
+      "orderCreated": "Order Created!",
+      "tableTag": "Table {{number}}",
+      "byTag": "By {{name}}",
+      "print": "Print",
+      "newOrder": "New Order"
+    },
+    "invoice": {
+      "title": "INVOICE",
+      "item": "Item",
+      "qty": "Qty",
+      "price": "Price",
+      "total": "Total",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "payment": "Payment:",
+      "orderType": "Order type:",
+      "table": "Table:",
+      "cashier": "Cashier:",
+      "thankYou": "Thank you for your visit!",
+      "restaurantFallback": "Restaurant"
+    }
   },
   "settings": {
     "heading": "Settings",
@@ -421,7 +534,58 @@
       "saving": "Saving…",
       "saved": "Branding saved!",
       "saveFailed": "Failed to save. Try again.",
-      "networkError": "Network error."
+      "networkError": "Network error.",
+      "colorPickerTitle": "Open color picker",
+      "resetTitle": "Reset to default",
+      "reset": "Reset"
+    },
+    "restaurantInfo": {
+      "heading": "Restaurant Information",
+      "subtext": "Edit the public details shown to customers.",
+      "fields": {
+        "name": "Restaurant Name",
+        "address": "Address",
+        "contactEmail": "Contact Email",
+        "contactPhone": "Phone Number"
+      },
+      "placeholders": {
+        "name": "The Artisan Kitchen",
+        "address": "123 Main St, City",
+        "contactEmail": "contact@restaurant.com",
+        "contactPhone": "+1 555 000 0000"
+      },
+      "currency": "Currency",
+      "currencies": {
+        "USD": "US Dollar",
+        "JOD": "Jordanian Dinar",
+        "SAR": "Saudi Riyal",
+        "AED": "UAE Dirham",
+        "EUR": "Euro",
+        "GBP": "British Pound"
+      },
+      "saved": "Saved!",
+      "saveFailed": "Failed to save.",
+      "networkError": "Network error.",
+      "saveChanges": "Save Changes",
+      "saving": "Saving…"
+    },
+    "hours": {
+      "heading": "Business Hours",
+      "subtext": "Set your opening times and average prep time shown to customers.",
+      "opensAt": "Opens at",
+      "closesAt": "Closes at",
+      "timezone": "Timezone",
+      "timezonePlaceholder": "e.g. Asia/Amman",
+      "timezoneHint": "IANA timezone — used to decide open/closed status. Current: ",
+      "prepTime": "Prep Time (shown to customers)",
+      "prepTimePlaceholder": "e.g. 15–25",
+      "prepTimeHint": "Displayed as \"15–25 min\" on the customer app.",
+      "openStatus": "Open {{open}} – {{close}}",
+      "saved": "Saved!",
+      "saveFailed": "Failed to save.",
+      "networkError": "Network error.",
+      "saveHours": "Save Hours",
+      "saving": "Saving…"
     },
     "comingSoon": "Coming Soon",
     "comingSoonMsg": "This section will be available in a future update.",
