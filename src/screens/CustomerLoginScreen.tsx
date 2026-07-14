@@ -32,12 +32,12 @@ export const CustomerLoginScreen = ({ onSuccess, onBack, onRegisterClick, restau
         body: JSON.stringify({ email, password, restaurantId }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.message ?? 'Login failed'); return; }
+      if (!res.ok) { setError(data.message ?? t('customerLogin.loginFailed')); return; }
       setCustomerToken(data.token);
       setCustomerInfo(data.customer);
       onSuccess();
     } catch {
-      setError('Network error. Please try again.');
+      setError(t('common.networkError'));
     } finally {
       setIsLoading(false);
     }

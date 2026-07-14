@@ -3,6 +3,7 @@ import { Plus, Trash2, Tag, ToggleLeft, ToggleRight, Calendar, Hash } from 'luci
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../src/lib/auth';
+import { formatCurrency } from '../../src/lib/currency';
 
 interface PromoCode {
   _id: string;
@@ -28,6 +29,7 @@ export const PromoManager = () => {
   const { t } = useTranslation();
   const [promos, setPromos] = useState<PromoCode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currency, setCurrency] = useState('USD');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm());
   const [saving, setSaving] = useState(false);
@@ -41,13 +43,16 @@ export const PromoManager = () => {
     finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchPromos(); }, []);
+  useEffect(() => {
+    fetchPromos();
+    authFetch('/api/settings/restaurant').then(r => r.ok ? r.json() : null).then(s => { if (s?.currency) setCurrency(s.currency); });
+  }, []);
 
   const handleCreate = async () => {
-    if (!form.code || !form.discountValue) { setError('Code and discount value are required'); return; }
+    if (!form.code || !form.discountValue) { setError(t('promos.errors.required')); return; }
     const value = parseFloat(form.discountValue as string);
-    if (isNaN(value) || value <= 0) { setError('Discount value must be a positive number'); return; }
-    if (form.discountType === 'percentage' && value > 100) { setError('Percentage discount cannot exceed 100'); return; }
+    if (isNaN(value) || value <= 0) { setError(t('promos.errors.positiveNumber')); return; }
+    if (form.discountType === 'percentage' && value > 100) { setError(t('promos.errors.percentageMax')); return; }
     setSaving(true); setError('');
     try {
       const body: Record<string, any> = { code: form.code.toUpperCase(), discountType: form.discountType, discountValue: value };
@@ -55,8 +60,8 @@ export const PromoManager = () => {
       if (form.maxUses) body.maxUses = parseInt(form.maxUses as string, 10);
       const res = await authFetch('/api/promos', { method: 'POST', body: JSON.stringify(body) });
       if (res.ok) { const created = await res.json(); setPromos(prev => [created, ...prev]); setForm(emptyForm()); setShowForm(false); }
-      else { const data = await res.json(); setError(data.message || 'Failed to create promo code'); }
-    } catch { setError('Network error'); }
+      else { const data = await res.json(); setError(data.message || t('promos.errors.createFailed')); }
+    } catch { setError(t('promos.errors.network')); }
     finally { setSaving(false); }
   };
 
@@ -75,7 +80,7 @@ export const PromoManager = () => {
   };
 
   const formatDiscount = (promo: PromoCode) =>
-    promo.discountType === 'percentage' ? `${promo.discountValue}%` : `$${promo.discountValue.toFixed(2)}`;
+    promo.discountType === 'percentage' ? `${promo.discountValue}%` : formatCurrency(promo.discountValue, currency);
 
   const isExpired = (promo: PromoCode) =>
     promo.expiryDate ? new Date() > new Date(promo.expiryDate) : false;

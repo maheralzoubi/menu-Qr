@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Utensils, ShoppingBag, Calendar,
-  Star, LogOut, TrendingUp, Settings as SettingsIcon, QrCode, Tag
+  Star, LogOut, TrendingUp, Settings as SettingsIcon, QrCode, Tag, MonitorSmartphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../src/lib/auth';
+import { pushNavParam } from './lib/navHistory';
 import { StatsGrid } from './components/StatsGrid';
 import { MenuManager } from './components/MenuManager';
 import { OrderManager } from './components/OrderManager';
@@ -15,15 +16,24 @@ import { Analytics } from './components/Analytics';
 import { Settings } from './components/Settings';
 import { QRManager } from './components/QRManager';
 import { PromoManager } from './components/PromoManager';
+import { CashierPOS } from './components/CashierPOS';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 
-export type DashboardTab = 'overview' | 'orders' | 'menu' | 'reservations' | 'reviews' | 'analytics' | 'qr' | 'promos' | 'settings';
+export type DashboardTab = 'overview' | 'orders' | 'menu' | 'reservations' | 'reviews' | 'analytics' | 'qr' | 'promos' | 'cashier' | 'settings';
+
+const DASHBOARD_TABS: DashboardTab[] = ['overview', 'orders', 'menu', 'reservations', 'reviews', 'analytics', 'qr', 'promos', 'cashier', 'settings'];
+
+function parseTab(search: string): DashboardTab {
+  const tab = new URLSearchParams(search).get('tab');
+  return DASHBOARD_TABS.includes(tab as DashboardTab) ? (tab as DashboardTab) : 'overview';
+}
 
 interface UserProfile { email: string; role: string; name?: string; title?: string; avatar?: string; restaurantId?: string; }
 
 export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
-  const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
+  const [activeTab, setActiveTab] = useState<DashboardTab>(() => parseTab(window.location.search));
   const [stats, setStats] = useState<any>(null);
+  const [currency, setCurrency] = useState('USD');
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const { t } = useTranslation();
@@ -35,14 +45,35 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  // Attach nav state to the current history entry without touching the URL on first load.
+  useEffect(() => {
+    window.history.replaceState({ tab: activeTab }, '', window.location.href);
+  }, []);
+
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      const state = e.state as { tab: DashboardTab } | null;
+      setActiveTab(state?.tab ?? parseTab(window.location.search));
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const changeTab = (tab: DashboardTab) => {
+    setActiveTab(tab);
+    pushNavParam('tab', tab);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, meRes] = await Promise.all([
+        const [statsRes, meRes, settingsRes] = await Promise.all([
           authFetch('/api/stats'),
           authFetch('/api/auth/me'),
+          authFetch('/api/settings/restaurant'),
         ]);
         if (statsRes.ok) setStats(await statsRes.json());
+        if (settingsRes.ok) { const s = await settingsRes.json(); if (s.currency) setCurrency(s.currency); }
         if (meRes.ok) setUser(await meRes.json());
       } catch (e) {
         console.error('Dashboard fetch error:', e);
@@ -60,11 +91,12 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     { id: 'analytics',    icon: <TrendingUp className="w-5 h-5" /> },
     { id: 'qr',           icon: <QrCode className="w-5 h-5" /> },
     { id: 'promos',       icon: <Tag className="w-5 h-5" /> },
+    { id: 'cashier',      icon: <MonitorSmartphone className="w-5 h-5" /> },
     { id: 'settings',     icon: <SettingsIcon className="w-5 h-5" /> },
   ];
 
-  const displayName = user?.name || user?.email || 'Admin';
-  const displayTitle = user?.title || user?.role || 'Manager';
+  const displayName = user?.name || user?.email || t('dashboard.defaultName');
+  const displayTitle = user?.title || user?.role || t('dashboard.defaultTitle');
   const initials = displayName.slice(0, 2).toUpperCase();
   const restaurantId = user?.restaurantId ?? '';
 
@@ -88,28 +120,20 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   return (
     <div className="min-h-screen bg-surface flex text-on-surface">
       {/* Sidebar */}
-      <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 border-r rtl:border-r-0 rtl:border-l border-surface-container bg-surface flex flex-col py-8 z-50">
+      <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50" style={{ backgroundColor: '#303942' }}>
         <div className="px-6 mb-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shrink-0">
-              <Utensils className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-extrabold leading-none">{t('dashboard.adminPanel')}</h1>
-              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-60">{t('dashboard.restaurantManagement')}</p>
-            </div>
-          </div>
+          <img src="/logo-dark.svg" alt="Menu QR" className="h-9 w-auto" />
         </div>
 
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
           {navItems.map(item => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as DashboardTab)}
+              onClick={() => changeTab(item.id as DashboardTab)}
               className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-xl ${
                 activeTab === item.id
-                  ? 'text-on-surface font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-surface-container'
-                  : 'text-on-surface-variant opacity-70 hover:bg-surface-container hover:opacity-100'
+                  ? 'text-white font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-white/10'
+                  : 'text-white/60 hover:bg-white/10 hover:text-white'
               }`}
             >
               <span className="shrink-0">{item.icon}</span>
@@ -118,9 +142,9 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           ))}
         </nav>
 
-        <div className="px-4 mt-auto pt-6 border-t border-surface-container space-y-2">
-          <LanguageSwitcher className="w-full justify-center" />
-          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant opacity-70 hover:bg-surface-container rounded-xl transition-all">
+        <div className="px-4 mt-auto pt-6 border-t border-white/10 space-y-2">
+          <LanguageSwitcher className="w-full justify-center text-white border-white/20 hover:bg-white/10" />
+          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/10 hover:text-white rounded-xl transition-all">
             <LogOut className="w-5 h-5" />
             <span className="text-sm">{t('dashboard.logout')}</span>
           </button>
@@ -137,7 +161,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
               <p className="text-[10px] text-on-surface-variant uppercase tracking-tighter">{displayTitle}</p>
             </div>
             {user?.avatar ? (
-              <img alt="Profile" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10" src={user.avatar} />
+              <img alt={t('dashboard.profileAlt')} className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10" src={user.avatar} />
             ) : (
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm ring-2 ring-primary/10">
                 {initials}
@@ -155,7 +179,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              {activeTab === 'overview'     && <StatsGrid stats={stats} />}
+              {activeTab === 'overview'     && <StatsGrid stats={stats} currency={currency} />}
               {activeTab === 'orders'       && <OrderManager />}
               {activeTab === 'menu'         && <MenuManager />}
               {activeTab === 'reservations' && <ReservationManager />}
@@ -163,6 +187,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
               {activeTab === 'analytics'    && <Analytics />}
               {activeTab === 'qr'           && <QRManager restaurantId={restaurantId} />}
               {activeTab === 'promos'       && <PromoManager />}
+              {activeTab === 'cashier'      && <CashierPOS />}
               {activeTab === 'settings'     && <Settings />}
             </motion.div>
           </AnimatePresence>

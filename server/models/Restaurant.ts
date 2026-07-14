@@ -8,6 +8,12 @@ export interface IRestaurant extends Document {
   contactPhone?: string;
   address?: string;
   status: 'active' | 'inactive';
+  cuisine: string[];
+  currency?: string;
+  openTime?: string;
+  closeTime?: string;
+  prepTime?: string;
+  timezone?: string;
   adminId: mongoose.Types.ObjectId;
   ownerId?: mongoose.Types.ObjectId; // subscriber who created this restaurant (null = created by superadmin)
 }
@@ -16,11 +22,17 @@ const RestaurantSchema = new Schema<IRestaurant>(
   {
     name: { type: String, required: true, trim: true },
     logo: { type: String },
-    primaryColor: { type: String, default: '#9b3f25' },
+    primaryColor: { type: String, default: '#fe5722' },
     contactEmail: { type: String, trim: true, lowercase: true },
     contactPhone: { type: String, trim: true },
     address: { type: String, trim: true },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+    cuisine:   { type: [String], default: [] },
+    currency:  { type: String, default: 'USD' },
+    openTime:  { type: String },
+    closeTime: { type: String },
+    prepTime:  { type: String },
+    timezone:  { type: String, default: 'UTC' },
     adminId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     ownerId: { type: Schema.Types.ObjectId, ref: 'User' },
   },

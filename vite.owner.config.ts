@@ -11,7 +11,8 @@ export default defineConfig({
       name: 'serve-owner',
       configureServer(server) {
         server.middlewares.use((req, _res, next) => {
-          if (req.url === '/' || req.url === '') req.url = '/owner.html';
+          const urlPath = req.url?.split('?')[0];
+          if (urlPath === '/' || urlPath === '') req.url = '/owner.html' + (req.url?.slice(urlPath.length) ?? '');
           next();
         });
       },

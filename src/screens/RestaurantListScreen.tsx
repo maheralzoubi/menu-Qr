@@ -283,7 +283,7 @@ function FeaturedCard({ restaurant: r, index, loading, onSelect }: {
           </div>
         )}
         <div className="absolute top-2.5 start-2.5 bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1">
-          <span className="text-white text-[10px] font-bold">{CUISINE_EMOJIS[r.cuisine]} {r.cuisine}</span>
+          <span className="text-white text-[10px] font-bold">{CUISINE_EMOJIS[r.cuisine]} {t(`restaurants.cuisineNames.${r.cuisine}`, { defaultValue: r.cuisine })}</span>
         </div>
       </div>
       <div className="bg-surface-container-low p-3">
@@ -344,7 +344,7 @@ function RestaurantRow({ restaurant: r, index, loading, onSelect }: {
           </div>
         </div>
         <div className="flex items-center gap-1 mt-1">
-          <span className="text-[11px] text-on-surface-variant">{CUISINE_EMOJIS[r.cuisine]} {r.cuisine}</span>
+          <span className="text-[11px] text-on-surface-variant">{CUISINE_EMOJIS[r.cuisine]} {t(`restaurants.cuisineNames.${r.cuisine}`, { defaultValue: r.cuisine })}</span>
         </div>
         <div className="flex items-center gap-3 mt-2">
           <div className="flex items-center gap-1">

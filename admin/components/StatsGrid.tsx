@@ -3,6 +3,7 @@ import { ShoppingBag, DollarSign, Star, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatCurrency } from '../../src/lib/currency';
 
 interface Stats {
   totalRevenue: number;
@@ -16,7 +17,7 @@ interface Stats {
   recentReviews: { _id: string; userName: string; rating: number; comment: string; date: string }[];
 }
 
-export const StatsGrid = ({ stats }: { stats: Stats | null }) => {
+export const StatsGrid = ({ stats, currency = 'USD' }: { stats: Stats | null; currency?: string }) => {
   const { t } = useTranslation();
 
   if (!stats) {
@@ -28,13 +29,13 @@ export const StatsGrid = ({ stats }: { stats: Stats | null }) => {
   }
 
   const avgOrderValue = stats.totalOrders > 0
-    ? (stats.totalRevenue / stats.totalOrders).toFixed(2)
-    : '0.00';
+    ? stats.totalRevenue / stats.totalOrders
+    : 0;
 
   const metrics = [
-    { labelKey: 'stats.totalRevenue', value: `$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: <DollarSign className="w-6 h-6" />, color: 'bg-primary/10 text-primary' },
-    { labelKey: 'stats.totalOrders',  value: stats.totalOrders,                           icon: <ShoppingBag className="w-6 h-6" />, color: 'bg-tertiary/10 text-tertiary' },
-    { labelKey: 'stats.avgOrderValue',value: `$${avgOrderValue}`,                          icon: <TrendingUp className="w-6 h-6" />, color: 'bg-amber-500/10 text-amber-600' },
+    { labelKey: 'stats.totalRevenue', value: formatCurrency(stats.totalRevenue, currency), icon: <DollarSign className="w-6 h-6" />, color: 'bg-primary/10 text-primary' },
+    { labelKey: 'stats.totalOrders',  value: stats.totalOrders,                            icon: <ShoppingBag className="w-6 h-6" />, color: 'bg-[#303942]/10 text-[#303942]' },
+    { labelKey: 'stats.avgOrderValue',value: formatCurrency(avgOrderValue, currency),      icon: <TrendingUp className="w-6 h-6" />, color: 'bg-primary/10 text-primary' },
     { labelKey: 'stats.satisfaction', value: `${stats.averageRating} / 5`,                 icon: <Star className="w-6 h-6" />,       color: 'bg-primary text-on-primary', isFeatured: true },
   ];
 
@@ -90,10 +91,10 @@ export const StatsGrid = ({ stats }: { stats: Stats | null }) => {
                 <LineChart data={stats.dailyRevenue}>
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#56423d' }} dy={10} />
                   <Tooltip
-                    formatter={(v: number) => [`$${v.toFixed(2)}`, t('analytics.revenue')]}
+                    formatter={(v: number) => [formatCurrency(v, currency), t('analytics.revenue')]}
                     contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Line type="monotone" dataKey="value" stroke="#9b3f25" strokeWidth={3} dot={false} animationDuration={1500} />
+                  <Line type="monotone" dataKey="value" stroke="#fe5722" strokeWidth={3} dot={false} animationDuration={1500} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -154,7 +155,7 @@ export const StatsGrid = ({ stats }: { stats: Stats | null }) => {
                       </div>
                       <span className="font-bold text-sm">{review.userName}</span>
                     </div>
-                    <div className="flex text-amber-500">
+                    <div className="flex text-[#303942]">
                       {[1, 2, 3, 4, 5].map(s => (
                         <Star key={s} className={`w-4 h-4 ${s <= review.rating ? 'fill-current' : 'text-surface-variant'}`} />
                       ))}

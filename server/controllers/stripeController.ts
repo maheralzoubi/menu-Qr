@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 import { stripe, PRICE_IDS } from '../services/stripe.js';
 import { User } from '../models/User.js';
 import { Plan } from '../models/Plan.js';
+import { PendingSignup } from '../models/PendingSignup.js';
 import { env } from '../config/env.js';
 
 export const createIntent = async (req: Request, res: Response, next: NextFunction) => {
@@ -12,9 +13,9 @@ export const createIntent = async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
-    const { plan, billing, name, email, restaurantName } = req.body as Record<string, string>;
+    const { plan, billing, name, email } = req.body as Record<string, string>;
 
-    if (!plan || !billing || !name?.trim() || !email?.trim() || !restaurantName?.trim()) {
+    if (!plan || !billing || !name?.trim() || !email?.trim()) {
       res.status(400).json({ message: 'All fields are required.' });
       return;
     }
@@ -40,9 +41,17 @@ export const createIntent = async (req: Request, res: Response, next: NextFuncti
     }
 
     // Reject if email is already a registered user
-    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       res.status(409).json({ message: 'An account with this email already exists.' });
+      return;
+    }
+
+    // Email must be verified (see signupStart/verifyEmail) before payment can begin
+    const pending = await PendingSignup.findOne({ email: normalizedEmail });
+    if (!pending || !pending.verified) {
+      res.status(403).json({ message: 'Please verify your email before continuing to payment.' });
       return;
     }
 
@@ -55,7 +64,7 @@ export const createIntent = async (req: Request, res: Response, next: NextFuncti
       customer = await stripe.customers.create({
         email: email.toLowerCase().trim(),
         name: name.trim(),
-        metadata: { restaurantName: restaurantName.trim(), plan, billing },
+        metadata: { plan, billing },
       });
     }
 

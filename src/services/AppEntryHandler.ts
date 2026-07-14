@@ -51,7 +51,8 @@ export async function fetchRestaurantContext(
       tableName,
       restaurantName: data.name,
       logo: data.logo ?? '',
-      primaryColor: data.primaryColor ?? '#9b3f25',
+      primaryColor: data.primaryColor ?? '#fe5722',
+      currency: data.currency ?? 'USD',
     };
   } catch {
     return null;

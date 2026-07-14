@@ -112,15 +112,15 @@ export const Analytics = () => {
                 <AreaChart data={data!.revenueByDay}>
                   <defs>
                     <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#9b3f25" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#9b3f25" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#fe5722" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#fe5722" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: 'rgba(0,0,0,0.4)' }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: 'rgba(0,0,0,0.4)' }} tickFormatter={v => `$${v}`} />
                   <Tooltip formatter={(v: number) => [`$${v.toFixed(2)}`, t('analytics.revenue')]} contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} />
-                  <Area type="monotone" dataKey="value" stroke="#9b3f25" strokeWidth={4} fillOpacity={1} fill="url(#areaGrad)" />
+                  <Area type="monotone" dataKey="value" stroke="#fe5722" strokeWidth={4} fillOpacity={1} fill="url(#areaGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -170,7 +170,7 @@ export const Analytics = () => {
                 <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
                 <YAxis hide />
                 <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} formatter={(v: number) => [v, t('analytics.orders')]} />
-                <Bar dataKey="val" fill="#9b3f25" radius={[6, 6, 0, 0]} barSize={32} />
+                <Bar dataKey="val" fill="#fe5722" radius={[6, 6, 0, 0]} barSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>

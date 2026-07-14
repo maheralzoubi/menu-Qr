@@ -49,7 +49,7 @@ export const getRestaurants = async (req: Request, res: Response, next: NextFunc
 
 export const createRestaurant = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, logo, contactEmail, contactPhone, address, adminName, adminEmail, adminPassword } = req.body;
+    const { name, logo, contactEmail, contactPhone, address, cuisine, adminName, adminEmail, adminPassword } = req.body;
     if (!name || !adminEmail || !adminPassword || !adminName) {
       res.status(400).json({ message: 'name, adminName, adminEmail, adminPassword are required' });
       return;
@@ -74,6 +74,7 @@ export const createRestaurant = async (req: Request, res: Response, next: NextFu
 
     const restaurant = await Restaurant.create({
       name, logo, contactEmail, contactPhone, address,
+      cuisine: Array.isArray(cuisine) ? cuisine : [],
       adminId: '000000000000000000000000',
       ownerId: isSuperAdmin(req) ? undefined : callerId(req),
     });
@@ -114,9 +115,11 @@ export const updateRestaurant = async (req: Request, res: Response, next: NextFu
     const r = await Restaurant.findById(req.params.id);
     if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
     if (!canManage(req, r.ownerId)) { res.status(403).json({ message: 'Access denied.' }); return; }
-    const { name, logo, contactEmail, contactPhone, address } = req.body;
+    const { name, logo, contactEmail, contactPhone, address, cuisine } = req.body;
+    const update: Record<string, unknown> = { name, logo, contactEmail, contactPhone, address };
+    if (Array.isArray(cuisine)) update.cuisine = cuisine;
     const updated = await Restaurant.findByIdAndUpdate(
-      req.params.id, { name, logo, contactEmail, contactPhone, address }, { new: true, runValidators: true }
+      req.params.id, update, { new: true, runValidators: true }
     );
     res.json(updated);
   } catch (e) { next(e); }
@@ -152,6 +155,89 @@ export const deleteRestaurant = async (req: Request, res: Response, next: NextFu
       Reservation.deleteMany({ restaurantId: rid }),
       Restaurant.findByIdAndDelete(rid),
     ]);
+    res.status(204).send();
+  } catch (e) { next(e); }
+};
+
+// ── Restaurant admin/staff management ────────────────────────────────────────
+
+export const getAdmins = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const restaurantId = req.query.restaurantId as string | undefined;
+    if (!restaurantId) { res.status(400).json({ message: 'restaurantId is required' }); return; }
+    const r = await Restaurant.findById(restaurantId);
+    if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
+    if (!canManage(req, r.ownerId)) { res.status(403).json({ message: 'Access denied.' }); return; }
+    const admins = await User.find({ restaurantId, role: { $in: ['admin', 'staff'] } })
+      .select('-password')
+      .sort({ createdAt: -1 });
+    res.json(admins);
+  } catch (e) { next(e); }
+};
+
+export const createAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { restaurantId, name, email, password, role, title } = req.body;
+    if (!restaurantId || !name?.trim() || !email?.trim() || !password) {
+      res.status(400).json({ message: 'restaurantId, name, email, and password are required' });
+      return;
+    }
+    if (!['admin', 'staff'].includes(role)) {
+      res.status(400).json({ message: 'role must be admin or staff' });
+      return;
+    }
+    const r = await Restaurant.findById(restaurantId);
+    if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
+    if (!canManage(req, r.ownerId)) { res.status(403).json({ message: 'Access denied.' }); return; }
+    const normalizedEmail = email.toLowerCase().trim();
+    const existing = await User.findOne({ email: normalizedEmail });
+    if (existing) { res.status(409).json({ message: 'Email already registered' }); return; }
+    const admin = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password,
+      role,
+      title: title?.trim(),
+      restaurantId,
+    });
+    const { password: _pw, ...safe } = admin.toObject();
+    res.status(201).json(safe);
+  } catch (e) { next(e); }
+};
+
+export const updateAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const admin = await User.findById(req.params.id);
+    if (!admin || !admin.restaurantId) { res.status(404).json({ message: 'Admin not found' }); return; }
+    const r = await Restaurant.findById(admin.restaurantId);
+    if (!r || !canManage(req, r.ownerId)) { res.status(403).json({ message: 'Access denied.' }); return; }
+
+    const { name, email, title, role, password } = req.body;
+    if (email !== undefined) {
+      const normalizedEmail = String(email).toLowerCase().trim();
+      if (normalizedEmail !== admin.email) {
+        const existing = await User.findOne({ email: normalizedEmail });
+        if (existing) { res.status(409).json({ message: 'Email already registered' }); return; }
+        admin.email = normalizedEmail;
+      }
+    }
+    if (name !== undefined) admin.name = name.trim();
+    if (title !== undefined) admin.title = title.trim();
+    if (role !== undefined && ['admin', 'staff'].includes(role)) admin.role = role;
+    if (password) admin.password = password;
+    await admin.save();
+    const { password: _pw, ...safe } = admin.toObject();
+    res.json(safe);
+  } catch (e) { next(e); }
+};
+
+export const deleteAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const admin = await User.findById(req.params.id);
+    if (!admin || !admin.restaurantId) { res.status(404).json({ message: 'Admin not found' }); return; }
+    const r = await Restaurant.findById(admin.restaurantId);
+    if (!r || !canManage(req, r.ownerId)) { res.status(403).json({ message: 'Access denied.' }); return; }
+    await User.findByIdAndDelete(req.params.id);
     res.status(204).send();
   } catch (e) { next(e); }
 };
@@ -240,8 +326,36 @@ export const updateCustomerStatus = async (req: Request, res: Response, next: Ne
 
 export const deleteCustomer = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const deleted = await User.findByIdAndDelete(req.params.id);
-    if (!deleted) { res.status(404).json({ message: 'Subscriber not found' }); return; }
+    const owner = await User.findById(req.params.id);
+    if (!owner) { res.status(404).json({ message: 'Subscriber not found' }); return; }
+
+    // Cancel their Stripe subscription so deleting the account doesn't leave it billing forever
+    if (owner.stripeSubscriptionId) {
+      const { stripe } = await import('../services/stripe.js');
+      if (stripe) {
+        await stripe.subscriptions.cancel(owner.stripeSubscriptionId).catch(() => {
+          // Already canceled / doesn't exist — fine, proceed with account deletion regardless
+        });
+      }
+    }
+
+    // Cascade-delete every restaurant this owner created, and everything tied to them
+    const restaurants = await Restaurant.find({ ownerId: owner._id });
+    for (const r of restaurants) {
+      const rid = r._id;
+      await Promise.all([
+        User.deleteMany({ restaurantId: rid }),
+        Customer.deleteMany({ restaurantId: rid }),
+        Order.deleteMany({ restaurantId: rid }),
+        MenuItem.deleteMany({ restaurantId: rid }),
+        Category.deleteMany({ restaurantId: rid }),
+        Review.deleteMany({ restaurantId: rid }),
+        Reservation.deleteMany({ restaurantId: rid }),
+        Restaurant.findByIdAndDelete(rid),
+      ]);
+    }
+
+    await User.findByIdAndDelete(owner._id);
     res.status(204).send();
   } catch (e) { next(e); }
 };

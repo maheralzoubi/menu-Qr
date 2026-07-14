@@ -12,7 +12,6 @@ interface Subscriber {
   _id: string;
   name: string;
   email: string;
-  restaurantName?: string;
   plan?: PlanId;
   planBilling?: Billing;
   planActivatedAt?: string;
@@ -151,8 +150,12 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
     if (!confirm(t('customers.deleteConfirm'))) return;
     try {
       const res = await authFetch(`/api/owner/customers/${id}`, { method: 'DELETE' });
-      if (res.ok) setSubscribers(prev => prev.filter(s => s._id !== id));
-    } catch (e) { console.error(e); }
+      if (res.ok) { setSubscribers(prev => prev.filter(s => s._id !== id)); return; }
+      const data = await res.json().catch(() => ({}));
+      alert(data.message ?? t('customers.deleteFailed'));
+    } catch {
+      alert(t('customers.deleteFailed'));
+    }
   };
 
   const handlePlanUpdated = (updated: Subscriber) => {
@@ -162,8 +165,7 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
   const filtered = subscribers.filter(s => {
     const matchSearch =
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.restaurantName ?? '').toLowerCase().includes(searchQuery.toLowerCase());
+      s.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchStatus = filterStatus === 'all' || s.status === filterStatus;
     return matchSearch && matchStatus;
   });
@@ -173,7 +175,6 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
 
   const tableHeaders = [
     t('customers.tableHeaders.subscriber'),
-    t('customers.tableHeaders.restaurant'),
     t('customers.tableHeaders.plan'),
     t('customers.tableHeaders.joined'),
     t('customers.tableHeaders.status'),
@@ -200,8 +201,8 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
       <div className="grid grid-cols-3 gap-6">
         {[
           { labelKey: 'customers.stats.total',  value: subscribers.length, icon: <Users className="w-6 h-6" />,     color: 'text-primary',      filter: 'all' },
-          { labelKey: 'customers.stats.active', value: active,             icon: <UserCheck className="w-6 h-6" />, color: 'text-emerald-600',  filter: 'active' },
-          { labelKey: 'customers.stats.locked', value: locked,             icon: <UserX className="w-6 h-6" />,     color: 'text-rose-500',     filter: 'locked' },
+          { labelKey: 'customers.stats.active', value: active,             icon: <UserCheck className="w-6 h-6" />, color: 'text-primary',  filter: 'active' },
+          { labelKey: 'customers.stats.locked', value: locked,             icon: <UserX className="w-6 h-6" />,     color: 'text-on-surface-variant',     filter: 'locked' },
         ].map(s => (
           <button key={s.labelKey} onClick={() => setFilterStatus(s.filter as any)}
             className={`p-6 rounded-3xl flex items-center justify-between shadow-sm border transition-all ${filterStatus === s.filter ? 'bg-surface-container-lowest border-primary ring-2 ring-primary' : 'bg-surface-container-low border-outline-variant/10 hover:bg-surface-container-lowest'}`}>
@@ -249,10 +250,6 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
                         </div>
                       </td>
 
-                      <td className="p-5 text-sm font-medium text-on-surface-variant">
-                        {s.restaurantName ?? '—'}
-                      </td>
-
                       <td className="p-5">
                         {style && s.plan ? (
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${style.cls}`}>
@@ -268,7 +265,7 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
                       </td>
 
                       <td className="p-5">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${s.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${s.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
                           {t(`common.${s.status}`)}
                         </span>
                       </td>
@@ -282,13 +279,13 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
                             </button>
                           )}
                           <button onClick={() => handleStatusToggle(s._id, s.status)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${s.status === 'active' ? 'hover:bg-rose-50 text-rose-500' : 'hover:bg-emerald-50 text-emerald-600'}`}>
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${s.status === 'active' ? 'hover:bg-surface-container-high text-on-surface-variant' : 'hover:bg-primary/10 text-primary'}`}>
                             {s.status === 'active'
                               ? <><Lock className="w-3 h-3" /> {t('customers.actions.lock')}</>
                               : <><Unlock className="w-3 h-3" /> {t('customers.actions.unlock')}</>}
                           </button>
                           <button onClick={() => handleDelete(s._id)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-50 text-rose-500 transition-colors">
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-surface-container-high text-on-surface-variant transition-colors">
                             <Trash2 className="w-3 h-3" /> {t('customers.actions.delete')}
                           </button>
                         </div>

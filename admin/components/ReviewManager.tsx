@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../src/lib/auth';
+import { pushNavParam, goBack } from '../lib/navHistory';
 
 interface Review {
   _id: string;
@@ -25,8 +26,24 @@ export const ReviewManager = () => {
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('reviewId')
+  );
+  const reviewKey = (r: Review) => r._id ?? r.id ?? '';
+  const selectedReview = reviews.find(r => reviewKey(r) === selectedReviewId) ?? null;
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const onPopState = () => setSelectedReviewId(new URLSearchParams(window.location.search).get('reviewId'));
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const selectReview = (review: Review) => {
+    setSelectedReviewId(reviewKey(review));
+    pushNavParam('reviewId', reviewKey(review));
+  };
+  const closeReview = () => { goBack(); };
 
   const fetchReviews = async () => {
     try {
@@ -44,12 +61,10 @@ export const ReviewManager = () => {
       const res = await authFetch(`/api/reviews/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setReviews(prev => prev.filter(r => reviewKey(r) !== id));
-        if (selectedReview && reviewKey(selectedReview) === id) setSelectedReview(null);
+        if (selectedReview && reviewKey(selectedReview) === id) closeReview();
       }
     } catch (error) { console.error('Failed to delete review:', error); }
   };
-
-  const reviewKey = (r: Review) => r._id ?? r.id ?? '';
 
   const filteredReviews = reviews.filter(review =>
     (review.userName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -93,7 +108,7 @@ export const ReviewManager = () => {
             <h4 className="text-5xl font-headline font-extrabold text-primary mb-2">{averageRating}</h4>
             <div className="flex items-center gap-1 mb-4">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className={`w-4 h-4 ${i < Math.round(Number(averageRating)) ? 'text-amber-400 fill-amber-400' : 'text-surface-variant'}`} />
+                <Star key={i} className={`w-4 h-4 ${i < Math.round(Number(averageRating)) ? 'text-primary fill-primary' : 'text-surface-variant'}`} />
               ))}
             </div>
             <p className="text-xs font-bold text-on-surface-variant">{t('reviews.basedOn', { count: reviews.length })}</p>
@@ -103,8 +118,8 @@ export const ReviewManager = () => {
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-6">{t('reviews.sentiment')}</p>
             <div className="space-y-5">
               {[
-                { labelKey: 'reviews.positive', value: sentiment.positive, color: 'bg-emerald-500', icon: ThumbsUp },
-                { labelKey: 'reviews.neutral',  value: sentiment.neutral,  color: 'bg-amber-400',  icon: MessageSquare },
+                { labelKey: 'reviews.positive', value: sentiment.positive, color: 'bg-primary', icon: ThumbsUp },
+                { labelKey: 'reviews.neutral',  value: sentiment.neutral,  color: 'bg-[#303942]/30',  icon: MessageSquare },
                 { labelKey: 'reviews.negative', value: sentiment.negative, color: 'bg-rose-500',   icon: ThumbsDown },
               ].map(item => (
                 <div key={item.labelKey} className="space-y-2">
@@ -138,7 +153,7 @@ export const ReviewManager = () => {
                   <div key={star} className="flex items-center gap-2 text-xs">
                     <span className="w-4 text-end font-bold">{star}★</span>
                     <div className="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-400 rounded-full" style={{ width: `${(count / total) * 100}%` }} />
+                      <div className="h-full bg-[#303942]/30 rounded-full" style={{ width: `${(count / total) * 100}%` }} />
                     </div>
                     <span className="text-on-surface-variant w-4">{count}</span>
                   </div>
@@ -158,7 +173,7 @@ export const ReviewManager = () => {
             <AnimatePresence mode="popLayout">
               {filteredReviews.map((review, i) => (
                 <motion.div key={reviewKey(review)} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
-                  onClick={() => setSelectedReview(review)}
+                  onClick={() => selectReview(review)}
                   className={`group p-8 bg-surface-container-low rounded-4xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer relative overflow-hidden ${
                     selectedReview && reviewKey(selectedReview) === reviewKey(review) ? 'ring-2 ring-primary' : ''
                   }`}>
@@ -173,7 +188,7 @@ export const ReviewManager = () => {
                           <h4 className="font-bold leading-tight">{review.userName || t('reviews.anonymous')}</h4>
                           <div className="flex items-center gap-0.5 mt-0.5">
                             {[...Array(5)].map((_, idx) => (
-                              <Star key={idx} className={`w-3 h-3 ${idx < review.rating ? 'text-amber-400 fill-amber-400' : 'text-surface-variant'}`} />
+                              <Star key={idx} className={`w-3 h-3 ${idx < review.rating ? 'text-primary fill-primary' : 'text-surface-variant'}`} />
                             ))}
                           </div>
                         </div>
@@ -185,7 +200,7 @@ export const ReviewManager = () => {
                     <p className="text-on-surface-variant text-sm leading-relaxed line-clamp-3 italic">"{review.comment}"</p>
                     <div className="flex items-center justify-between pt-3 border-t border-outline-variant/10">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <div className="w-2 h-2 rounded-full bg-primary" />
                         <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('reviews.verifiedGuest')}</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
@@ -213,7 +228,7 @@ export const ReviewManager = () => {
               className="h-full bg-surface-container-low rounded-4xl p-8 flex flex-col shadow-2xl shadow-primary/5">
               <div className="flex justify-between items-start mb-8">
                 <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('reviews.detailHeading')}</h3>
-                <button onClick={() => setSelectedReview(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+                <button onClick={closeReview} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -225,7 +240,7 @@ export const ReviewManager = () => {
                   <h4 className="text-lg font-bold">{selectedReview.userName || t('reviews.anonymous')}</h4>
                   <div className="flex justify-center items-center gap-1 mt-2">
                     {[...Array(5)].map((_, idx) => (
-                      <Star key={idx} className={`w-5 h-5 ${idx < selectedReview.rating ? 'text-amber-400 fill-amber-400' : 'text-surface-variant'}`} />
+                      <Star key={idx} className={`w-5 h-5 ${idx < selectedReview.rating ? 'text-primary fill-primary' : 'text-surface-variant'}`} />
                     ))}
                   </div>
                   <p className="text-xs text-on-surface-variant mt-2">

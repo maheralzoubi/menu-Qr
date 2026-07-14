@@ -1,6 +1,7 @@
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../src/index.css';
+import './admin.css';
 import './i18n';
 import { useTranslation } from 'react-i18next';
 import { Dashboard } from './Dashboard';
@@ -19,6 +20,7 @@ function DashboardApp() {
         onLogin={() => setAuthed(true)}
         onBack={() => {}}
         onTokenSave={setToken}
+        appId="admin"
         title={t('login.title')}
         subtitle={t('login.subtitle')}
         icon="utensils"

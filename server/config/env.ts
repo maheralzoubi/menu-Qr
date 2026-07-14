@@ -14,6 +14,10 @@ export const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN ?? '7d',
   PORT: Number(process.env.PORT ?? 3000),
   NODE_ENV: process.env.NODE_ENV ?? 'development',
+  APP_URL: process.env.APP_URL ?? 'http://localhost:5173',
+  // Resend — all optional; server logs the verification link instead of sending if absent
+  RESEND_API_KEY: process.env.RESEND_API_KEY ?? '',
+  EMAIL_FROM: process.env.EMAIL_FROM ?? 'Menu QR <onboarding@resend.dev>',
   // Stripe — all optional; server skips Stripe if STRIPE_SECRET_KEY is absent
   STRIPE_SECRET_KEY:               process.env.STRIPE_SECRET_KEY ?? '',
   STRIPE_WEBHOOK_SECRET:           process.env.STRIPE_WEBHOOK_SECRET ?? '',

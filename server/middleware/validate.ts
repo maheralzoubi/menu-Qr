@@ -9,7 +9,7 @@ export function validate(schema: ZodSchema) {
         field: e.path.join('.'),
         message: e.message,
       }));
-      res.status(400).json({ message: 'Validation failed', errors });
+      res.status(400).json({ code: 'VALIDATION_ERROR', message: 'Validation failed', errors });
       return;
     }
     req.body = result.data;

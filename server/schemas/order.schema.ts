@@ -11,6 +11,7 @@ const cartItemSchema = z.object({
   featured: z.boolean().default(false),
   ingredients: z.array(z.string()).default([]),
   allergens: z.array(z.string()).default([]),
+  note: z.string().optional().default(''),
 });
 
 export const createOrderSchema = z.object({
@@ -22,8 +23,21 @@ export const createOrderSchema = z.object({
   tableNumber: z.string().optional(),
   customerName: z.string().optional(),
   fcmToken: z.string().optional(),
+  order_source: z.enum(['QR_CODE', 'CUSTOMER_APP', 'CASHIER_POS']).optional(),
+  order_type: z.enum(['DINE_IN', 'TAKEAWAY', 'PICKUP', 'DELIVERY']).optional(),
+  payment_method: z.enum(['CASH', 'CARD', 'CLIQ', 'UNPAID', 'PAY_LATER']).optional(),
+  payment_status: z.enum(['PAID', 'UNPAID', 'PENDING_CASH', 'PENDING_CARD_PAYMENT', 'PENDING_CLIQ_VERIFICATION', 'REFUNDED']).optional(),
+  cashier_id: z.string().optional(),
+  cashier_name: z.string().optional(),
+  order_note: z.string().optional(),
+  discount_type: z.enum(['CODE', 'PERCENTAGE', 'FIXED']).optional(),
+  discount_applied_by: z.string().optional(),
 });
 
 export const updateOrderStatusSchema = z.object({
-  status: z.enum(['Pending', 'Preparing', 'Ready', 'Delivered']),
+  status: z.enum(['Pending', 'Preparing', 'Ready', 'Delivered', 'Cancelled']),
+});
+
+export const confirmPaymentSchema = z.object({
+  confirmed_by: z.string().optional(),
 });

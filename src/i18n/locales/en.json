@@ -7,6 +7,7 @@
     "min": "min",
     "result": "result",
     "results": "results",
+    "networkError": "Network error. Please try again.",
     "greetings": {
       "night": "Good night",
       "morning": "Good morning",
@@ -48,7 +49,26 @@
     "fresh": "Fresh",
     "orgValue": "100%",
     "srcValue": "Local",
-    "freshValue": "Daily"
+    "freshValue": "Daily",
+    "categories": {
+      "All": "All",
+      "Coffee": "Coffee",
+      "Burgers": "Burgers",
+      "Pizza": "Pizza",
+      "Pasta": "Pasta",
+      "Shawarma": "Shawarma",
+      "Salads": "Salads",
+      "Desserts": "Desserts",
+      "Drinks": "Drinks",
+      "Breakfast": "Breakfast",
+      "Chicken": "Chicken",
+      "Healthy": "Healthy"
+    },
+    "promos": {
+      "freePickup": { "title": "Free Pickup", "subtitle": "All orders this week" },
+      "offMains": { "title": "20% Off Mains", "subtitle": "On orders over $30" },
+      "newArrivals": { "title": "New Arrivals", "subtitle": "Try our latest menu" }
+    }
   },
   "menu": {
     "searchPlaceholder": "Search dishes or ingredients...",
@@ -79,7 +99,9 @@
     "empty": "Your cart is empty",
     "promoApplied": "{{value}} discount applied!",
     "promoInvalid": "Invalid promo code",
-    "promoError": "Could not validate code. Try again."
+    "promoError": "Could not validate code. Try again.",
+    "orderFailed": "Failed to place order",
+    "noTip": "No tip"
   },
   "payment": {
     "title": "Payment Method",
@@ -100,6 +122,7 @@
     "Preparing": "Preparing",
     "Ready": "Ready",
     "Delivered": "Delivered",
+    "Cancelled": "Cancelled",
     "pendingDesc": "Order confirmed",
     "preparingDesc": "Our chefs are crafting your meal",
     "readyDesc": "Final plating and garnish",
@@ -184,6 +207,16 @@
       "mexican": "Mexican",
       "french": "French",
       "indian": "Indian"
+    },
+    "cuisineNames": {
+      "Italian": "Italian",
+      "American": "American",
+      "Asian": "Asian",
+      "Mediterranean": "Mediterranean",
+      "Japanese": "Japanese",
+      "Mexican": "Mexican",
+      "French": "French",
+      "Indian": "Indian"
     }
   },
   "nav": {
@@ -215,7 +248,22 @@
     "signIn": "Sign In",
     "signingIn": "Signing in...",
     "noAccount": "No account?",
-    "createOne": "Create one"
+    "createOne": "Create one",
+    "loginFailed": "Login failed"
+  },
+  "customerRegister": {
+    "title": "Create Account",
+    "subtitle": "Join to track orders & reservations",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "John Doe",
+    "phone": "Phone (optional)",
+    "phonePlaceholder": "+1 555 000 0000",
+    "passwordPlaceholder": "Min 6 characters",
+    "creatingAccount": "Creating account...",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "registrationFailed": "Registration failed"
   },
   "profile": {
     "orders": "Orders",
@@ -224,5 +272,112 @@
     "recentOrders": "Recent Orders",
     "noOrders": "No orders yet",
     "orderNum": "Order #{{id}}"
+  },
+  "settings": {
+    "preferences": "Preferences",
+    "language": "Language",
+    "notifications": "Notifications",
+    "about": "About",
+    "appVersion": "App Version",
+    "helpSupport": "Help & Support",
+    "poweredBy": "Powered by Menu QR"
+  },
+  "welcome": {
+    "tagline": "Pre-order · Skip the Wait",
+    "description": "Browse restaurants, customize your order, and pick it up when it's ready — no waiting in line.",
+    "getStarted": "Get Started",
+    "signIn": "Sign In",
+    "continueAsGuest": "Continue as Guest"
+  },
+  "qrScanner": {
+    "cameraDenied": "Camera access denied. Allow camera permission and try again.",
+    "restaurantNotFound": "Restaurant not found. Check the QR code and try again.",
+    "noValidQr": "No valid restaurant QR code found in this image.",
+    "imageReadError": "Could not read the selected image. Please try again.",
+    "alignQr": "Align QR code in the frame",
+    "scanningAuto": "Scanning automatically — no tap needed",
+    "loadingRestaurant": "Loading restaurant…",
+    "tryAgain": "Try Again",
+    "uploadGallery": "Upload from Gallery",
+    "restaurantFound": "Restaurant Found!",
+    "openingMenu": "Opening your menu…"
+  },
+  "notification": {
+    "orderUpdate": "Order Update"
+  },
+  "app": {
+    "searchPlaceholder": "Search restaurants or dishes...",
+    "craving": "What are you craving?",
+    "recentOrders": "Recent Orders",
+    "viewAll": "View all",
+    "reorder": "Reorder",
+    "nearYou": "Restaurants Near You",
+    "available": "available",
+    "noRestaurants": "No restaurants available",
+    "clearFilter": "Clear filter"
+  },
+  "pickup": {
+    "cartTitle": "Your Cart",
+    "clearAll": "Clear all",
+    "tapToAdd": "Tap any product to add to cart",
+    "emptyCart": "Your cart is empty",
+    "browseMenu": "Browse Menu",
+    "pickupTime": "Pickup Time",
+    "orderNote": "Order Note",
+    "orderNotePlaceholder": "Any special instructions for the whole order...",
+    "itemNotePlaceholder": "Special request for this item...",
+    "payAtPickup": "Pay at Pickup",
+    "payAtPickupDesc": "Payment will be collected when you pick up your order",
+    "placeOrder": "Place Order",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "discount": "Discount",
+    "items": "items",
+    "item": "item"
+  },
+  "ordersPage": {
+    "title": "My Orders",
+    "active": "Active",
+    "past": "Past",
+    "noActive": "No active orders",
+    "noPast": "No past orders yet"
+  },
+  "tracking": {
+    "orderLabel": "Order",
+    "notFound": "Order not found",
+    "received": "Order Received",
+    "receivedDesc": "Your order has been received",
+    "preparing": "Preparing",
+    "preparingDesc": "The kitchen is preparing your order",
+    "ready": "Ready for Pickup",
+    "readyDesc": "Your order is ready — come pick it up!",
+    "completed": "Completed",
+    "completedDesc": "Enjoy your meal!",
+    "cancelled": "Order Cancelled",
+    "cancelledDesc": "Your order was cancelled",
+    "summary": "Order Summary",
+    "payAtPickup": "Pay at Pickup",
+    "viewOrders": "View All Orders",
+    "backHome": "Back to Home"
+  },
+  "product": {
+    "addToCart": "Add to Cart",
+    "specialRequest": "e.g. No onions, extra sauce...",
+    "specialRequestLabel": "Special Request",
+    "inCart": "in cart",
+    "ingredients": "Ingredients",
+    "allergens": "Allergens"
+  },
+  "restaurantPage": {
+    "searchMenu": "Search menu...",
+    "noItems": "No items found",
+    "viewCart": "View Cart"
+  },
+  "bottomNav": {
+    "home": "Home",
+    "orders": "Orders",
+    "profile": "Profile",
+    "cart": "Cart"
   }
 }
+

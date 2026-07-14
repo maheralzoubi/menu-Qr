@@ -3,6 +3,8 @@ import { Plus, X, Eye, EyeOff, Loader, ToggleLeft, ToggleRight, Trash2, Search, 
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { ownerFetch as authFetch, isSuperAdmin } from '../../src/lib/ownerAuth';
+import { PhoneInput } from './PhoneInput';
+import { CUISINE_OPTIONS } from '../lib/cuisineOptions';
 
 interface Restaurant {
   _id: string;
@@ -27,6 +29,7 @@ interface Props { onSelect: (r: Restaurant) => void; }
 
 const emptyForm = () => ({
   name: '', logo: '', contactEmail: '', contactPhone: '', address: '',
+  cuisine: [] as string[],
   adminName: '', adminEmail: '', adminPassword: '',
 });
 
@@ -74,11 +77,11 @@ export const RestaurantList = ({ onSelect }: Props) => {
     try {
       const res = await authFetch('/api/owner/restaurants', { method: 'POST', body: JSON.stringify(form) });
       const data = await res.json();
-      if (!res.ok) { setFormError(data.message ?? 'Failed to create restaurant'); return; }
+      if (!res.ok) { setFormError(data.message ?? t('restaurants.panel.createFailed')); return; }
       setRestaurants(prev => [{ ...data.restaurant, totalOrders: 0, totalRevenue: 0, totalCustomers: 0 }, ...prev]);
       setShowPanel(false);
       setForm(emptyForm());
-    } catch { setFormError('Network error.'); }
+    } catch { setFormError(t('restaurants.panel.networkError')); }
     finally { setFormLoading(false); }
   };
 
@@ -220,7 +223,7 @@ export const RestaurantList = ({ onSelect }: Props) => {
                       </div>
                     </td>
                     <td className="p-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${r.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${r.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
                         {t(`common.${r.status}`)}
                       </span>
                     </td>
@@ -234,11 +237,11 @@ export const RestaurantList = ({ onSelect }: Props) => {
                           <Eye className="w-4 h-4" />
                         </button>
                         <button onClick={() => handleToggleStatus(r._id, r.status)}
-                          className={`p-2 rounded-xl transition-colors ${r.status === 'active' ? 'hover:bg-rose-50 text-rose-500' : 'hover:bg-emerald-50 text-emerald-600'}`}
+                          className={`p-2 rounded-xl transition-colors ${r.status === 'active' ? 'hover:bg-surface-container-high text-on-surface-variant' : 'hover:bg-primary/10 text-primary'}`}
                           title={r.status === 'active' ? t('restaurants.deactivate') : t('restaurants.activate')}>
                           {r.status === 'active' ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                         </button>
-                        <button onClick={() => handleDelete(r._id)} className="p-2 rounded-xl hover:bg-rose-50 text-rose-500 transition-colors" title={t('common.delete')}>
+                        <button onClick={() => handleDelete(r._id)} className="p-2 rounded-xl hover:bg-surface-container-high text-on-surface-variant transition-colors" title={t('common.delete')}>
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -283,7 +286,19 @@ export const RestaurantList = ({ onSelect }: Props) => {
                   {[
                     { labelKey: 'restaurants.panel.restaurantName', key: 'name', type: 'text', required: true, placeholder: 'The Artisan Kitchen' },
                     { labelKey: 'restaurants.panel.contactEmail', key: 'contactEmail', type: 'email', required: false, placeholder: 'contact@restaurant.com' },
-                    { labelKey: 'restaurants.panel.phone', key: 'contactPhone', type: 'tel', required: false, placeholder: '+1 555 000 0000' },
+                  ].map(({ labelKey, key, type, required, placeholder }) => (
+                    <div key={key} className="space-y-1.5 mb-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t(labelKey)}</label>
+                      <input type={type} required={required} value={(form as any)[key]}
+                        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
+                        className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                    </div>
+                  ))}
+                  <div className="space-y-1.5 mb-4">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.phone')}</label>
+                    <PhoneInput value={form.contactPhone} onChange={v => setForm(f => ({ ...f, contactPhone: v }))} placeholder="555 000 0000" />
+                  </div>
+                  {[
                     { labelKey: 'restaurants.panel.address', key: 'address', type: 'text', required: false, placeholder: '123 Main St, City' },
                     { labelKey: 'restaurants.panel.logoUrl', key: 'logo', type: 'url', required: false, placeholder: 'https://...' },
                   ].map(({ labelKey, key, type, required, placeholder }) => (
@@ -294,6 +309,23 @@ export const RestaurantList = ({ onSelect }: Props) => {
                         className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
                     </div>
                   ))}
+                </div>
+
+                {/* Cuisine types */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.cuisineTypes')}</label>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {CUISINE_OPTIONS.map(c => {
+                      const active = form.cuisine.includes(c);
+                      return (
+                        <button key={c} type="button"
+                          onClick={() => setForm(f => ({ ...f, cuisine: active ? f.cuisine.filter(x => x !== c) : [...f.cuisine, c] }))}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${active ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'}`}>
+                          {t(`restaurants.panel.cuisineLabels.${c}`, { defaultValue: c })}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div>
@@ -323,7 +355,7 @@ export const RestaurantList = ({ onSelect }: Props) => {
                   </div>
                 </div>
 
-                {formError && <p className="text-sm text-rose-500 font-medium">{formError}</p>}
+                {formError && <p className="text-sm text-on-surface-variant font-medium">{formError}</p>}
               </form>
 
               <div className="px-8 py-6 border-t border-surface-container flex gap-3">
