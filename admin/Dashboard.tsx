@@ -120,9 +120,9 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   return (
     <div className="min-h-screen bg-surface flex text-on-surface">
       {/* Sidebar */}
-      <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50" style={{ backgroundColor: '#303942' }}>
+      <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50 bg-surface border-r border-surface-container rtl:border-r-0 rtl:border-l">
         <div className="px-6 mb-10">
-          <img src="/logo-dark.svg" alt="Menu QR" className="h-9 w-auto" />
+          <img src="/logo.svg" alt="Menu QR" className="h-9 w-auto" />
         </div>
 
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
@@ -132,8 +132,8 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
               onClick={() => changeTab(item.id as DashboardTab)}
               className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-xl ${
                 activeTab === item.id
-                  ? 'text-white font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-white/10'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white'
+                  ? 'text-primary font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-primary/10'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
               }`}
             >
               <span className="shrink-0">{item.icon}</span>
@@ -142,9 +142,9 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           ))}
         </nav>
 
-        <div className="px-4 mt-auto pt-6 border-t border-white/10 space-y-2">
-          <LanguageSwitcher className="w-full justify-center text-white border-white/20 hover:bg-white/10" />
-          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-white/60 hover:bg-white/10 hover:text-white rounded-xl transition-all">
+        <div className="px-4 mt-auto pt-6 border-t border-surface-container space-y-2">
+          <LanguageSwitcher className="w-full justify-center text-on-surface border-outline-variant hover:bg-surface-container" />
+          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded-xl transition-all">
             <LogOut className="w-5 h-5" />
             <span className="text-sm">{t('dashboard.logout')}</span>
           </button>
