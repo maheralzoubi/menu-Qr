@@ -9,11 +9,12 @@ import { useTranslation } from 'react-i18next';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { VerifyEmailScreen } from './VerifyEmailScreen';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type PlanId = string;
 type Billing = 'monthly' | 'annual';
-type Step = 'home' | 'setup' | 'checkout' | 'success';
+type Step = 'home' | 'setup' | 'checkout' | 'verify' | 'success';
 
 interface PlanDef {
   id: PlanId;
@@ -21,17 +22,22 @@ interface PlanDef {
   popular?: boolean;
   icon: React.ReactNode;
   description?: string;
+  descriptionAr?: string;
   features?: string[];
+  featuresAr?: string[];
 }
 
 interface ApiPlan {
   _id: string;
   key: string;
   name: string;
+  nameAr: string;
   description: string;
+  descriptionAr: string;
   monthlyPrice: number;
   annualPrice: number;
   features: string[];
+  featuresAr: string[];
   popular: boolean;
   active: boolean;
 }
@@ -39,7 +45,6 @@ interface ApiPlan {
 interface SetupForm {
   fullName: string;
   email: string;
-  restaurantName: string;
   password: string;
   confirmPassword: string;
 }
@@ -47,7 +52,6 @@ interface SetupForm {
 interface PendingAccount {
   name: string;
   email: string;
-  restaurantName: string;
   password: string;
   plan: PlanId;
   billing: Billing;
@@ -148,7 +152,8 @@ function StripePayForm({
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isAr = i18n.language.startsWith('ar');
   const [step, setStep]       = useState<Step>('home');
   const [billing, setBilling] = useState<Billing>('monthly');
   const [selected, setSelected] = useState<PlanDef | null>(null);
@@ -165,15 +170,17 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
           price:   { monthly: p.monthlyPrice, annual: p.annualPrice },
           popular: p.popular,
           icon:    PLAN_ICONS[p.key] ?? <Star className="w-5 h-5" />,
-          description: p.description,
-          features:    p.features,
+          description:   p.description,
+          descriptionAr: p.descriptionAr,
+          features:      p.features,
+          featuresAr:    p.featuresAr,
         })));
       })
       .catch(() => { /* keep fallback */ });
   }, []);
 
   const [setup, setSetup] = useState<SetupForm>({
-    fullName: '', email: '', restaurantName: '', password: '', confirmPassword: '',
+    fullName: '', email: '', password: '', confirmPassword: '',
   });
   const [setupLoading, setSetupLoading] = useState(false);
   const [setupError, setSetupError]     = useState('');
@@ -273,7 +280,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
   const openSetup = (plan: PlanDef) => {
     setSelected(plan);
-    setSetup({ fullName: '', email: '', restaurantName: '', password: '', confirmPassword: '' });
+    setSetup({ fullName: '', email: '', password: '', confirmPassword: '' });
     setSetupError('');
     setStep('setup');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -284,42 +291,64 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     setSetupError('');
     if (!setup.fullName.trim())            { setSetupError(t('setup.errorName'));     return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(setup.email)) { setSetupError(t('setup.errorEmail'));    return; }
-    if (!setup.restaurantName.trim())      { setSetupError(t('setup.errorRestaurant')); return; }
     if (setup.password.length < 8)         { setSetupError(t('setup.errorPassword')); return; }
     if (setup.password !== setup.confirmPassword) { setSetupError(t('setup.errorMatch')); return; }
 
     setSetupLoading(true);
     try {
-      const res = await fetch('/api/stripe/create-intent', {
+      const res = await fetch('/api/auth/signup-start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan:           selected!.id,
+          plan:     selected!.id,
           billing,
-          name:           setup.fullName.trim(),
-          email:          setup.email.trim(),
-          restaurantName: setup.restaurantName.trim(),
+          name:     setup.fullName.trim(),
+          email:    setup.email.trim(),
+          password: setup.password,
         }),
       });
       const data = await res.json();
       if (!res.ok) { setSetupError(data.message ?? t('setup.errorGeneric')); return; }
 
-      setClientSecret(data.clientSecret);
       setPending({
         name:           setup.fullName.trim(),
         email:          setup.email.trim(),
-        restaurantName: setup.restaurantName.trim(),
         password:       setup.password,
         plan:           selected!.id,
         billing,
-        subscriptionId: data.subscriptionId,
+        subscriptionId: '',
       });
-      setPayError('');
-      setStep('checkout');
+      setStep('verify');
     } catch {
       setSetupError(t('setup.errorNetwork'));
     } finally {
       setSetupLoading(false);
+    }
+  };
+
+  // Called once the email code is confirmed — starts the Stripe payment intent, then moves to checkout
+  const handleVerified = async () => {
+    if (!pending || !selected) return;
+    try {
+      const res = await fetch('/api/stripe/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan:    pending.plan,
+          billing: pending.billing,
+          name:    pending.name,
+          email:   pending.email,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message ?? t('setup.errorGeneric'));
+
+      setClientSecret(data.clientSecret);
+      setPending(p => p ? { ...p, subscriptionId: data.subscriptionId } : p);
+      setPayError('');
+      setStep('checkout');
+    } catch (err) {
+      throw err instanceof Error ? err : new Error(t('setup.errorGeneric'));
     }
   };
 
@@ -329,12 +358,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name:           data.name,
           email:          data.email,
-          password:       data.password,
-          restaurantName: data.restaurantName,
-          plan:           data.plan,
-          billing:        data.billing,
           subscriptionId: data.subscriptionId,
         }),
       });
@@ -356,11 +380,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       <div className="min-h-screen bg-surface">
         <nav className="fixed top-0 start-0 end-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <QrCode className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-extrabold text-lg font-headline">MenuQR</span>
+            <div className="flex items-center">
+              <img src="/logo-dark.svg" alt="Menu QR" className="h-8 w-auto" />
             </div>
             <div className="flex items-center gap-3">
               <LanguageSwitcher />
@@ -441,8 +462,14 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {plans.map((plan, i) => {
-                const planFeatures = plan.features ?? (t(`plans.${plan.id}.features`, { returnObjects: true }) as string[]);
-                const planDescription = plan.description ?? t(`plans.${plan.id}.description`);
+                const translatedFeatures = t(`plans.${plan.id}.features`, { returnObjects: true, defaultValue: [] }) as string[];
+                const translatedDescription = t(`plans.${plan.id}.description`, { defaultValue: '' }) as string;
+                const planFeatures = isAr
+                  ? (plan.featuresAr?.length ? plan.featuresAr : (translatedFeatures.length ? translatedFeatures : plan.features))
+                  : (plan.features?.length ? plan.features : translatedFeatures);
+                const planDescription = isAr
+                  ? (plan.descriptionAr || translatedDescription || plan.description)
+                  : (plan.description || translatedDescription);
                 return (
                   <motion.div key={plan.id} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                     className={`relative flex flex-col rounded-3xl p-7 border transition-all ${plan.popular
@@ -528,11 +555,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       <div className="min-h-screen bg-surface">
         <nav className="fixed top-0 start-0 end-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <QrCode className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-extrabold text-lg font-headline">MenuQR</span>
+            <div className="flex items-center">
+              <img src="/logo-dark.svg" alt="Menu QR" className="h-8 w-auto" />
             </div>
             <button onClick={onLoginClick} className="text-sm text-on-surface-variant hover:text-on-surface transition-colors">
               {t('checkout.alreadyHaveAccount')} <span className="font-bold text-primary">{t('checkout.signIn')}</span>
@@ -568,9 +592,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
 
               <form onSubmit={handleSetup} className="space-y-4">
                 {[
-                  { key: 'fullName',       label: t('setup.fullName'),       type: 'text',     placeholder: 'Jane Smith',        value: setup.fullName,        field: 'fullName' },
-                  { key: 'email',          label: t('setup.emailAddress'),   type: 'email',    placeholder: 'you@example.com',   value: setup.email,           field: 'email' },
-                  { key: 'restaurantName', label: t('setup.restaurantName'), type: 'text',     placeholder: 'e.g. Bella Cucina', value: setup.restaurantName,  field: 'restaurantName' },
+                  { key: 'fullName', label: t('setup.fullName'),     type: 'text',  placeholder: 'Jane Smith',      value: setup.fullName, field: 'fullName' },
+                  { key: 'email',    label: t('setup.emailAddress'), type: 'email', placeholder: 'you@example.com', value: setup.email,    field: 'email' },
                 ].map(item => (
                   <div key={item.key}>
                     <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">{item.label}</label>
@@ -623,6 +646,11 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
     );
   }
 
+  // ── VERIFY — email code, before payment ─────────────────────────────────────
+  if (step === 'verify' && pending) {
+    return <VerifyEmailScreen email={pending.email} onVerified={handleVerified} />;
+  }
+
   // ── CHECKOUT — Stripe Elements (step 2) ────────────────────────────────────
   if (step === 'checkout' && selected && clientSecret && pending) {
     const totalDue = billing === 'annual' ? planPrice(selected) * 12 : planPrice(selected);
@@ -631,11 +659,8 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
       <div className="min-h-screen bg-surface">
         <nav className="fixed top-0 start-0 end-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <QrCode className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-extrabold text-lg font-headline">MenuQR</span>
+            <div className="flex items-center">
+              <img src="/logo-dark.svg" alt="Menu QR" className="h-8 w-auto" />
             </div>
             <button onClick={onLoginClick} className="text-sm text-on-surface-variant hover:text-on-surface transition-colors">
               {t('checkout.alreadyHaveAccount')} <span className="font-bold text-primary">{t('checkout.signIn')}</span>
@@ -660,7 +685,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                   <div className="flex items-center gap-3 mb-6 pb-5 border-b border-outline-variant">
                     <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">{selected.icon}</div>
                     <div>
-                      <p className="font-bold">MenuQR {t(`plans.${selected.id}.name`)}</p>
+                      <p className="font-bold">Menu QR {t(`plans.${selected.id}.name`)}</p>
                       <p className="text-xs text-on-surface-variant">{t(`checkout.${billing}Billing`)}</p>
                     </div>
                   </div>
@@ -772,7 +797,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
           <p className="text-on-surface-variant max-w-sm mx-auto mb-2">
             {t('success.description', { plan: t(`plans.${selected.id}.name`) })}
           </p>
-          <p className="text-sm text-on-surface-variant mb-10">{t('success.emailSent')}</p>
+          <p className="text-sm text-on-surface-variant mb-10">{t('success.ready')}</p>
 
           <button onClick={onLoginClick}
             className="btn-gradient text-white px-10 py-4 rounded-2xl font-bold text-base shadow-lg shadow-primary/20 hover:opacity-95 transition-all flex items-center gap-2 mx-auto">

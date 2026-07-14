@@ -71,16 +71,19 @@ export const getAdminPlans = async (_req: Request, res: Response, next: NextFunc
 export const updatePlan = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { key } = req.params;
-    const { name, description, monthlyPrice, annualPrice, restaurantLimit, features, popular, active } = req.body;
+    const { name, nameAr, description, descriptionAr, monthlyPrice, annualPrice, restaurantLimit, features, featuresAr, popular, active } = req.body;
 
     const current = await Plan.findOne({ key });
     if (!current) { res.status(404).json({ message: 'Plan not found' }); return; }
 
     const update: Record<string, unknown> = {};
     if (name            !== undefined) update.name            = name;
+    if (nameAr          !== undefined) update.nameAr          = nameAr;
     if (description     !== undefined) update.description     = description;
+    if (descriptionAr   !== undefined) update.descriptionAr   = descriptionAr;
     if (restaurantLimit !== undefined) update.restaurantLimit = Number(restaurantLimit);
     if (features        !== undefined) update.features        = features;
+    if (featuresAr      !== undefined) update.featuresAr      = featuresAr;
     if (popular         !== undefined) update.popular         = Boolean(popular);
     if (active          !== undefined) update.active          = Boolean(active);
 

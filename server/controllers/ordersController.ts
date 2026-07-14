@@ -49,6 +49,17 @@ export const deleteOrder = async (req: AuthRequest, res: Response, next: NextFun
   } catch (e) { next(e); }
 };
 
+export const confirmPayment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const restaurantId = req.user!.restaurantId!;
+    const confirmedBy = req.body.confirmed_by || req.user!.email || 'Staff';
+    const order = await ordersService.confirmOrderPayment(req.params.id, restaurantId, confirmedBy);
+    if (!order) { res.status(404).json({ message: 'Order not found' }); return; }
+    getIO().to('admin').emit('order:payment', { id: order._id, payment_status: order.payment_status });
+    res.json(order);
+  } catch (e) { next(e); }
+};
+
 export const archiveToday = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const restaurantId = req.user!.restaurantId!;

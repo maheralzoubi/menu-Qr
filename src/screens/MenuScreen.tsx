@@ -2,11 +2,14 @@ import { useState, useMemo, useEffect } from 'react';
 import { Search, X, ChevronRight, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { useFmt } from '../hooks/useCurrency';
 import { Category, MenuItem } from '../types';
 import { Skeleton } from '../components/Skeleton';
 import { ItemDetailsModal } from '../components/ItemDetailsModal';
+
 export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: MenuItem) => void; restaurantId: string }) => {
   const { t, i18n } = useTranslation();
+  const fmt = useFmt();
   const isRTL = i18n.language === 'ar';
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -128,7 +131,7 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
         <section className="relative rounded-2xl overflow-hidden aspect-[4/3] group shadow-xl">
           <img
             src={specialItem.image}
-            alt="Special"
+            alt={t('menu.todaySpecial')}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
@@ -179,7 +182,7 @@ export const MenuScreen = ({ addToCart, restaurantId }: { addToCart: (item: Menu
                   </button>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                  <span className="font-headline font-bold text-primary">${item.price.toFixed(2)}</span>
+                  <span className="font-headline font-bold text-primary">{fmt(item.price)}</span>
                   <button
                     onClick={() => addToCart(item)}
                     className="w-8 h-8 rounded-full bg-surface-container-highest text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors"

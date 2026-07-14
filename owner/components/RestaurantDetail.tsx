@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ToggleLeft, ToggleRight, Trash2, Building2, Users, ShoppingBag, DollarSign, Star, Calendar, Utensils } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ArrowLeft, ToggleLeft, ToggleRight, Trash2, Pencil, X, Check, Building2, Users, ShoppingBag, DollarSign, Star, Calendar, Utensils } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { ownerFetch as authFetch } from '../../src/lib/ownerAuth';
+import { formatCurrency } from '../../src/lib/currency';
+import { PhoneInput } from './PhoneInput';
+import { CUISINE_OPTIONS } from '../lib/cuisineOptions';
+import { AdminTable } from './AdminTable';
 
 interface RestaurantFull {
   _id: string;
@@ -11,7 +15,9 @@ interface RestaurantFull {
   contactEmail?: string;
   contactPhone?: string;
   address?: string;
+  cuisine?: string[];
   status: 'active' | 'inactive';
+  currency?: string;
   createdAt: string;
   admin?: { _id: string; name: string; email: string };
   stats?: {
@@ -20,12 +26,18 @@ interface RestaurantFull {
   };
 }
 
+type EditForm = { name: string; logo: string; contactEmail: string; contactPhone: string; address: string; cuisine: string[] };
+
 interface Props { restaurantId: string; onBack: () => void; onDeleted: () => void; }
 
 export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => {
   const { t } = useTranslation();
   const [restaurant, setRestaurant] = useState<RestaurantFull | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm>({ name: '', logo: '', contactEmail: '', contactPhone: '', address: '', cuisine: [] });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
 
   const fetchDetail = async () => {
     try {
@@ -36,6 +48,39 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
   };
 
   useEffect(() => { fetchDetail(); }, [restaurantId]);
+
+  const openEdit = () => {
+    if (!restaurant) return;
+    setEditForm({
+      name: restaurant.name,
+      logo: restaurant.logo ?? '',
+      contactEmail: restaurant.contactEmail ?? '',
+      contactPhone: restaurant.contactPhone ?? '',
+      address: restaurant.address ?? '',
+      cuisine: restaurant.cuisine ?? [],
+    });
+    setEditError('');
+    setShowEdit(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditError('');
+    setEditLoading(true);
+    try {
+      const res = await authFetch(`/api/owner/restaurants/${restaurantId}`, {
+        method: 'PATCH', body: JSON.stringify(editForm),
+      });
+      const data = await res.json();
+      if (!res.ok) { setEditError(data.message ?? t('restaurantDetail.editFailed')); return; }
+      setRestaurant(prev => prev ? { ...prev, ...data } : prev);
+      setShowEdit(false);
+    } catch {
+      setEditError(t('restaurantDetail.editFailed'));
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   const handleToggleStatus = async () => {
     if (!restaurant) return;
@@ -77,17 +122,20 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
           <ArrowLeft className="w-4 h-4 rtl:scale-x-[-1]" /> {t('restaurantDetail.allRestaurants')}
         </button>
         <div className="flex gap-3">
+          <button onClick={openEdit} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-primary/10 text-primary hover:bg-primary/20 transition-all">
+            <Pencil className="w-4 h-4" /> {t('restaurantDetail.edit')}
+          </button>
           <button onClick={handleToggleStatus}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
               restaurant.status === 'active'
-                ? 'bg-rose-50 text-rose-600 hover:bg-rose-100'
-                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                ? 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                : 'bg-primary/10 text-primary hover:bg-primary/20'
             }`}>
             {restaurant.status === 'active'
               ? <><ToggleRight className="w-4 h-4" /> {t('restaurantDetail.deactivate')}</>
               : <><ToggleLeft className="w-4 h-4" /> {t('restaurantDetail.activate')}</>}
           </button>
-          <button onClick={handleDelete} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+          <button onClick={handleDelete} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">
             <Trash2 className="w-4 h-4" /> {t('restaurantDetail.delete')}
           </button>
         </div>
@@ -102,13 +150,13 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2 flex-wrap">
             <h2 className="text-3xl font-headline font-extrabold">{restaurant.name}</h2>
-            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${restaurant.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${restaurant.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
               {t(`common.${restaurant.status}`)}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm text-on-surface-variant">
-            {restaurant.contactEmail && <p>✉ {restaurant.contactEmail}</p>}
-            {restaurant.contactPhone && <p>📞 {restaurant.contactPhone}</p>}
+            {restaurant.contactEmail && <p>✉ <span dir="ltr">{restaurant.contactEmail}</span></p>}
+            {restaurant.contactPhone && <p>📞 <span dir="ltr">{restaurant.contactPhone}</span></p>}
             {restaurant.address && <p className="col-span-2">📍 {restaurant.address}</p>}
             <p className="text-xs mt-1">
               {new Date(restaurant.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -122,7 +170,7 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             { labelKey: 'restaurantDetail.stats.totalOrders',   value: stats.totalOrders,        icon: <ShoppingBag className="w-5 h-5" /> },
-            { labelKey: 'restaurantDetail.stats.totalRevenue',  value: `$${stats.totalRevenue.toFixed(2)}`, icon: <DollarSign className="w-5 h-5" /> },
+            { labelKey: 'restaurantDetail.stats.totalRevenue',  value: formatCurrency(stats.totalRevenue, restaurant?.currency ?? 'USD'), icon: <DollarSign className="w-5 h-5" /> },
             { labelKey: 'restaurantDetail.stats.customers',     value: stats.totalCustomers,     icon: <Users className="w-5 h-5" /> },
             { labelKey: 'restaurantDetail.stats.menuItems',     value: stats.totalMenuItems,     icon: <Utensils className="w-5 h-5" /> },
             { labelKey: 'restaurantDetail.stats.reviews',       value: stats.totalReviews,       icon: <Star className="w-5 h-5" /> },
@@ -139,21 +187,83 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
         </div>
       )}
 
-      {/* Admin account */}
-      {restaurant.admin && (
-        <div className="bg-surface-container-low rounded-3xl p-6 border border-outline-variant/10">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-4">{t('restaurantDetail.adminAccount')}</h3>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shrink-0">
-              {restaurant.admin.name?.slice(0, 1).toUpperCase() || '?'}
-            </div>
-            <div>
-              <p className="font-bold">{restaurant.admin.name}</p>
-              <p className="text-sm text-on-surface-variant">{restaurant.admin.email}</p>
-            </div>
+      {/* Admin & staff management */}
+      <AdminTable restaurantId={restaurant._id} />
+
+      {/* Edit restaurant modal */}
+      <AnimatePresence>
+        {showEdit && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.15 }}
+              className="bg-surface rounded-3xl border border-surface-container w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-surface-container shrink-0">
+                <h3 className="font-extrabold text-lg">{t('restaurantDetail.editTitle')}</h3>
+                <button onClick={() => setShowEdit(false)} className="p-2 rounded-xl hover:bg-surface-container transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveEdit} className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.restaurantName')}</label>
+                  <input required value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.contactEmail')}</label>
+                  <input type="email" value={editForm.contactEmail} onChange={e => setEditForm(f => ({ ...f, contactEmail: e.target.value }))}
+                    className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.phone')}</label>
+                  <PhoneInput value={editForm.contactPhone} onChange={v => setEditForm(f => ({ ...f, contactPhone: v }))} placeholder="555 000 0000" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.address')}</label>
+                  <input value={editForm.address} onChange={e => setEditForm(f => ({ ...f, address: e.target.value }))}
+                    className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.logoUrl')}</label>
+                  <input value={editForm.logo} onChange={e => setEditForm(f => ({ ...f, logo: e.target.value }))}
+                    className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.cuisineTypes')}</label>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {CUISINE_OPTIONS.map(c => {
+                      const active = editForm.cuisine.includes(c);
+                      return (
+                        <button key={c} type="button"
+                          onClick={() => setEditForm(f => ({ ...f, cuisine: active ? f.cuisine.filter(x => x !== c) : [...f.cuisine, c] }))}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${active ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'}`}>
+                          {t(`restaurants.panel.cuisineLabels.${c}`, { defaultValue: c })}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {editError && <p className="text-sm text-error bg-error/5 border border-error/20 rounded-xl px-4 py-3">{editError}</p>}
+              </form>
+
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-container shrink-0">
+                <button type="button" onClick={() => setShowEdit(false)} className="px-5 py-2.5 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-colors">
+                  {t('common.cancel')}
+                </button>
+                <button onClick={handleSaveEdit as any} disabled={editLoading}
+                  className="px-5 py-2.5 rounded-xl btn-gradient text-white text-sm font-bold hover:opacity-95 transition-all disabled:opacity-60 flex items-center gap-2">
+                  {editLoading
+                    ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{t('common.saving')}</>
+                    : <><Check className="w-4 h-4" />{t('restaurants.panel.saveChanges')}</>}
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };

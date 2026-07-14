@@ -109,7 +109,7 @@ export const PlatformAnalytics = () => {
                 className="border-b border-outline-variant/5 hover:bg-surface-container-lowest transition-colors">
                 <td className="p-5 font-bold text-sm">{r.name}</td>
                 <td className="p-5">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${r.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${r.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
                     {t(`common.${r.status}`)}
                   </span>
                 </td>

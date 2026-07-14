@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Calendar, Users, Clock, XCircle, Trash2, Mail,
   User, ChevronRight, Search, Map as MapIcon, CalendarDays, Phone
@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../src/lib/auth';
+import { pushNavParam, goBack } from '../lib/navHistory';
 
 interface Reservation {
   _id: string;
@@ -22,6 +23,12 @@ interface Reservation {
 
 type ResView = 'list' | 'map';
 
+function parseResNav(search: string): { view: ResView; resId: string | null } {
+  const params = new URLSearchParams(search);
+  const view: ResView = params.get('resView') === 'map' ? 'map' : 'list';
+  return { view, resId: params.get('resId') };
+}
+
 const tables = [
   { id: 'T1', capacity: 2, x: 20, y: 20 }, { id: 'T2', capacity: 4, x: 50, y: 20 },
   { id: 'T3', capacity: 2, x: 80, y: 20 }, { id: 'T4', capacity: 6, x: 35, y: 50 },
@@ -33,11 +40,36 @@ export const ReservationManager = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
-  const [view, setView] = useState<ResView>('list');
+  const [view, setView] = useState<ResView>(() => parseResNav(window.location.search).view);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedRes, setSelectedRes] = useState<Reservation | null>(null);
+  const [selectedResId, setSelectedResId] = useState<string | null>(() => parseResNav(window.location.search).resId);
+  const selectedRes = reservations.find(r => (r._id ?? r.id ?? '') === selectedResId) ?? null;
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const onPopState = () => {
+      const next = parseResNav(window.location.search);
+      setView(next.view);
+      setSelectedResId(next.resId);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const enterView = useCallback((v: ResView) => {
+    setView(v);
+    pushNavParam('resView', v);
+  }, []);
+
+  const backToListView = useCallback(() => { goBack(); }, []);
+
+  const selectRes = useCallback((id: string) => {
+    setSelectedResId(id);
+    pushNavParam('resId', id);
+  }, []);
+
+  const closeRes = useCallback(() => { goBack(); }, []);
 
   const fetchReservations = async () => {
     try {
@@ -55,7 +87,6 @@ export const ReservationManager = () => {
       if (res.ok) {
         const updated: Reservation = await res.json();
         setReservations(prev => prev.map(r => resKey(r) === id ? { ...r, status: updated.status } : r));
-        setSelectedRes(prev => prev && resKey(prev) === id ? { ...prev, status: updated.status } : prev);
       }
     } catch (error) { console.error('Failed to update status:', error); }
   };
@@ -64,7 +95,7 @@ export const ReservationManager = () => {
     if (!confirm(t('reservations.deleteConfirm'))) return;
     try {
       const res = await authFetch(`/api/reservations/${id}`, { method: 'DELETE' });
-      if (res.ok) { setReservations(prev => prev.filter(r => resKey(r) !== id)); setSelectedRes(null); }
+      if (res.ok) { setReservations(prev => prev.filter(r => resKey(r) !== id)); closeRes(); }
     } catch (error) { console.error('Failed to delete reservation:', error); }
   };
 
@@ -97,7 +128,7 @@ export const ReservationManager = () => {
               {t('reservations.confirmedToday', { count: todayConfirmed })}
             </p>
           </div>
-          <button onClick={() => setView('list')} className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+          <button onClick={backToListView} className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
             {t('reservations.backToList')}
           </button>
         </div>
@@ -108,7 +139,7 @@ export const ReservationManager = () => {
               <motion.div key={table.id} initial={{ scale: 0 }} animate={{ scale: 1 }}
                 style={{ left: `${table.x}%`, top: `${table.y}%` }}
                 className={`absolute -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-3xl flex flex-col items-center justify-center cursor-pointer shadow-lg transition-all hover:scale-110 ${
-                  table.status === 'Reserved' ? 'bg-amber-400 text-white' : 'bg-surface-container-highest text-on-surface'
+                  table.status === 'Reserved' ? 'bg-[#303942] text-white' : 'bg-surface-container-highest text-on-surface'
                 }`}>
                 <span className="text-xs font-bold opacity-60 mb-1">{table.id}</span>
                 <Users className="w-6 h-6 mb-2" />
@@ -119,7 +150,7 @@ export const ReservationManager = () => {
               </motion.div>
             ))}
             <div className="absolute bottom-0 end-0 p-6 bg-surface-container-lowest/80 backdrop-blur-md rounded-3xl border border-outline-variant/10 flex gap-8">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-400" /><span className="text-xs font-bold">{t('reservations.reserved')}</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#303942]/30" /><span className="text-xs font-bold">{t('reservations.reserved')}</span></div>
               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-surface-container-highest" /><span className="text-xs font-bold">{t('reservations.available')}</span></div>
             </div>
           </div>
@@ -143,7 +174,7 @@ export const ReservationManager = () => {
                 className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <button onClick={() => setView('map')} className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+            <button onClick={() => enterView('map')} className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <MapIcon className="w-4 h-4" /> {t('reservations.tableMap')}
             </button>
           </div>
@@ -156,12 +187,12 @@ export const ReservationManager = () => {
             <AnimatePresence mode="popLayout">
               {filteredReservations.map((res, i) => (
                 <motion.div key={resKey(res)} layout initial={{ opacity: 0, x: isRTL ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                  onClick={() => setSelectedRes(res)}
+                  onClick={() => selectRes(resKey(res))}
                   className={`group flex items-center p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
                     selectedRes && resKey(selectedRes) === resKey(res) ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
                   }`}>
                   <div className="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center shrink-0 me-6 group-hover:scale-110 transition-transform">
-                    <CalendarDays className={`w-6 h-6 ${res.status === 'Confirmed' ? 'text-emerald-500' : res.status === 'Cancelled' ? 'text-rose-500' : 'text-amber-500'}`} />
+                    <CalendarDays className={`w-6 h-6 ${res.status === 'Confirmed' ? 'text-primary' : res.status === 'Cancelled' ? 'text-primary' : 'text-[#303942]'}`} />
                   </div>
                   <div className="flex-1 grid grid-cols-4 gap-4">
                     <div>
@@ -178,8 +209,8 @@ export const ReservationManager = () => {
                     </div>
                     <div>
                       <div className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mt-1 ${
-                        res.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-700' :
-                        res.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                        res.status === 'Confirmed' ? 'bg-primary/10 text-primary' :
+                        res.status === 'Cancelled' ? 'bg-[#303942]/10 text-[#303942]' : 'bg-[#303942]/10 text-[#303942]'
                       }`}>{statusLabel(res.status)}</div>
                     </div>
                   </div>
@@ -209,7 +240,7 @@ export const ReservationManager = () => {
                   <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('reservations.detailHeading')}</h3>
                   <p className="text-on-surface-variant font-mono text-sm mt-1">#{resKey(selectedRes).slice(-6).toUpperCase()}</p>
                 </div>
-                <button onClick={() => setSelectedRes(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+                <button onClick={closeRes} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
                   <XCircle className="w-6 h-6" />
                 </button>
               </div>
@@ -222,18 +253,18 @@ export const ReservationManager = () => {
                     <div>
                       <p className="font-bold">{selectedRes.name}</p>
                       <div className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${
-                        selectedRes.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-700' :
-                        selectedRes.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                        selectedRes.status === 'Confirmed' ? 'bg-primary/10 text-primary' :
+                        selectedRes.status === 'Cancelled' ? 'bg-[#303942]/10 text-[#303942]' : 'bg-[#303942]/10 text-[#303942]'
                       }`}>{statusLabel(selectedRes.status)}</div>
                     </div>
                   </div>
                   <div className="space-y-2 text-sm pt-2 border-t border-outline-variant/10">
                     <div className="flex items-center gap-2 text-on-surface-variant">
-                      <Mail className="w-4 h-4 shrink-0" /><span>{selectedRes.email}</span>
+                      <Mail className="w-4 h-4 shrink-0" /><span dir="ltr">{selectedRes.email}</span>
                     </div>
                     {selectedRes.phone && (
                       <div className="flex items-center gap-2 text-on-surface-variant">
-                        <Phone className="w-4 h-4 shrink-0" /><span>{selectedRes.phone}</span>
+                        <Phone className="w-4 h-4 shrink-0" /><span dir="ltr">{selectedRes.phone}</span>
                       </div>
                     )}
                   </div>
@@ -272,7 +303,7 @@ export const ReservationManager = () => {
                 </button>
               </div>
               <button onClick={() => handleDelete(resKey(selectedRes))}
-                className="mt-3 w-full py-3 rounded-2xl text-rose-500 font-bold text-sm hover:bg-rose-50 transition-all flex items-center justify-center gap-2">
+                className="mt-3 w-full py-3 rounded-2xl text-primary font-bold text-sm hover:bg-rose-50 transition-all flex items-center justify-center gap-2">
                 <Trash2 className="w-4 h-4" /> {t('reservations.deleteReservation')}
               </button>
             </motion.div>

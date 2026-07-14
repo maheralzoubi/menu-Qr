@@ -18,6 +18,13 @@ export const createOrder = async (data: any) => {
 export const updateOrderStatus = (id: string, restaurantId: string, status: string) =>
   Order.findOneAndUpdate({ _id: id, restaurantId }, { status }, { returnDocument: 'after' });
 
+export const confirmOrderPayment = (id: string, restaurantId: string, confirmedBy: string) =>
+  Order.findOneAndUpdate(
+    { _id: id, restaurantId },
+    { payment_status: 'PAID', paid_at: new Date(), confirmed_by: confirmedBy },
+    { returnDocument: 'after' }
+  );
+
 export const deleteOrder = (id: string, restaurantId: string) =>
   Order.findOneAndDelete({ _id: id, restaurantId });
 

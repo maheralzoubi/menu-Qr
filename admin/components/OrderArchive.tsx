@@ -6,6 +6,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../src/lib/auth';
+import { formatCurrency } from '../../src/lib/currency';
+import { pushNavParam, goBack } from '../lib/navHistory';
 
 interface CartItem { id: string; name: string; price: number; quantity: number; }
 interface ArchivedOrder {
@@ -16,30 +18,49 @@ interface ArchivedOrder {
 interface ArchiveResult { orders: ArchivedOrder[]; total: number; page: number; pages: number; }
 
 const STATUS_OPTIONS = ['', 'Pending', 'Preparing', 'Ready', 'Delivered'];
+const STATUS_LABEL_KEY: Record<string, string> = { Pending: 'pending', Preparing: 'preparing', Ready: 'ready', Delivered: 'delivered', Cancelled: 'cancelled' };
 const PAGE_SIZE = 50;
 
 const statusStyle = (s: string) => {
   switch (s) {
-    case 'Delivered': return 'bg-emerald-100 text-emerald-700';
+    case 'Delivered': return 'bg-primary/10 text-primary';
     case 'Preparing': return 'bg-primary/10 text-primary';
-    case 'Ready':     return 'bg-blue-100 text-blue-700';
-    default:          return 'bg-amber-100 text-amber-700';
+    case 'Ready':     return 'bg-primary/15 text-primary';
+    default:          return 'bg-[#303942]/10 text-[#303942]';
   }
 };
 
 export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
+  const statusLabel = (s: string) => STATUS_LABEL_KEY[s] ? t(`orders.${STATUS_LABEL_KEY[s]}`) : s;
 
+  const [currency, setCurrency]          = useState('USD');
   const [result, setResult]             = useState<ArchiveResult | null>(null);
   const [isLoading, setIsLoading]       = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<ArchivedOrder | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('archiveOrderId')
+  );
+  const selectedOrder = (result?.orders ?? []).find(o => o._id === selectedOrderId) ?? null;
   const [search, setSearch]             = useState('');
   const [status, setStatus]             = useState('');
   const [dateFrom, setDateFrom]         = useState('');
   const [dateTo, setDateTo]             = useState('');
   const [tableNumber, setTableNumber]   = useState('');
   const [page, setPage]                 = useState(1);
+
+  useEffect(() => {
+    const onPopState = () => setSelectedOrderId(new URLSearchParams(window.location.search).get('archiveOrderId'));
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const selectOrder = useCallback((order: ArchivedOrder) => {
+    setSelectedOrderId(order._id);
+    pushNavParam('archiveOrderId', order._id);
+  }, []);
+
+  const closeOrder = useCallback(() => { goBack(); }, []);
 
   const fetchArchive = useCallback(async (p = page) => {
     setIsLoading(true);
@@ -60,16 +81,21 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
 
   useEffect(() => { fetchArchive(1); setPage(1); }, [search, status, dateFrom, dateTo, tableNumber]); // eslint-disable-line
   useEffect(() => { fetchArchive(page); }, [page]); // eslint-disable-line
+  useEffect(() => { authFetch('/api/settings/restaurant').then(r => r.ok ? r.json() : null).then(s => { if (s?.currency) setCurrency(s.currency); }); }, []);
 
   const handleExportCSV = () => {
     if (!result?.orders.length) return;
     const rows = [
-      ['Order ID', 'Date', 'Archived', 'Table', 'Customer', 'Items', 'Total', 'Discount', 'Status'],
+      [
+        t('orderArchive.orderId'), t('orderArchive.date'), t('orderArchive.archivedAt'),
+        t('orderArchive.tableLabel'), t('orderArchive.customerLabel'), t('orderArchive.itemsLabel'),
+        t('orderArchive.totalLabel'), t('orderArchive.discount'), t('orderArchive.statusLabel'),
+      ],
       ...result.orders.map(o => [
         o._id, new Date(o.createdAt).toLocaleString(), new Date(o.archivedAt).toLocaleString(),
-        o.tableNumber || '', o.customerName || 'Guest',
+        o.tableNumber || '', o.customerName || t('orders.guest'),
         o.items.map(i => `${i.quantity}x ${i.name}`).join('; '),
-        o.total.toFixed(2), o.discount?.toFixed(2) ?? '0.00', o.status,
+        o.total.toFixed(2), o.discount?.toFixed(2) ?? '0.00', statusLabel(o.status),
       ]),
     ];
     const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
@@ -112,7 +138,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
             {[
               { labelKey: 'orderArchive.totalOrders', value: result.total.toLocaleString() },
               { labelKey: 'orderArchive.shown',       value: orders.length.toLocaleString() },
-              { labelKey: 'orderArchive.revenuePage', value: `$${totalRevenue.toFixed(2)}` },
+              { labelKey: 'orderArchive.revenuePage', value: formatCurrency(totalRevenue, currency) },
             ].map(s => (
               <div key={s.labelKey} className="bg-surface-container-low rounded-2xl p-5 shadow-sm border border-outline-variant/10">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
@@ -140,7 +166,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
             <select value={status} onChange={e => setStatus(e.target.value)}
               className="bg-surface-container-high border-none rounded-xl py-2.5 ps-9 pe-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none">
               <option value="">{t('orderArchive.allStatuses')}</option>
-              {STATUS_OPTIONS.filter(Boolean).map(s => <option key={s} value={s}>{s}</option>)}
+              {STATUS_OPTIONS.filter(Boolean).map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
             </select>
           </div>
           <input type="text" placeholder={t('orderArchive.tablePlaceholder')} value={tableNumber}
@@ -189,7 +215,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
             <AnimatePresence mode="popLayout">
               {orders.map((order, i) => (
                 <motion.div key={order._id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-                  onClick={() => setSelectedOrder(order)}
+                  onClick={() => selectOrder(order)}
                   className={`group flex items-center p-5 bg-surface-container-low rounded-2xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-lg transition-all cursor-pointer ${
                     selectedOrder?._id === order._id ? 'ring-2 ring-primary' : ''
                   }`}>
@@ -220,11 +246,11 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                     </div>
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.totalLabel')}</p>
-                      <p className="font-bold text-sm text-primary">${order.total.toFixed(2)}</p>
+                      <p className="font-bold text-sm text-primary">{formatCurrency(order.total, currency)}</p>
                     </div>
                   </div>
                   <div className="ms-4 flex items-center gap-3 shrink-0">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyle(order.status)}`}>{order.status}</span>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyle(order.status)}`}>{statusLabel(order.status)}</span>
                     <ChevronRight className="w-4 h-4 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
                   </div>
                 </motion.div>
@@ -261,7 +287,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                   <h3 className="text-xl font-headline font-extrabold tracking-tight">{t('orderArchive.detailHeading')}</h3>
                   <p className="font-mono text-xs text-on-surface-variant mt-0.5">#{selectedOrder._id.toUpperCase()}</p>
                 </div>
-                <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+                <button onClick={closeOrder} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -277,7 +303,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                     </p>
                   </div>
                   <span className={`ms-auto px-3 py-1 rounded-full text-[10px] font-bold uppercase ${statusStyle(selectedOrder.status)}`}>
-                    {selectedOrder.status}
+                    {statusLabel(selectedOrder.status)}
                   </span>
                 </div>
                 <div>
@@ -289,7 +315,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                           <span className="w-7 h-7 rounded-lg bg-surface-container-high flex items-center justify-center font-bold text-xs">{item.quantity}x</span>
                           <span className="font-semibold text-sm">{item.name}</span>
                         </div>
-                        <span className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-bold text-sm">{formatCurrency(item.price * item.quantity, currency)}</span>
                       </div>
                     ))}
                   </div>
@@ -297,18 +323,18 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                 <div className="bg-primary/5 p-5 rounded-2xl space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">{t('orderArchive.subtotal')}</span>
-                    <span className="font-bold">${(selectedOrder.total + (selectedOrder.discount ?? 0)).toFixed(2)}</span>
+                    <span className="font-bold">{formatCurrency(selectedOrder.total + (selectedOrder.discount ?? 0), currency)}</span>
                   </div>
                   {selectedOrder.discount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-on-surface-variant">{t('orderArchive.discount')} {selectedOrder.promoCode ? `(${selectedOrder.promoCode})` : ''}</span>
-                      <span className="font-bold text-green-600">-${selectedOrder.discount.toFixed(2)}</span>
+                      <span className="font-bold text-primary">-{formatCurrency(selectedOrder.discount, currency)}</span>
                     </div>
                   )}
                   <div className="h-px bg-primary/10" />
                   <div className="flex justify-between items-center">
                     <span className="font-bold">{t('orderArchive.total')}</span>
-                    <span className="text-xl font-headline font-extrabold text-primary">${selectedOrder.total.toFixed(2)}</span>
+                    <span className="text-xl font-headline font-extrabold text-primary">{formatCurrency(selectedOrder.total, currency)}</span>
                   </div>
                 </div>
                 <div className="space-y-1.5 text-xs text-on-surface-variant">

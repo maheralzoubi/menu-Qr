@@ -11,7 +11,8 @@ export default defineConfig({
       name: 'serve-admin',
       configureServer(server) {
         server.middlewares.use((req, _res, next) => {
-          if (req.url === '/' || req.url === '') req.url = '/admin.html';
+          const urlPath = req.url?.split('?')[0];
+          if (urlPath === '/' || urlPath === '') req.url = '/admin.html' + (req.url?.slice(urlPath.length) ?? '');
           next();
         });
       },

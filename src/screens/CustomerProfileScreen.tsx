@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { User, LogOut, ShoppingBag, Calendar, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { useFmt } from '../hooks/useCurrency';
 import { getCustomerInfo, clearCustomerToken, customerFetch, CustomerInfo } from '../lib/customerAuth';
 
 interface Props { onLogout: () => void; }
 
 export const CustomerProfileScreen = ({ onLogout }: Props) => {
   const { t } = useTranslation();
+  const fmt = useFmt();
   const [customer, setCustomer] = useState<CustomerInfo | null>(getCustomerInfo());
   const [orders, setOrders] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
@@ -71,7 +73,7 @@ export const CustomerProfileScreen = ({ onLogout }: Props) => {
                     <p className="text-xs text-on-surface-variant">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className="text-end">
-                    <p className="font-headline font-bold text-primary">${order.total?.toFixed(2)}</p>
+                    <p className="font-headline font-bold text-primary">{fmt(order.total ?? 0)}</p>
                     <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
                       order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                     }`}>

@@ -9,11 +9,14 @@ interface PlanData {
   _id: string;
   key: string;
   name: string;
+  nameAr: string;
   description: string;
+  descriptionAr: string;
   monthlyPrice: number;
   annualPrice: number;
   restaurantLimit: number;
   features: string[];
+  featuresAr: string[];
   popular: boolean;
   active: boolean;
 }
@@ -39,6 +42,7 @@ const EditPlanModal = ({
   const { t } = useTranslation();
   const [form, setForm] = useState<Omit<PlanData, '_id'>>({ ...plan });
   const [newFeature, setNewFeature] = useState('');
+  const [newFeatureAr, setNewFeatureAr] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -55,6 +59,16 @@ const EditPlanModal = ({
   const removeFeature = (idx: number) =>
     set('features', form.features.filter((_, i) => i !== idx));
 
+  const addFeatureAr = () => {
+    const f = newFeatureAr.trim();
+    if (!f) return;
+    set('featuresAr', [...form.featuresAr, f]);
+    setNewFeatureAr('');
+  };
+
+  const removeFeatureAr = (idx: number) =>
+    set('featuresAr', form.featuresAr.filter((_, i) => i !== idx));
+
   const handleSave = async () => {
     setError('');
     setLoading(true);
@@ -66,11 +80,14 @@ const EditPlanModal = ({
         signal: controller.signal,
         body: JSON.stringify({
           name:            form.name,
+          nameAr:          form.nameAr,
           description:     form.description,
+          descriptionAr:   form.descriptionAr,
           monthlyPrice:    form.monthlyPrice,
           annualPrice:     form.annualPrice,
           restaurantLimit: form.restaurantLimit,
           features:        form.features,
+          featuresAr:      form.featuresAr,
           popular:         form.popular,
           active:          form.active,
         }),
@@ -125,6 +142,19 @@ const EditPlanModal = ({
             />
           </div>
 
+          {/* Name (Arabic) */}
+          <div>
+            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
+              {t('plans.manager.planNameAr')}
+            </label>
+            <input
+              dir="rtl"
+              value={form.nameAr}
+              onChange={e => set('nameAr', e.target.value)}
+              className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+            />
+          </div>
+
           {/* Description */}
           <div>
             <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
@@ -133,6 +163,20 @@ const EditPlanModal = ({
             <textarea
               value={form.description}
               onChange={e => set('description', e.target.value)}
+              rows={2}
+              className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all resize-none"
+            />
+          </div>
+
+          {/* Description (Arabic) */}
+          <div>
+            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
+              {t('plans.manager.descriptionAr')}
+            </label>
+            <textarea
+              dir="rtl"
+              value={form.descriptionAr}
+              onChange={e => set('descriptionAr', e.target.value)}
               rows={2}
               className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all resize-none"
             />
@@ -242,6 +286,40 @@ const EditPlanModal = ({
             </div>
           </div>
 
+          {/* Features (Arabic) */}
+          <div>
+            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">
+              {t('plans.manager.featuresAr')}
+            </label>
+            <ul className="space-y-2 mb-3">
+              {form.featuresAr.map((f, i) => (
+                <li key={i} dir="rtl" className="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2">
+                  <Check className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-sm flex-1">{f}</span>
+                  <button onClick={() => removeFeatureAr(i)} className="text-on-surface-variant/50 hover:text-error transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-2">
+              <input
+                dir="rtl"
+                value={newFeatureAr}
+                onChange={e => setNewFeatureAr(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addFeatureAr())}
+                placeholder={t('plans.manager.addFeaturePlaceholderAr')}
+                className="flex-1 bg-surface-container border border-outline-variant rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+              />
+              <button
+                onClick={addFeatureAr}
+                className="px-4 py-2.5 bg-primary/10 text-primary rounded-2xl hover:bg-primary/20 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
           <AnimatePresence>
             {error && (
               <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -280,11 +358,15 @@ const PlanCard = ({
   plan: PlanData;
   onEdit: () => void;
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [billing, setBilling] = useState<Billing>('monthly');
+  const isAr = i18n.language.startsWith('ar');
 
   const price = billing === 'annual' ? plan.annualPrice : plan.monthlyPrice;
   const limitLabel = plan.restaurantLimit === -1 ? t('plans.manager.unlimited') : String(plan.restaurantLimit);
+  const displayName = isAr && plan.nameAr ? plan.nameAr : plan.name;
+  const displayDescription = isAr && plan.descriptionAr ? plan.descriptionAr : plan.description;
+  const displayFeatures = isAr && plan.featuresAr?.length ? plan.featuresAr : plan.features;
 
   return (
     <div className={`relative flex flex-col rounded-3xl border p-6 transition-all ${
@@ -311,7 +393,7 @@ const PlanCard = ({
             {PLAN_ICONS[plan.key] ?? <Star className="w-5 h-5" />}
           </div>
           <div>
-            <h3 className={`font-extrabold ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>{plan.name}</h3>
+            <h3 className={`font-extrabold ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>{displayName}</h3>
             <p className={`text-[11px] font-mono ${plan.popular ? 'text-on-primary/60' : 'text-on-surface-variant'}`}>{plan.key}</p>
           </div>
         </div>
@@ -335,10 +417,10 @@ const PlanCard = ({
 
       <div className={`text-4xl font-extrabold leading-none mb-1 ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>
         ${price}
-        <span className={`text-sm font-normal ms-1 ${plan.popular ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>/mo</span>
+        <span className={`text-sm font-normal ms-1 ${plan.popular ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>{t('landing.perMonth')}</span>
       </div>
 
-      <p className={`text-xs mb-4 mt-1 ${plan.popular ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>{plan.description}</p>
+      <p className={`text-xs mb-4 mt-1 ${plan.popular ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>{displayDescription}</p>
 
       <div className={`text-xs font-semibold mb-4 px-3 py-2 rounded-xl ${plan.popular ? 'bg-white/15' : 'bg-primary/8 text-primary'}`}>
         {t('plans.manager.restaurantsAllowed', { count: limitLabel })}

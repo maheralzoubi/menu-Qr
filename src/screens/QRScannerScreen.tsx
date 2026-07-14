@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import jsQR from 'jsqr';
 import { ArrowLeft, AlertCircle, Loader2, RefreshCw, Zap, ZapOff, ImagePlus, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { parseQRCode, fetchRestaurantContext } from '../services/AppEntryHandler';
 import type { RestaurantContext } from '../hooks/useRestaurant';
 
@@ -13,6 +14,7 @@ interface Props {
 type Phase = 'scanning' | 'loading' | 'success' | 'error';
 
 export const QRScannerScreen = ({ onBack, onScan }: Props) => {
+  const { t } = useTranslation();
   const videoRef    = useRef<HTMLVideoElement>(null);
   const canvasRef   = useRef<HTMLCanvasElement>(null);
   const streamRef   = useRef<MediaStream | null>(null);
@@ -70,7 +72,7 @@ export const QRScannerScreen = ({ onBack, onScan }: Props) => {
         rafRef.current = requestAnimationFrame(tick);
       }
     } catch {
-      setErrorMsg('Camera access denied. Allow camera permission and try again.');
+      setErrorMsg(t('qrScanner.cameraDenied'));
       setPhase('error');
     }
   }
@@ -129,7 +131,7 @@ export const QRScannerScreen = ({ onBack, onScan }: Props) => {
         if (pendingCtx.current) onScan(pendingCtx.current);
       }, 1300);
     } else {
-      setErrorMsg('Restaurant not found. Check the QR code and try again.');
+      setErrorMsg(t('qrScanner.restaurantNotFound'));
       setPhase('error');
     }
   }
@@ -166,11 +168,11 @@ export const QRScannerScreen = ({ onBack, onScan }: Props) => {
         detectedRef.current = true;
         handleDetected(code.data);
       } else {
-        setErrorMsg('No valid restaurant QR code found in this image.');
+        setErrorMsg(t('qrScanner.noValidQr'));
         setPhase('error');
       }
     } catch {
-      setErrorMsg('Could not read the selected image. Please try again.');
+      setErrorMsg(t('qrScanner.imageReadError'));
       setPhase('error');
     }
   };
@@ -244,7 +246,7 @@ export const QRScannerScreen = ({ onBack, onScan }: Props) => {
           className="flex items-center gap-2 text-white/90 text-sm font-semibold"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          {t('common.back')}
         </button>
 
         {/* Torch button (only on scanning phase + torch available) */}
@@ -273,8 +275,8 @@ export const QRScannerScreen = ({ onBack, onScan }: Props) => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <p className="text-white font-headline font-bold text-base">Align QR code in the frame</p>
-            <p className="text-white/50 text-sm mt-1">Scanning automatically — no tap needed</p>
+            <p className="text-white font-headline font-bold text-base">{t('qrScanner.alignQr')}</p>
+            <p className="text-white/50 text-sm mt-1">{t('qrScanner.scanningAuto')}</p>
           </motion.div>
         )}
 
@@ -288,7 +290,7 @@ export const QRScannerScreen = ({ onBack, onScan }: Props) => {
             <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center">
               <Loader2 className="w-7 h-7 text-white animate-spin" />
             </div>
-            <p className="text-white font-semibold text-sm">Loading restaurant…</p>
+            <p className="text-white font-semibold text-sm">{t('qrScanner.loadingRestaurant')}</p>
           </motion.div>
         )}
 
@@ -306,7 +308,7 @@ export const QRScannerScreen = ({ onBack, onScan }: Props) => {
               className="flex items-center gap-2 bg-white text-black text-sm font-bold px-5 py-2.5 rounded-xl"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Try Again
+              {t('qrScanner.tryAgain')}
             </button>
           </motion.div>
         )}
@@ -322,7 +324,7 @@ export const QRScannerScreen = ({ onBack, onScan }: Props) => {
             className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-[13px] font-semibold px-5 py-2.5 rounded-full"
           >
             <ImagePlus className="w-4 h-4" />
-            Upload from Gallery
+            {t('qrScanner.uploadGallery')}
           </motion.button>
         )}
       </div>
@@ -360,8 +362,8 @@ export const QRScannerScreen = ({ onBack, onScan }: Props) => {
               </div>
 
               <div className="text-center">
-                <h3 className="font-headline font-extrabold text-xl text-on-surface">Restaurant Found!</h3>
-                <p className="text-on-surface-variant text-sm mt-1">Opening your menu…</p>
+                <h3 className="font-headline font-extrabold text-xl text-on-surface">{t('qrScanner.restaurantFound')}</h3>
+                <p className="text-on-surface-variant text-sm mt-1">{t('qrScanner.openingMenu')}</p>
               </div>
             </motion.div>
           </motion.div>

@@ -3,6 +3,7 @@
     "search": "Search...",
     "cancel": "Cancel",
     "delete": "Delete",
+    "edit": "Edit",
     "active": "Active",
     "inactive": "Inactive",
     "locked": "Locked",
@@ -12,13 +13,15 @@
     "annual": "Annual",
     "creating": "Creating...",
     "saving": "Saving…",
-    "noResults": "No results"
+    "noResults": "No results",
+    "switchLanguage": "Switch to Arabic"
   },
   "nav": {
     "restaurants": "Restaurants",
     "analytics": "Analytics",
     "customers": "Customers",
     "plans": "Plans",
+    "banners": "Banners",
     "logout": "Logout"
   },
   "sidebar": {
@@ -30,15 +33,68 @@
     "superAdmin": "Super Admin",
     "appOwner": "App Owner"
   },
+  "account": {
+    "title": "My Account",
+    "loading": "Loading…",
+    "fullName": "Full Name",
+    "emailAddress": "Email Address",
+    "phoneNumber": "Phone Number",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Leave blank to keep current password",
+    "save": "Save Changes",
+    "saved": "Your account has been updated.",
+    "saveFailed": "Failed to save changes. Please try again.",
+    "networkError": "Network error. Please try again."
+  },
   "login": {
     "title": "Owner Access",
-    "subtitle": "Sign in to the App Owner Panel"
+    "subtitle": "Sign in to the App Owner Panel",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "errors": {
+      "invalidCredentials": "Invalid email or password",
+      "restaurantInactive": "Restaurant account is inactive. Please contact the platform owner.",
+      "accountLocked": "Your account has been locked. Please contact support.",
+      "validation": "Please check your email and password and try again.",
+      "network": "Network error. Please try again.",
+      "generic": "Login failed. Please try again.",
+      "emailNotVerified": "Please verify your email address before signing in.",
+      "wrongApp": "This account isn't an owner account. Please sign in from the restaurant admin dashboard instead."
+    },
+    "resendVerification": "Resend verification email",
+    "resendSent": "A new verification link has been sent to your inbox."
+  },
+  "forgotPassword": {
+    "link": "Forgot password?",
+    "heading": "Reset your password",
+    "emailSubtext": "Enter your email and we'll send you a reset code.",
+    "sendCodeButton": "Send reset code",
+    "codeSubtext": "Enter the 6-digit code we sent to {{email}}",
+    "newPasswordLabel": "New Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "resetButton": "Reset Password",
+    "resendButton": "Resend code",
+    "resendSent": "A new code has been sent to your inbox.",
+    "doneHeading": "Your password has been reset.",
+    "doneBody": "You can now sign in with your new password.",
+    "backToSignIn": "Back to Sign In",
+    "errors": {
+      "invalidCode": "Incorrect code. Please try again.",
+      "expiredCode": "This code has expired. Please request a new one.",
+      "tooManyAttempts": "Too many incorrect attempts. Please request a new code.",
+      "weakPassword": "Password must be at least 6 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "emailNotFound": "No account found with this email.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "landing": {
     "signIn": "Sign In",
     "heroTag": "The Restaurant Platform",
     "heroHeading1": "Run your restaurant",
-    "heroHeading2": "smarter with MenuQR",
+    "heroHeading2": "smarter with Menu QR",
     "heroSubtext": "Digital menus, live order management, analytics, and multi-location support — all in one place.",
     "startTrial": "Start Free Trial",
     "featuresHeading": "Everything you need to grow",
@@ -55,7 +111,7 @@
     "cancelAnytime": "Cancel anytime",
     "alreadyHaveAccount": "Already have an account?",
     "signInLink": "Sign in",
-    "copyright": "© {{year}} MenuQR · All rights reserved",
+    "copyright": "© {{year}} Menu QR · All rights reserved",
     "features": {
       "qrMenus": {
         "title": "Smart QR Menus",
@@ -108,10 +164,9 @@
     "stepPayment": "Payment",
     "stepSetup": "Setup Account",
     "heading": "Set up your account",
-    "subtext": "Create your login credentials for the MenuQR {{plan}} owner panel.",
+    "subtext": "Create your login credentials for the Menu QR {{plan}} owner panel.",
     "fullName": "Full Name",
     "emailAddress": "Email Address",
-    "restaurantName": "Restaurant Name",
     "password": "Password",
     "passwordPlaceholder": "Min. 8 characters",
     "confirmPassword": "Confirm Password",
@@ -125,7 +180,6 @@
     "backToSetup": "Back to account setup",
     "errorName": "Full name is required.",
     "errorEmail": "Enter a valid email address.",
-    "errorRestaurant": "Restaurant name is required.",
     "errorPassword": "Password must be at least 8 characters.",
     "errorMatch": "Passwords do not match.",
     "errorGeneric": "Something went wrong. Please try again.",
@@ -134,9 +188,24 @@
   "success": {
     "badge": "Account Created",
     "heading": "You're all set!",
-    "description": "Your MenuQR {{plan}} account is ready. Sign in to your owner panel to get started.",
-    "emailSent": "A welcome email has been sent to your inbox.",
+    "description": "Your Menu QR {{plan}} account has been created.",
+    "ready": "Your account is ready. Sign in to get started.",
     "goToSignIn": "Go to Sign In"
+  },
+  "verify": {
+    "heading": "Verify your email",
+    "subtext": "Enter the 6-digit code we sent to {{email}}",
+    "codePlaceholder": "000000",
+    "verifyButton": "Verify",
+    "verifying": "Verifying…",
+    "resendButton": "Resend code",
+    "resendSent": "A new code has been sent to your inbox.",
+    "errors": {
+      "invalidCode": "Incorrect code. Please try again.",
+      "expiredCode": "This code has expired. Please request a new one.",
+      "tooManyAttempts": "Too many incorrect attempts. Please request a new code.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "plans": {
     "manager": {
@@ -144,7 +213,9 @@
       "subtext": "Edit pricing, features, and limits for each plan. Changes appear live on the landing page.",
       "editPlan": "Edit {{name}} Plan",
       "planName": "Plan Name",
+      "planNameAr": "Plan Name (Arabic)",
       "description": "Description",
+      "descriptionAr": "Description (Arabic)",
       "monthlyPrice": "Monthly Price / mo",
       "annualPrice": "Annual Price / mo",
       "priceNote": "Price changes create a new Stripe price and apply to new subscriptions only. Existing subscribers keep their current rate.",
@@ -153,7 +224,9 @@
       "mostPopular": "Most Popular",
       "active": "Active",
       "features": "Features",
+      "featuresAr": "Features (Arabic)",
       "addFeaturePlaceholder": "Add a feature and press Enter…",
+      "addFeaturePlaceholderAr": "Add a feature in Arabic and press Enter…",
       "restaurantsAllowed": "{{count}} restaurant(s) allowed",
       "unlimited": "Unlimited",
       "save": "Save Changes",
@@ -245,11 +318,31 @@
       "passwordPlaceholder": "Min 6 characters",
       "cancel": "Cancel",
       "create": "Create Restaurant",
-      "creating": "Creating..."
+      "creating": "Creating...",
+      "saveChanges": "Save Changes",
+      "createFailed": "Failed to create restaurant",
+      "networkError": "Network error.",
+      "cuisineTypes": "Cuisine Types",
+      "cuisineLabels": {
+        "Coffee": "Coffee",
+        "Burgers": "Burgers",
+        "Pizza": "Pizza",
+        "Pasta": "Pasta",
+        "Shawarma": "Shawarma",
+        "Salads": "Salads",
+        "Desserts": "Desserts",
+        "Drinks": "Drinks",
+        "Breakfast": "Breakfast",
+        "Chicken": "Chicken",
+        "Healthy": "Healthy"
+      }
     }
   },
   "restaurantDetail": {
     "allRestaurants": "All Restaurants",
+    "edit": "Edit",
+    "editTitle": "Edit Restaurant",
+    "editFailed": "Failed to save changes. Please try again.",
     "deactivate": "Deactivate",
     "activate": "Activate",
     "delete": "Delete",
@@ -262,7 +355,6 @@
       "reviews": "Reviews",
       "reservations": "Reservations"
     },
-    "adminAccount": "Admin Account",
     "deleteConfirm": "Delete this restaurant and ALL its data? This cannot be undone."
   },
   "analytics": {
@@ -288,7 +380,7 @@
   },
   "customers": {
     "heading": "Subscribers",
-    "subtext": "All MenuQR platform subscribers.",
+    "subtext": "All Menu QR platform subscribers.",
     "search": "Search name, email, or restaurant…",
     "stats": {
       "total": "Total",
@@ -297,7 +389,6 @@
     },
     "tableHeaders": {
       "subscriber": "Subscriber",
-      "restaurant": "Restaurant",
       "plan": "Plan",
       "joined": "Joined",
       "status": "Status",
@@ -312,6 +403,7 @@
       "delete": "Delete"
     },
     "deleteConfirm": "Delete this subscriber? This cannot be undone.",
+    "deleteFailed": "Failed to delete subscriber. Please try again.",
     "modal": {
       "title": "Change Plan",
       "subtitle": "Update subscription for {{name}}",
@@ -345,16 +437,49 @@
     "deleteConfirm": "Delete this admin account?",
     "panel": {
       "title": "Add Restaurant Admin",
+      "editTitle": "Edit Admin",
       "note": "This account will be able to log in to the restaurant admin dashboard",
       "fullName": "Full Name",
       "emailAddress": "Email Address",
       "jobTitle": "Job Title (optional)",
       "role": "Role",
       "password": "Password",
+      "newPasswordOptional": "New Password (optional)",
       "passwordPlaceholder": "Min 6 characters",
       "cancel": "Cancel",
       "create": "Create Admin",
-      "creating": "Creating..."
+      "save": "Save Changes",
+      "creating": "Creating...",
+      "createFailed": "Failed to create admin",
+      "networkError": "Network error. Please try again."
     }
+  },
+  "banners": {
+    "heading": "Home Banners",
+    "subtext": "Manage the promo slider shown on the customer app home screen.",
+    "addBanner": "Add Banner",
+    "loadFailed": "Failed to load banners.",
+    "livePreview": "Live Preview",
+    "noBanners": "No banners yet. Add your first one.",
+    "active": "Active",
+    "hidden": "Hidden",
+    "hide": "Hide",
+    "show": "Show",
+    "editBanner": "Edit Banner",
+    "newBanner": "New Banner",
+    "titleLabel": "Title *",
+    "titlePlaceholder": "e.g. Free Pickup",
+    "subtitleLabel": "Subtitle",
+    "subtitlePlaceholder": "e.g. All orders this week",
+    "emojiLabel": "Emoji",
+    "orderLabel": "Order",
+    "showOnHome": "Show on home screen",
+    "saveChanges": "Save Changes",
+    "createBanner": "Create Banner",
+    "saveFailed": "Failed to save. Try again.",
+    "updateFailed": "Failed to update.",
+    "deleteFailed": "Failed to delete.",
+    "deleteConfirmTitle": "Delete banner?",
+    "deleteConfirmBody": "This will remove the banner from the home screen immediately."
   }
 }

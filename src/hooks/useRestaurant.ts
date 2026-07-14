@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { applyPrimaryColor } from '../lib/branding';
 
 const STORAGE_KEY = 'restaurant_context';
 
@@ -8,6 +9,7 @@ export interface RestaurantContext {
   restaurantName: string;
   logo: string;
   primaryColor: string;
+  currency: string;
 }
 
 function readFromStorage(): RestaurantContext | null {
@@ -23,12 +25,13 @@ function saveToStorage(ctx: RestaurantContext) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ctx));
 }
 
-function applyBranding(name: string, logo: string) {
+function applyBranding(name: string, logo: string, primaryColor?: string) {
   document.title = name || 'Menu QR';
   const existing = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
   const favicon = existing ?? Object.assign(document.createElement('link'), { rel: 'icon' });
   favicon.href = logo || '/favicon.svg';
   if (!existing) document.head.appendChild(favicon);
+  if (primaryColor) applyPrimaryColor(primaryColor);
 }
 
 export function useRestaurant() {
@@ -43,7 +46,7 @@ export function useRestaurant() {
     // Restore branding from previous visit even when no URL param.
     const stored = readFromStorage();
     if (stored) {
-      applyBranding(stored.restaurantName, stored.logo);
+      applyBranding(stored.restaurantName, stored.logo, stored.primaryColor);
       setContextState(stored);
     }
 
@@ -62,9 +65,10 @@ export function useRestaurant() {
           restaurantName: data.name,
           logo: data.logo ?? '',
           primaryColor: data.primaryColor ?? '#9b3f25',
+          currency: data.currency ?? 'USD',
         };
         saveToStorage(ctx);
-        applyBranding(ctx.restaurantName, ctx.logo);
+        applyBranding(ctx.restaurantName, ctx.logo, ctx.primaryColor);
         setContextState(ctx);
       })
       .catch(() => {})
@@ -73,7 +77,7 @@ export function useRestaurant() {
 
   const setContext = (ctx: RestaurantContext) => {
     saveToStorage(ctx);
-    applyBranding(ctx.restaurantName, ctx.logo);
+    applyBranding(ctx.restaurantName, ctx.logo, ctx.primaryColor);
     setContextState(ctx);
   };
 

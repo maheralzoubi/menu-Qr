@@ -1,293 +1,357 @@
-import { useState, useEffect } from 'react';
-import { ArrowRight, Star, Clock, Utensils, BookOpen, CalendarDays, ChefHat } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useState, useEffect, memo } from 'react';
+import { useFmt } from '../hooks/useCurrency';
+import { Search, Bell, ChevronRight, Clock, Star, RefreshCw, MapPin } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { MenuItem } from '../types';
-import { Skeleton } from '../components/Skeleton';
 
-interface HomeScreenProps {
-  onStart: () => void;
-  onReserve: () => void;
-  restaurantName?: string;
+interface Restaurant {
+  _id: string;
+  name: string;
   logo?: string;
-  restaurantId?: string;
+  address?: string;
+  status: string;
+  cuisine: string[];
+  isOpen: boolean;
+  prepTime: string | null;
+  openTime: string | null;
+  closeTime: string | null;
+  averageRating: number;
 }
 
-const DISH_GRADIENTS = [
-  'from-rose-500 to-orange-400',
-  'from-violet-500 to-indigo-400',
-  'from-emerald-500 to-teal-400',
-  'from-sky-500 to-blue-400',
-  'from-amber-500 to-yellow-400',
+interface Props {
+  onOpenRestaurant: (id: string, name: string, logo?: string) => void;
+  onOpenTracking: (orderId: string) => void;
+  onViewAllOrders: () => void;
+}
+
+const FOOD_CATEGORIES = [
+  { key: 'All',       emoji: '⚡' },
+  { key: 'Coffee',    emoji: '☕' },
+  { key: 'Burgers',   emoji: '🍔' },
+  { key: 'Pizza',     emoji: '🍕' },
+  { key: 'Pasta',     emoji: '🍝' },
+  { key: 'Shawarma',  emoji: '🌯' },
+  { key: 'Salads',    emoji: '🥗' },
+  { key: 'Desserts',  emoji: '🍰' },
+  { key: 'Drinks',    emoji: '🥤' },
+  { key: 'Breakfast', emoji: '🍳' },
+  { key: 'Chicken',   emoji: '🍗' },
+  { key: 'Healthy',   emoji: '🌿' },
 ];
 
-export const HomeScreen = ({ onStart, onReserve, restaurantName, logo, restaurantId }: HomeScreenProps) => {
-  const { t } = useTranslation();
+const RestaurantLogo = memo(({ logo, name }: { logo?: string; name: string }) => {
+  const [error, setError] = useState(false);
+  if (!logo || error) return <span className="text-4xl">🍽️</span>;
+  return <img src={logo} alt={name} className="w-full h-full object-cover" onError={() => setError(true)} />;
+});
 
-  const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
-  const [isLoading, setIsLoading]         = useState(true);
-  const [stats, setStats]                 = useState({ rating: 0, reviews: 0 });
+export const HomeScreen = ({ onOpenRestaurant, onOpenTracking, onViewAllOrders }: Props) => {
+  const { t, i18n } = useTranslation();
+  const fmt = useFmt();
+  const isRTL = i18n.language === 'ar';
 
-  // Pick one tagline deterministically — no newline split needed
-  const taglineKeys = ['tagline_0', 'tagline_1', 'tagline_2', 'tagline_3'] as const;
-  const taglineKey = restaurantName
-    ? taglineKeys[restaurantName.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 4]
-    : 'tagline_0';
+  const FALLBACK_PROMOS = [
+    { title: t('home.promos.freePickup.title'),   subtitle: t('home.promos.freePickup.subtitle'),   emoji: '🛍️' },
+    { title: t('home.promos.offMains.title'),     subtitle: t('home.promos.offMains.subtitle'),     emoji: '🎉' },
+    { title: t('home.promos.newArrivals.title'),  subtitle: t('home.promos.newArrivals.subtitle'),  emoji: '✨' },
+  ];
+
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [promoIdx, setPromoIdx] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [banners, setBanners] = useState<{ title: string; subtitle: string; emoji: string }[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [menuRes, reviewRes] = await Promise.allSettled([
-          fetch(`/api/menu?restaurantId=${restaurantId}`),
-          fetch(`/api/reviews?restaurantId=${restaurantId}`),
-        ]);
-        if (menuRes.status === 'fulfilled' && menuRes.value.ok) {
-          const data: MenuItem[] = await menuRes.value.json();
-          setFeaturedItems(data.filter(item => item.featured).slice(0, 3));
-        }
-        if (reviewRes.status === 'fulfilled' && reviewRes.value.ok) {
-          const data = await reviewRes.value.json();
-          if (Array.isArray(data) && data.length > 0) {
-            const avg = data.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / data.length;
-            setStats({ rating: Math.round(avg * 10) / 10, reviews: data.length });
-          }
-        }
-      } catch { /* silent */ }
-      finally { setIsLoading(false); }
-    };
-    fetchData();
+    fetch('/api/restaurants/public')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { setRestaurants(data); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetch('/api/banners/public')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { if (data.length) setBanners(data); })
+      .catch(() => { /* keep fallback */ });
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('order_history') || '[]');
+      const history = raw.map((e: any) => typeof e === 'string' ? e : (e._id ?? e.id)).filter(Boolean);
+      if (!history.length) return;
+      Promise.all(history.slice(0, 3).map((id: string) => fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null)))
+        .then(orders => setRecentOrders(orders.filter(Boolean)));
+    } catch { /* ignore */ }
+  }, []);
+
+  const slides = banners.length ? banners : FALLBACK_PROMOS;
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const timer = setInterval(() => setPromoIdx(i => (i + 1) % slides.length), 3500);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  const filteredRestaurants = restaurants.filter(r => {
+    const q = searchQuery.trim().toLowerCase();
+    const matchSearch = !q || r.name.toLowerCase().includes(q) || r.address?.toLowerCase().includes(q);
+    const matchCategory = selectedCategory === 'All' || (r.cuisine ?? []).includes(selectedCategory);
+    return matchSearch && matchCategory;
+  });
+
   return (
-    <div className="min-h-screen flex flex-col bg-surface">
-
-      {/* ── Gradient hero (no external image) ──────────── */}
-      <section
-        className="relative overflow-hidden flex flex-col"
-        style={{
-          background: 'linear-gradient(160deg, var(--color-primary) 0%, var(--color-primary-container) 55%, #1a0a05 100%)',
-          minHeight: '62vh',
-        }}
-      >
-        {/* Decorative blobs */}
-        <span className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/[0.06]" />
-        <span className="pointer-events-none absolute top-1/2 -left-20 w-56 h-56 rounded-full bg-black/[0.12]" />
-        <span className="pointer-events-none absolute -bottom-10 right-10 w-40 h-40 rounded-full bg-white/[0.04]" />
-
-        {/* Content */}
-        <div className="relative flex-1 flex flex-col items-center justify-between px-7 pt-16 pb-10 text-center">
-
-          {/* ── Brand identity ── */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 220, damping: 22 }}
-            className="flex flex-col items-center gap-4"
-          >
-            {/* Logo */}
-            <div className="w-24 h-24 rounded-3xl overflow-hidden ring-4 ring-white/20 shadow-2xl shadow-black/40">
-              {logo ? (
-                <img src={logo} alt={restaurantName} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                  <Utensils className="w-11 h-11 text-white" />
-                </div>
-              )}
-            </div>
-
-            {/* Name */}
-            {restaurantName && (
-              <div>
-                <p className="text-white/55 text-[11px] font-bold uppercase tracking-[0.16em]">
-                  {t('home.welcomeTo')}
-                </p>
-                <h1 className="text-white font-headline font-extrabold text-[1.65rem] leading-tight mt-0.5">
-                  {restaurantName}
-                </h1>
-              </div>
-            )}
-
-            {/* Tagline — whiteSpace:pre-line renders \n as line breaks, no split/map needed */}
-            <p
-              className="text-white/55 text-sm leading-relaxed max-w-[220px]"
-              style={{ whiteSpace: 'pre-line' }}
-            >
-              {t(`home.${taglineKey}`)}
-            </p>
-          </motion.div>
-
-          {/* ── Stats + CTAs ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.12, type: 'spring', stiffness: 220, damping: 22 }}
-            className="w-full max-w-sm flex flex-col items-center gap-5"
-          >
-            {/* Stats pills */}
-            {(stats.rating > 0) && (
-              <div className="flex items-center gap-2.5 flex-wrap justify-center">
-                <div className="flex items-center gap-1.5 bg-white/[0.14] backdrop-blur-sm rounded-full px-3.5 py-1.5">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span className="text-white font-bold text-[12px]">{stats.rating}</span>
-                  {stats.reviews > 0 && (
-                    <span className="text-white/50 text-[11px]">({stats.reviews})</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 bg-white/[0.14] backdrop-blur-sm rounded-full px-3.5 py-1.5">
-                  <Clock className="w-3.5 h-3.5 text-white/70" />
-                  <span className="text-white font-bold text-[12px]">{t('home.tableService')}</span>
-                </div>
-              </div>
-            )}
-
-            {/* CTA buttons */}
-            <div className="flex gap-3 w-full">
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={onStart}
-                className="flex-1 bg-white font-headline font-bold text-[15px] py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-2xl shadow-black/30"
-                style={{ color: 'var(--color-primary)' }}
-              >
-                <BookOpen className="w-4 h-4" />
-                {t('home.viewMenu')}
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={onReserve}
-                className="flex-1 bg-white/[0.15] backdrop-blur-md border border-white/25 text-white font-headline font-bold text-[15px] py-3.5 rounded-2xl flex items-center justify-center gap-2"
-              >
-                <CalendarDays className="w-4 h-4" />
-                {t('home.reserve')}
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── Curved transition ──────────────────────────── */}
-      <div className="h-6 -mt-6 bg-surface rounded-t-[28px] relative z-10" />
-
-      {/* ── Featured Dishes ──────────────────────────────── */}
-      <section className="px-6 -mt-2 pb-6 space-y-4 relative z-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-headline font-extrabold text-[1.2rem] text-on-surface">
-              {t('home.chefSelection')}
-            </h2>
-            <p className="text-on-surface-variant text-[11px] font-medium uppercase tracking-widest mt-0.5">
-              {t('home.seasonalFavourites')}
-            </p>
-          </div>
-          <button
-            onClick={onStart}
-            className="flex items-center gap-1 text-primary text-xs font-bold"
-          >
-            {t('home.exploreMenu')}
-            <ArrowRight className="w-3.5 h-3.5" />
+    <div className="bg-surface min-h-screen pb-4">
+      {/* Sticky Header */}
+      <div className="bg-surface px-5 pt-12 pb-4 sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <img src="/logo-dark.svg" alt="Menu QR" className="h-7 w-auto" />
+          <button className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center active:scale-90 transition-transform">
+            <Bell className="w-5 h-5 text-on-surface-variant" />
           </button>
         </div>
+        <div className="flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-3 text-on-surface-variant">
+          <Search className="w-4 h-4 shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={t('app.searchPlaceholder')}
+            className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="text-on-surface-variant text-xs font-bold">✕</button>
+          )}
+        </div>
+      </div>
 
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2].map(i => <Skeleton key={i} className="h-[130px] rounded-2xl" />)}
-          </div>
-        ) : featuredItems.length > 0 ? (
-          <div className="space-y-3">
-            {featuredItems.map((item, i) => (
-              <motion.button
-                key={item.id}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.07 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onStart}
-                className="w-full h-[130px] rounded-2xl overflow-hidden flex text-left relative"
-                style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+      <div className="px-5 pt-5 space-y-6">
+        {/* Promo Slider */}
+        <div>
+          <div className="relative overflow-hidden rounded-3xl" style={{ height: 148 }}>
+            <AnimatePresence initial={false} mode="wait">
+              <motion.div
+                key={promoIdx}
+                initial={{ opacity: 0, x: isRTL ? -40 : 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: isRTL ? 40 : -40 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -50) setPromoIdx(i => (i + 1) % slides.length);
+                  else if (info.offset.x > 50) setPromoIdx(i => (i - 1 + slides.length) % slides.length);
+                }}
+                className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary-container rounded-3xl px-6 py-5 flex items-center justify-between cursor-grab active:cursor-grabbing select-none overflow-hidden"
               >
-                {/* Image or gradient fallback */}
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-[110px] h-full object-cover shrink-0" />
-                ) : (
-                  <div className={`w-[110px] h-full bg-gradient-to-br ${DISH_GRADIENTS[i % DISH_GRADIENTS.length]} shrink-0 flex items-center justify-center`}>
-                    <ChefHat className="w-10 h-10 text-white/80" />
-                  </div>
-                )}
+                {/* Background decoration */}
+                <div className="absolute -top-6 -right-6 w-36 h-36 rounded-full bg-white/10" />
+                <div className="absolute -bottom-8 right-10 w-24 h-24 rounded-full bg-white/5" />
 
-                {/* Info */}
-                <div className="flex-1 bg-surface-container-low px-4 py-4 flex flex-col justify-between min-w-0">
-                  <div>
-                    <div className="flex items-center gap-1 mb-1">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      <span className="text-amber-500 text-[10px] font-bold uppercase tracking-widest">
-                        {t('home.featured')}
-                      </span>
-                    </div>
-                    <h3 className="font-headline font-bold text-on-surface text-[15px] leading-tight line-clamp-2">
-                      {item.name}
-                    </h3>
-                    <p className="text-on-surface-variant text-[11px] mt-1 line-clamp-1">
-                      {item.description}
-                    </p>
-                  </div>
+                {/* Text */}
+                <div className="relative z-10 flex-1 min-w-0 pr-4">
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-widest bg-white/20 text-white px-2.5 py-1 rounded-full mb-2">
+                    {`${promoIdx + 1} / ${slides.length}`}
+                  </span>
+                  <p className="text-2xl font-extrabold text-white leading-tight">{slides[promoIdx].title}</p>
+                  {slides[promoIdx].subtitle && (
+                    <p className="text-sm text-white/75 mt-1 leading-snug">{slides[promoIdx].subtitle}</p>
+                  )}
+                </div>
 
+                {/* Emoji bubble */}
+                <div className="relative z-10 w-20 h-20 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                  <span className="text-4xl">{slides[promoIdx].emoji}</span>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Dot indicators */}
+          {slides.length > 1 && (
+            <div className="flex justify-center gap-1.5 mt-3">
+              {slides.map((_, i) => (
+                <button key={i} onClick={() => setPromoIdx(i)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${i === promoIdx ? 'w-6 bg-primary' : 'w-1.5 bg-surface-container-high'}`} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Food Categories */}
+        <div>
+          <h2 className="text-base font-extrabold mb-3">{t('app.craving')}</h2>
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {FOOD_CATEGORIES.map(cat => {
+              const count = cat.key === 'All'
+                ? restaurants.length
+                : restaurants.filter(r => (r.cuisine ?? []).includes(cat.key)).length;
+              const active = selectedCategory === cat.key;
+              if (cat.key !== 'All' && count === 0) return null;
+              return (
+                <motion.button
+                  key={cat.key}
+                  onClick={() => setSelectedCategory(cat.key)}
+                  whileTap={{ scale: 0.92 }}
+                  className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl transition-colors ${
+                    active
+                      ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                      : 'bg-surface-container text-on-surface-variant'
+                  }`}
+                >
+                  <span className="text-2xl leading-none">{cat.emoji}</span>
+                  <span className="text-[10px] font-extrabold tracking-wide leading-none">{t(`home.categories.${cat.key}`, { defaultValue: cat.key })}</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                    active ? 'bg-white/20 text-white' : 'bg-surface-container-high text-on-surface-variant'
+                  }`}>
+                    {count}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Recent Orders */}
+        {recentOrders.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-extrabold">{t('app.recentOrders')}</h2>
+              <button onClick={onViewAllOrders} className="text-xs text-primary font-bold flex items-center gap-0.5">
+                {t('app.viewAll')} <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+              {recentOrders.map(order => (
+                <motion.button key={order._id} whileTap={{ scale: 0.96 }}
+                  onClick={() => onOpenTracking(order._id)}
+                  className="flex-shrink-0 w-44 bg-surface-container rounded-2xl p-3.5 text-start">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase">#{order._id?.slice(-4).toUpperCase()}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      order.status === 'Delivered' ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-on-surface-variant'
+                    }`}>{t(`status.${order.status}`, { defaultValue: order.status })}</span>
+                  </div>
+                  <p className="text-xs font-bold truncate">{order.items?.slice(0,2).map((i: any) => i.name).join(', ')}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="font-headline font-extrabold text-primary text-[15px]">
-                      ${item.price.toFixed(2)}
-                    </span>
-                    <div className="flex items-center gap-1 bg-primary/10 rounded-full px-2.5 py-1">
-                      <span className="text-primary text-[10px] font-bold">{t('home.order')}</span>
-                      <ArrowRight className="w-3 h-3 text-primary" />
+                    <span className="text-sm font-extrabold text-primary">{fmt(order.total ?? 0)}</span>
+                    <div className="flex items-center gap-1 text-on-surface-variant">
+                      <RefreshCw className="w-3 h-3" /><span className="text-[10px] font-bold">{t('app.reorder')}</span>
                     </div>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Restaurants */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-extrabold">{t('app.nearYou')}</h2>
+            <span className="text-xs text-on-surface-variant">{filteredRestaurants.length} {t('app.available')}</span>
+          </div>
+
+          {loading ? (
+            <div className="space-y-3">
+              {[1,2,3].map(i => (
+                <div key={i} className="bg-surface-container rounded-2xl h-28 animate-pulse flex gap-4 p-4">
+                  <div className="w-20 h-20 rounded-2xl bg-surface-container-high shrink-0" />
+                  <div className="flex-1 space-y-2 pt-1">
+                    <div className="h-3 bg-surface-container-high rounded-full w-2/3" />
+                    <div className="h-2.5 bg-surface-container-high rounded-full w-1/2" />
+                    <div className="h-2 bg-surface-container-high rounded-full w-1/3" />
                   </div>
                 </div>
-              </motion.button>
-            ))}
-          </div>
-        ) : (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            onClick={onStart}
-            className="w-full py-5 bg-surface-container-low rounded-2xl flex items-center justify-center gap-2"
-          >
-            <ChefHat className="w-5 h-5 text-primary" />
-            <span className="text-primary font-headline font-bold text-sm">{t('home.exploreMenu')}</span>
-            <ArrowRight className="w-4 h-4 text-primary" />
-          </motion.button>
-        )}
-      </section>
-
-      {/* ── Promise strip ───────────────────────────────── */}
-      <section className="mx-6 mb-8 bg-surface-container-low rounded-2xl p-5 relative z-10">
-        <h3 className="font-headline font-extrabold text-[16px] text-on-surface mb-0.5">
-          {t('home.ourPromise')}
-        </h3>
-        <p className="text-on-surface-variant text-[12px] leading-relaxed mb-5">
-          {t('home.promiseDesc')}
-        </p>
-        <div className="grid grid-cols-3 gap-3 border-t border-outline-variant/20 pt-4">
-          {([
-            { val: t('home.orgValue'),   label: t('home.organic') },
-            { val: t('home.srcValue'),   label: t('home.sourced') },
-            { val: t('home.freshValue'), label: t('home.fresh')   },
-          ] as const).map(({ val, label }) => (
-            <div key={label} className="text-center">
-              <p className="font-headline font-extrabold text-primary text-lg">{val}</p>
-              <p className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest mt-0.5">
-                {label}
-              </p>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          ) : filteredRestaurants.length === 0 ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16 text-on-surface-variant">
+              <p className="text-5xl mb-4">🍽️</p>
+              <p className="text-sm font-medium">{searchQuery || selectedCategory !== 'All' ? t('restaurants.noFound') : t('app.noRestaurants')}</p>
+              {selectedCategory !== 'All' && (
+                <button onClick={() => setSelectedCategory('All')} className="mt-3 text-xs text-primary font-bold">
+                  {t('app.clearFilter')}
+                </button>
+              )}
+            </motion.div>
+          ) : (
+            <div className="space-y-3">
+              <AnimatePresence mode="popLayout">
+                {filteredRestaurants.map((r, idx) => (
+                    <motion.button
+                      key={r._id}
+                      layout
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      transition={{ delay: idx * 0.03, duration: 0.2 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => r.isOpen && onOpenRestaurant(r._id, r.name, r.logo)}
+                      className={`w-full bg-surface-container rounded-2xl overflow-hidden text-start flex items-center gap-4 p-4 ${!r.isOpen ? 'opacity-50' : ''}`}
+                    >
+                      {/* Logo */}
+                      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-surface-container-high shrink-0 flex items-center justify-center">
+                        <RestaurantLogo logo={r.logo} name={r.name} />
+                      </div>
 
-      {/* ── Footer ──────────────────────────────────────── */}
-      <footer className="pb-36 pt-2 text-center">
-        <p className="text-[10px] font-bold text-on-surface-variant/25 uppercase tracking-[0.18em]">
-          © {new Date().getFullYear()} {restaurantName ?? 'Restaurant'}
-        </p>
-      </footer>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <p className="font-extrabold text-sm leading-tight truncate">{r.name}</p>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${r.isOpen ? 'bg-primary/15 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
+                            {r.isOpen ? t('common.open') : t('common.closed')}
+                          </span>
+                        </div>
+
+                        {r.address && (
+                          <div className="flex items-center gap-1 mb-1.5">
+                            <MapPin className="w-3 h-3 text-on-surface-variant shrink-0" />
+                            <p className="text-xs text-on-surface-variant truncate">{r.address}</p>
+                          </div>
+                        )}
+
+                        {/* Cuisine tags */}
+                        {r.cuisine?.length > 0 && (
+                          <div className="flex gap-1 flex-wrap mb-1.5">
+                            {r.cuisine.slice(0, 3).map(c => (
+                              <span key={c} className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant">
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-3">
+                          {r.averageRating > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3 h-3 text-primary fill-primary" />
+                              <span className="text-xs font-extrabold">{r.averageRating}</span>
+                            </div>
+                          )}
+                          {r.prepTime && (
+                          <div className="flex items-center gap-1 text-on-surface-variant">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-xs">{r.prepTime} {t('common.min')}</span>
+                          </div>
+                        )}
+                        {r.openTime && r.closeTime && (
+                          <span className="text-xs text-on-surface-variant">{r.openTime} – {r.closeTime}</span>
+                        )}
+                        </div>
+                      </div>
+
+                      <ChevronRight className={`w-4 h-4 text-on-surface-variant/30 shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
+                    </motion.button>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

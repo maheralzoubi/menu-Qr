@@ -1,7 +1,47 @@
 {
   "login": {
     "title": "صلاحية الإدارة",
-    "subtitle": "سجّل دخولك لإدارة مطعمك"
+    "subtitle": "سجّل دخولك لإدارة مطعمك",
+    "emailLabel": "البريد الإلكتروني",
+    "passwordLabel": "كلمة المرور",
+    "signIn": "تسجيل الدخول",
+    "signingIn": "جارٍ تسجيل الدخول...",
+    "errors": {
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+      "restaurantInactive": "حساب المطعم غير نشط. يرجى التواصل مع مالك المنصة.",
+      "accountLocked": "تم قفل حسابك. يرجى التواصل مع الدعم.",
+      "validation": "يرجى التحقق من البريد الإلكتروني وكلمة المرور والمحاولة مرة أخرى.",
+      "network": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+      "generic": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+      "emailNotVerified": "يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول.",
+      "wrongApp": "هذا الحساب ليس حساب موظف مطعم. يرجى تسجيل الدخول من لوحة المالك بدلاً من ذلك."
+    },
+    "resendVerification": "إعادة إرسال رسالة التأكيد",
+    "resendSent": "تم إرسال رابط تأكيد جديد إلى بريدك الإلكتروني."
+  },
+  "forgotPassword": {
+    "link": "هل نسيت كلمة المرور؟",
+    "heading": "إعادة تعيين كلمة المرور",
+    "emailSubtext": "أدخل بريدك الإلكتروني وسنرسل لك رمز إعادة التعيين.",
+    "sendCodeButton": "إرسال رمز إعادة التعيين",
+    "codeSubtext": "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى {{email}}",
+    "newPasswordLabel": "كلمة المرور الجديدة",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "resetButton": "إعادة تعيين كلمة المرور",
+    "resendButton": "إعادة إرسال الرمز",
+    "resendSent": "تم إرسال رمز جديد إلى بريدك الإلكتروني.",
+    "doneHeading": "تمت إعادة تعيين كلمة المرور.",
+    "doneBody": "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.",
+    "backToSignIn": "العودة إلى تسجيل الدخول",
+    "errors": {
+      "invalidCode": "رمز غير صحيح. يرجى المحاولة مرة أخرى.",
+      "expiredCode": "انتهت صلاحية هذا الرمز. يرجى طلب رمز جديد.",
+      "tooManyAttempts": "عدد كبير جداً من المحاولات الخاطئة. يرجى طلب رمز جديد.",
+      "weakPassword": "يجب أن تكون كلمة المرور 6 أحرف على الأقل.",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+      "emailNotFound": "لم يتم العثور على حساب بهذا البريد الإلكتروني.",
+      "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    }
   },
   "dashboard": {
     "adminPanel": "لوحة الإدارة",
@@ -15,13 +55,17 @@
       "analytics": "التحليلات",
       "qr": "QR للطاولة",
       "promos": "رموز الخصم",
+      "cashier": "الكاشير / نقطة البيع",
       "settings": "الإعدادات"
     },
     "logout": "تسجيل الخروج",
     "headerTitle": "لوحة التحكم",
     "desktopOnly": "لأجهزة سطح المكتب فقط",
     "desktopOnlyMsg": "لوحة تحكم الإدارة مُحسَّنة لأجهزة سطح المكتب والأجهزة اللوحية.",
-    "backToApp": "العودة إلى التطبيق"
+    "backToApp": "العودة إلى التطبيق",
+    "defaultName": "المدير",
+    "defaultTitle": "مدير",
+    "profileAlt": "الملف الشخصي"
   },
   "stats": {
     "heading": "لوحة الإحصاءات",
@@ -70,9 +114,27 @@
     "preparing": "قيد الإعداد",
     "ready": "جاهز",
     "delivered": "تم التسليم",
+    "cancelled": "ملغي",
+    "sourceLabel": {
+      "CASHIER_POS": "POS",
+      "QR_CODE": "QR",
+      "CUSTOMER_APP": "تطبيق"
+    },
+    "paymentStatus": {
+      "PAID": "مدفوع",
+      "UNPAID": "غير مدفوع",
+      "PENDING_CASH": "بانتظار الدفع نقداً",
+      "PENDING_CARD_PAYMENT": "بانتظار الدفع بالبطاقة",
+      "PENDING_CLIQ_VERIFICATION": "بانتظار تحقق كليك",
+      "REFUNDED": "مسترد"
+    },
+    "archivedSuccess_one": "تمت أرشفة {{count}} طلب.",
+    "archivedSuccess_other": "تمت أرشفة {{count}} طلب.",
+    "archiveFailed": "فشلت الأرشفة. حاول مرة أخرى.",
     "detailHeading": "تفاصيل الطلب",
     "guestInfo": "معلومات الضيف",
     "orderItems": "عناصر الطلب",
+    "orderNote": "تعليمات المطبخ",
     "subtotal": "المجموع الجزئي",
     "total": "الإجمالي",
     "prepare": "إعداد",
@@ -83,6 +145,7 @@
     "table": "الطاولة",
     "customer": "العميل",
     "items": "العناصر",
+    "total": "الإجمالي",
     "guest": "ضيف",
     "toastNew": "طلب جديد #{{ref}}{{table}} وصل للتو!",
     "toastNewTable": " — طاولة {{table}}",
@@ -123,7 +186,8 @@
     "tableLabel": "الطاولة",
     "customerLabel": "العميل",
     "itemsLabel": "العناصر",
-    "totalLabel": "الإجمالي"
+    "totalLabel": "الإجمالي",
+    "statusLabel": "الحالة"
   },
   "menu": {
     "breadcrumbMenu": "القائمة",
@@ -214,7 +278,14 @@
     "usesWithMax": "{{count}}/{{max}} استخدام",
     "expires": "ينتهي {{date}}",
     "deactivate": "تعطيل",
-    "activate": "تفعيل"
+    "activate": "تفعيل",
+    "errors": {
+      "required": "الكود وقيمة الخصم مطلوبان",
+      "positiveNumber": "يجب أن تكون قيمة الخصم رقماً موجباً",
+      "percentageMax": "لا يمكن أن تتجاوز نسبة الخصم 100",
+      "createFailed": "فشل إنشاء رمز الخصم",
+      "network": "خطأ في الشبكة"
+    }
   },
   "reservations": {
     "heading": "الحجوزات",
@@ -321,14 +392,100 @@
     "useBrandLogo": "استخدام شعار المطعم",
     "uploadCustomLogo": "رفع مخصص",
     "removeLogo": "إزالة",
-    "presets": "إعدادات مسبقة"
+    "presets": "إعدادات مسبقة",
+    "presetNames": {
+      "Classic": "كلاسيكي",
+      "Noir": "أسود",
+      "Slate": "رمادي أردوازي",
+      "Forest": "أخضر غابي",
+      "Berry": "توتي",
+      "Ocean": "محيطي"
+    },
+    "logoSet": "تم ضبط الشعار",
+    "uploading": "جاري الرفع...",
+    "altQrFor": "رمز QR لـ {{table}}",
+    "altPreview": "معاينة QR",
+    "altLogo": "الشعار",
+    "altBrandLogo": "شعار المطعم"
+  },
+  "pos": {
+    "searchPlaceholder": "بحث في القائمة...",
+    "itemNotePlaceholder": "ملاحظة الصنف...",
+    "orderNotePlaceholder": "ملاحظة الطلب...",
+    "orderTypes": {
+      "dineIn": "بالمطعم",
+      "takeaway": "تيك أواي",
+      "pickup": "استلام",
+      "delivery": "توصيل"
+    },
+    "paymentMethods": {
+      "cash": "نقدي",
+      "card": "بطاقة",
+      "cliq": "كليك",
+      "unpaid": "غير مدفوع",
+      "payLater": "الدفع لاحقاً"
+    },
+    "categoryItemCount": "{{count}} عنصر",
+    "noProducts": "لم يتم العثور على منتجات",
+    "cart": "السلة",
+    "clear": "مسح",
+    "emptyCartHint": "اضغط على أي منتج لإضافته إلى السلة",
+    "selectTableOption": "— اختر طاولة *",
+    "discountModes": {
+      "code": "كود",
+      "percentage": "%",
+      "fixed": "ثابت"
+    },
+    "promoCodePlaceholder": "كود الخصم",
+    "percentagePlaceholder": "مثال: 10",
+    "fixedPlaceholder": "مثال: 5.00",
+    "apply": "تطبيق",
+    "applied": "تم التطبيق — وفّر {{amount}}",
+    "subtotal": "المجموع الجزئي",
+    "discount": "الخصم",
+    "total": "الإجمالي",
+    "creating": "جاري الإنشاء...",
+    "createOrder": "إنشاء الطلب · {{total}}",
+    "loading": "جاري تحميل نقطة البيع...",
+    "errors": {
+      "invalidPromo": "كود غير صالح أو منتهي",
+      "promoNetworkError": "خطأ في الشبكة. حاول مرة أخرى.",
+      "emptyCart": "أضف عنصراً واحداً على الأقل إلى السلة",
+      "selectTable": "يرجى اختيار طاولة لطلبات تناول الطعام بالمطعم",
+      "createFailed": "فشل إنشاء الطلب",
+      "createNetworkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى."
+    },
+    "receipt": {
+      "orderCreated": "تم إنشاء الطلب!",
+      "tableTag": "طاولة {{number}}",
+      "byTag": "بواسطة {{name}}",
+      "print": "طباعة",
+      "newOrder": "طلب جديد"
+    },
+    "invoice": {
+      "title": "فاتورة",
+      "item": "الصنف",
+      "qty": "الكمية",
+      "price": "السعر",
+      "total": "الإجمالي",
+      "subtotal": "المجموع الجزئي",
+      "discount": "الخصم",
+      "payment": "الدفع:",
+      "orderType": "نوع الطلب:",
+      "table": "الطاولة:",
+      "cashier": "الكاشير:",
+      "thankYou": "شكراً لزيارتكم!",
+      "restaurantFallback": "مطعم"
+    }
   },
   "settings": {
     "heading": "الإعدادات",
     "subtext": "اضبط تفضيلات مساحة العمل.",
     "sections": {
       "profile":       { "label": "إعدادات الملف الشخصي", "desc": "أدر معلوماتك الشخصية." },
+      "restaurant":    { "label": "معلومات المطعم",        "desc": "الاسم والعنوان وبيانات التواصل." },
       "branding":      { "label": "هوية المطعم",           "desc": "الشعار ولون التمييز للعملاء." },
+      "hours":         { "label": "ساعات العمل",           "desc": "أوقات الفتح والإغلاق ووقت التحضير." },
       "notifications": { "label": "الإشعارات",             "desc": "اضبط التنبيهات والتحديثات." },
       "security":      { "label": "الأمان",                "desc": "كلمة المرور وأمان الحساب." },
       "preferences":   { "label": "التفضيلات",             "desc": "إعدادات اللغة والعرض." }
@@ -377,7 +534,58 @@
       "saving": "جاري الحفظ...",
       "saved": "تم حفظ الهوية!",
       "saveFailed": "فشل الحفظ. حاول مجدداً.",
-      "networkError": "خطأ في الشبكة."
+      "networkError": "خطأ في الشبكة.",
+      "colorPickerTitle": "فتح منتقي الألوان",
+      "resetTitle": "إعادة التعيين إلى الافتراضي",
+      "reset": "إعادة تعيين"
+    },
+    "restaurantInfo": {
+      "heading": "معلومات المطعم",
+      "subtext": "عدّل التفاصيل العامة المعروضة للعملاء.",
+      "fields": {
+        "name": "اسم المطعم",
+        "address": "العنوان",
+        "contactEmail": "بريد التواصل الإلكتروني",
+        "contactPhone": "رقم الهاتف"
+      },
+      "placeholders": {
+        "name": "مطبخ ذا آرتيزان",
+        "address": "شارع الملك عبدالله، المدينة",
+        "contactEmail": "contact@restaurant.com",
+        "contactPhone": "+962 7 0000 0000"
+      },
+      "currency": "العملة",
+      "currencies": {
+        "USD": "دولار أمريكي",
+        "JOD": "دينار أردني",
+        "SAR": "ريال سعودي",
+        "AED": "درهم إماراتي",
+        "EUR": "يورو",
+        "GBP": "جنيه إسترليني"
+      },
+      "saved": "تم الحفظ!",
+      "saveFailed": "فشل الحفظ.",
+      "networkError": "خطأ في الشبكة.",
+      "saveChanges": "حفظ التغييرات",
+      "saving": "جاري الحفظ..."
+    },
+    "hours": {
+      "heading": "ساعات العمل",
+      "subtext": "اضبط أوقات الفتح ومتوسط وقت التحضير المعروض للعملاء.",
+      "opensAt": "وقت الفتح",
+      "closesAt": "وقت الإغلاق",
+      "timezone": "المنطقة الزمنية",
+      "timezonePlaceholder": "مثال: Asia/Amman",
+      "timezoneHint": "المنطقة الزمنية (IANA) — تُستخدم لتحديد حالة الفتح/الإغلاق. الحالية: ",
+      "prepTime": "وقت التحضير (يظهر للعملاء)",
+      "prepTimePlaceholder": "مثال: 15–25",
+      "prepTimeHint": "يظهر كـ \"15–25 دقيقة\" في تطبيق العملاء.",
+      "openStatus": "مفتوح {{open}} – {{close}}",
+      "saved": "تم الحفظ!",
+      "saveFailed": "فشل الحفظ.",
+      "networkError": "خطأ في الشبكة.",
+      "saveHours": "حفظ ساعات العمل",
+      "saving": "جاري الحفظ..."
     },
     "comingSoon": "قريباً",
     "comingSoonMsg": "سيكون هذا القسم متاحاً في تحديث مستقبلي.",

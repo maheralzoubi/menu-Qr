@@ -8,31 +8,91 @@ import { useTranslation } from 'react-i18next';
 import { io } from 'socket.io-client';
 import { authFetch } from '../../src/lib/auth';
 import { OrderArchive } from './OrderArchive';
+import { formatCurrency } from '../../src/lib/currency';
+import { pushNavParam, goBack } from '../lib/navHistory';
 
-interface CartItem { id: string; name: string; price: number; image: string; quantity: number; }
+interface CartItem { id: string; name: string; price: number; image: string; quantity: number; note?: string; }
 interface Order {
   _id: string; items: CartItem[]; total: number; status: string;
   customerName?: string; address?: string; tableNumber?: string; createdAt: string;
+  order_source?: string; payment_status?: string; payment_method?: string; cashier_name?: string;
+  order_note?: string;
 }
+
+const SOURCE_LABEL_KEY: Record<string, string> = { CASHIER_POS: 'CASHIER_POS', QR_CODE: 'QR_CODE', CUSTOMER_APP: 'CUSTOMER_APP' };
+const STATUS_LABEL_KEY: Record<string, string> = { Pending: 'pending', Preparing: 'preparing', Ready: 'ready', Delivered: 'delivered', Cancelled: 'cancelled' };
+const SOURCE_COLOR: Record<string, string> = {
+  CASHIER_POS: 'bg-[#303942] text-white',
+  QR_CODE:     'bg-primary/10 text-primary',
+  CUSTOMER_APP:'bg-[#303942]/10 text-[#303942]',
+};
+const PAYMENT_COLOR: Record<string, string> = {
+  PAID:                       'bg-primary/10 text-primary',
+  UNPAID:                     'bg-[#303942]/10 text-[#303942]',
+  PENDING_CASH:               'bg-primary/10 text-primary',
+  PENDING_CARD_PAYMENT:       'bg-primary/15 text-primary',
+  PENDING_CLIQ_VERIFICATION:  'bg-primary/20 text-primary',
+  REFUNDED:                   'bg-[#303942]/10 text-[#303942]',
+};
 
 type OrderView = 'feed' | 'kds' | 'archive';
 interface Toast { id: number; type: 'new' | 'preparing' | 'delivered'; orderRef: string; table?: string; }
+
+function parseOrderNav(search: string): { view: OrderView; orderId: string | null } {
+  const params = new URLSearchParams(search);
+  const rawView = params.get('orderView');
+  const view: OrderView = rawView === 'kds' || rawView === 'archive' ? rawView : 'feed';
+  return { view, orderId: params.get('orderId') };
+}
 
 export const OrderManager = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
-  const [view, setView] = useState<OrderView>('feed');
+  const sourceLabel = (source?: string) => (source && SOURCE_LABEL_KEY[source]) ? t(`orders.sourceLabel.${SOURCE_LABEL_KEY[source]}`) : source;
+  const statusLabel = (status: string) => STATUS_LABEL_KEY[status] ? t(`orders.${STATUS_LABEL_KEY[status]}`) : status;
+  const paymentStatusLabel = (ps?: string) => ps ? t(`orders.paymentStatus.${ps}`, { defaultValue: ps.replace(/_/g, ' ') }) : ps;
+
+  const [view, setView] = useState<OrderView>(() => parseOrderNav(window.location.search).view);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
   const [archiving, setArchiving] = useState(false);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [archiveMsg, setArchiveMsg] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
+  const [currency, setCurrency] = useState('USD');
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(() => parseOrderNav(window.location.search).orderId);
+  const selectedOrder = orders.find(o => o._id === selectedOrderId) ?? null;
   const [searchQuery, setSearchQuery] = useState('');
   const [tableFilter, setTableFilter] = useState<string>('all');
+
+  useEffect(() => {
+    const onPopState = () => {
+      const next = parseOrderNav(window.location.search);
+      setView(next.view);
+      setSelectedOrderId(next.orderId);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // Entering a sub-view/detail pushes a real history entry so the browser
+  // back button steps out of it instead of leaving the app; closing it
+  // (backToFeed/closeOrder) undoes that via a normal back navigation.
+  const enterView = useCallback((v: OrderView) => {
+    setView(v);
+    pushNavParam('orderView', v);
+  }, []);
+
+  const backToFeed = useCallback(() => { goBack(); }, []);
+
+  const selectOrder = useCallback((id: string) => {
+    setSelectedOrderId(id);
+    pushNavParam('orderId', id);
+  }, []);
+
+  const closeOrder = useCallback(() => { goBack(); }, []);
 
   const tableNames = ['all', ...Array.from(new Set(orders.map(o => o.tableNumber).filter(Boolean) as string[]))].sort();
 
@@ -44,8 +104,12 @@ export const OrderManager = () => {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await authFetch('/api/orders');
-      if (res.ok) setOrders(await res.json());
+      const [ordersRes, settingsRes] = await Promise.all([
+        authFetch('/api/orders'),
+        authFetch('/api/settings/restaurant'),
+      ]);
+      if (ordersRes.ok) setOrders(await ordersRes.json());
+      if (settingsRes.ok) { const s = await settingsRes.json(); if (s.currency) setCurrency(s.currency); }
     } catch (error) { console.error('Failed to fetch orders:', error); }
     finally { setIsLoading(false); }
   }, []);
@@ -57,7 +121,6 @@ export const OrderManager = () => {
     socket.on('order:new', (order: Order) => { setOrders(prev => [order, ...prev]); pushToast('new', order._id.slice(-4).toUpperCase(), order.tableNumber); });
     socket.on('order:status', ({ id, status }: { id: string; status: string }) => {
       setOrders(prev => prev.map(o => o._id === id ? { ...o, status } : o));
-      setSelectedOrder(prev => prev?._id === id ? { ...prev, status } : prev);
     });
     return () => { socket.disconnect(); };
   }, [fetchOrders]);
@@ -75,8 +138,8 @@ export const OrderManager = () => {
     setArchiving(true); setArchiveMsg('');
     try {
       const res = await authFetch('/api/orders/archive-today', { method: 'POST' });
-      if (res.ok) { const { archived } = await res.json(); setArchiveMsg(`${archived} order${archived !== 1 ? 's' : ''} archived.`); await fetchOrders(); }
-    } catch { setArchiveMsg('Failed to archive. Try again.'); }
+      if (res.ok) { const { archived } = await res.json(); setArchiveMsg(t('orders.archivedSuccess', { count: archived })); await fetchOrders(); }
+    } catch { setArchiveMsg(t('orders.archiveFailed')); }
     finally { setArchiving(false); setArchiveConfirm(false); setTimeout(() => setArchiveMsg(''), 4000); }
   };
 
@@ -93,7 +156,7 @@ export const OrderManager = () => {
   const pendingOrders  = orders.filter(o => o.status === 'Pending');
   const dismissToast   = (id: number) => setToasts(prev => prev.filter(t => t.id !== id));
 
-  if (view === 'archive') return <OrderArchive onBack={() => setView('feed')} />;
+  if (view === 'archive') return <OrderArchive onBack={backToFeed} />;
 
   if (view === 'kds') {
     return (
@@ -109,7 +172,7 @@ export const OrderManager = () => {
                 <ChefHat className="w-4 h-4 text-primary" />
                 <span>{t('orders.preparingCount', { count: preparingOrders.length })}</span>
               </div>
-              <button onClick={() => setView('feed')}
+              <button onClick={backToFeed}
                 className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
                 {t('orders.backToFeed')}
               </button>
@@ -119,7 +182,7 @@ export const OrderManager = () => {
             {activeOrders.map((order, i) => (
               <motion.div key={order._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 className={`flex flex-col bg-surface-container-low rounded-3xl border-s-8 overflow-hidden shadow-sm ${
-                  order.status === 'Preparing' ? 'border-primary' : 'border-amber-400'
+                  order.status === 'Preparing' ? 'border-primary' : 'border-[#303942]'
                 }`}>
                 <div className="p-5 border-b border-outline-variant/20 flex justify-between items-center">
                   <div>
@@ -131,7 +194,8 @@ export const OrderManager = () => {
                       <Timer className="w-3 h-3" />
                       <span>{Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000)}m</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">{order.status}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">{statusLabel(order.status)}</span>
+                    {order.order_source && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${SOURCE_COLOR[order.order_source] ?? 'bg-gray-100 text-gray-600'}`}>{sourceLabel(order.order_source)}</span>}
                   </div>
                 </div>
                 <div className="p-5 flex-1 space-y-4 overflow-y-auto no-scrollbar">
@@ -183,16 +247,16 @@ export const OrderManager = () => {
               className="bg-surface-container-high border-none rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none">
               {tableNames.map(tb => <option key={tb} value={tb}>{tb === 'all' ? t('orders.allTables') : tb}</option>)}
             </select>
-            <button onClick={() => setView('kds')}
+            <button onClick={() => enterView('kds')}
               className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <ChefHat className="w-4 h-4" /> {t('orders.kdsView')}
             </button>
-            <button onClick={() => setView('archive')}
+            <button onClick={() => enterView('archive')}
               className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <Archive className="w-4 h-4" /> {t('orders.archive')}
             </button>
             <button onClick={() => setArchiveConfirm(true)} disabled={orders.length === 0}
-              className="flex items-center gap-2 px-6 py-3 bg-amber-500/10 text-amber-700 rounded-xl font-bold text-sm hover:bg-amber-500/20 disabled:opacity-30 transition-all">
+              className="flex items-center gap-2 px-6 py-3 bg-primary/10 text-primary rounded-xl font-bold text-sm hover:bg-primary/20 disabled:opacity-30 transition-all">
               <Archive className="w-4 h-4" /> {t('orders.archiveDay')}
             </button>
           </div>
@@ -201,13 +265,13 @@ export const OrderManager = () => {
         <AnimatePresence>
           {archiveConfirm && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              className="flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4">
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-              <p className="flex-1 text-sm font-medium text-amber-800">
+              className="flex items-center gap-4 bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4">
+              <AlertTriangle className="w-5 h-5 text-primary shrink-0" />
+              <p className="flex-1 text-sm font-medium text-on-surface">
                 {t('orders.archiveConfirmPrefix')} <strong>{orders.length}</strong> {t('orders.archiveConfirmSuffix')}
               </p>
               <button onClick={handleArchiveToday} disabled={archiving}
-                className="px-5 py-2 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 disabled:opacity-50 transition-colors">
+                className="px-5 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-container disabled:opacity-50 transition-colors">
                 {archiving ? t('orders.archiving') : t('orders.confirm')}
               </button>
               <button onClick={() => setArchiveConfirm(false)}
@@ -218,7 +282,7 @@ export const OrderManager = () => {
           )}
           {archiveMsg && !archiveConfirm && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-3 text-emerald-700 font-medium text-sm">
+              className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-2xl px-6 py-3 text-primary font-medium text-sm">
               <CheckCircle2 className="w-4 h-4" />{archiveMsg}
             </motion.div>
           )}
@@ -226,9 +290,9 @@ export const OrderManager = () => {
 
         <div className="grid grid-cols-3 gap-6">
           {[
-            { labelKey: 'orders.pending',   count: pendingOrders.length,                          color: 'bg-amber-400' },
+            { labelKey: 'orders.pending',   count: pendingOrders.length,                          color: 'bg-primary' },
             { labelKey: 'orders.preparing', count: preparingOrders.length,                        color: 'bg-primary' },
-            { labelKey: 'orders.ready',     count: orders.filter(o => o.status === 'Ready').length, color: 'bg-emerald-500' },
+            { labelKey: 'orders.ready',     count: orders.filter(o => o.status === 'Ready').length, color: 'bg-[#303942]' },
           ].map(stat => (
             <div key={stat.labelKey} className="bg-surface-container-low p-6 rounded-3xl flex items-center justify-between shadow-sm border border-outline-variant/10">
               <div>
@@ -246,32 +310,64 @@ export const OrderManager = () => {
           <AnimatePresence mode="popLayout">
             {filteredOrders.map((order, i) => (
               <motion.div key={order._id} layout initial={{ opacity: 0, x: isRTL ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                onClick={() => setSelectedOrder(order)}
+                onClick={() => selectOrder(order._id)}
                 className={`group flex items-center p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
                   selectedOrder?._id === order._id ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
                 }`}>
-                <div className="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center shrink-0 me-6 group-hover:scale-110 transition-transform">
-                  <Package className={`w-6 h-6 ${order.status === 'Delivered' ? 'text-emerald-500' : order.status === 'Preparing' ? 'text-primary' : 'text-amber-500'}`} />
+                {/* Source icon */}
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 me-5 group-hover:scale-110 transition-transform text-white text-[10px] font-extrabold tracking-wide ${
+                  order.order_source === 'CASHIER_POS' ? 'bg-[#303942]' : order.order_source === 'QR_CODE' ? 'bg-primary' : 'bg-primary/70'
+                }`}>
+                  {order.order_source ? sourceLabel(order.order_source) : <Package className="w-5 h-5" />}
                 </div>
-                <div className="flex-1 grid grid-cols-5 gap-4">
-                  {[
-                    { labelKey: 'orders.orderId',  val: `#${order._id.slice(-6).toUpperCase()}`, mono: true },
-                    { labelKey: 'orders.table',    val: order.tableNumber || '—' },
-                    { labelKey: 'orders.customer', val: order.customerName || t('orders.guest'), truncate: true },
-                    { labelKey: 'orders.items',    val: `${order.items.length} ${t('orders.items')}` },
-                    { labelKey: 'orders.table',    val: `$${order.total.toFixed(2)}`, primary: true },
-                  ].map((col, ci) => (
-                    <div key={ci}>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t(col.labelKey)}</p>
-                      <p className={`font-bold text-sm ${col.mono ? 'font-mono' : ''} ${col.truncate ? 'truncate' : ''} ${col.primary ? 'text-primary' : ''}`}>{col.val}</p>
-                    </div>
-                  ))}
+
+                <div className="flex-1 grid grid-cols-5 gap-4 min-w-0">
+                  {/* Order ID */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.orderId')}</p>
+                    <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
+                  </div>
+
+                  {/* Table */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.table')}</p>
+                    <p className="font-bold text-sm">{order.tableNumber || '—'}</p>
+                  </div>
+
+                  {/* Customer */}
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.customer')}</p>
+                    <p className="font-bold text-sm truncate">{order.customerName || t('orders.guest')}</p>
+                  </div>
+
+                  {/* Items */}
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.items')}</p>
+                    <p className="font-semibold text-sm truncate text-on-surface-variant">
+                      {order.items.slice(0, 2).map(i => i.name).join(', ')}
+                      {order.items.length > 2 && ` +${order.items.length - 2}`}
+                    </p>
+                  </div>
+
+                  {/* Total */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.total')}</p>
+                    <p className="font-extrabold text-sm text-primary">{formatCurrency(order.total, currency)}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-6 ms-6">
-                  <div className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                    order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
-                    order.status === 'Preparing' ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'
-                  }`}>{order.status}</div>
+                <div className="flex items-center gap-2 ms-5 flex-wrap justify-end shrink-0">
+                  {order.payment_status && (
+                    <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${PAYMENT_COLOR[order.payment_status] ?? 'bg-gray-100 text-gray-600'}`}>
+                      {paymentStatusLabel(order.payment_status)}
+                    </span>
+                  )}
+                  <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                    order.status === 'Delivered' ? 'bg-primary/10 text-primary' :
+                    order.status === 'Preparing' ? 'bg-primary/10 text-primary' :
+                    order.status === 'Ready'     ? 'bg-emerald-100 text-emerald-700' :
+                    order.status === 'Cancelled' ? 'bg-red-100 text-red-600' :
+                    'bg-[#303942]/10 text-[#303942]'
+                  }`}>{statusLabel(order.status)}</span>
                   <ChevronRight className="w-5 h-5 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
                 </div>
               </motion.div>
@@ -292,7 +388,7 @@ export const OrderManager = () => {
                   <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('orders.detailHeading')}</h3>
                   <p className="text-on-surface-variant font-mono text-sm mt-1">#{selectedOrder._id.toUpperCase()}</p>
                 </div>
-                <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+                <button onClick={closeOrder} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
                   <XIcon className="w-6 h-6" />
                 </button>
               </div>
@@ -313,25 +409,40 @@ export const OrderManager = () => {
                   <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('orders.orderItems')}</h4>
                   <div className="space-y-3">
                     {selectedOrder.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-surface-container-lowest p-4 rounded-2xl">
-                        <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center font-bold text-xs">{item.quantity}x</span>
-                          <span className="font-semibold text-sm">{item.name}</span>
+                      <div key={idx} className="bg-surface-container-lowest p-4 rounded-2xl space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-3">
+                            <span className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center font-bold text-xs shrink-0">{item.quantity}x</span>
+                            <span className="font-semibold text-sm">{item.name}</span>
+                          </div>
+                          <span className="font-bold text-sm">{formatCurrency(item.price * item.quantity, currency)}</span>
                         </div>
-                        <span className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</span>
+                        {item.note && (
+                          <p className="text-xs text-on-surface-variant ms-11 italic">"{item.note}"</p>
+                        )}
                       </div>
                     ))}
                   </div>
                 </section>
+                {selectedOrder.order_note && (
+                  <section className="space-y-2">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('orders.orderNote')}</h4>
+                    <div className="bg-surface-container-lowest p-4 rounded-2xl flex items-start gap-3">
+                      <ChefHat className="w-4 h-4 text-on-surface-variant shrink-0 mt-0.5" />
+                      <p className="text-sm text-on-surface-variant italic">"{selectedOrder.order_note}"</p>
+                    </div>
+                  </section>
+                )}
+
                 <section className="bg-primary/5 p-6 rounded-3xl space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-on-surface-variant font-medium">{t('orders.subtotal')}</span>
-                    <span className="font-bold">${selectedOrder.total.toFixed(2)}</span>
+                    <span className="font-bold">{formatCurrency(selectedOrder.total, currency)}</span>
                   </div>
                   <div className="h-[1px] bg-primary/10 w-full" />
                   <div className="flex justify-between items-end">
                     <span className="text-lg font-bold">{t('orders.total')}</span>
-                    <span className="text-2xl font-headline font-extrabold text-primary">${selectedOrder.total.toFixed(2)}</span>
+                    <span className="text-2xl font-headline font-extrabold text-primary">{formatCurrency(selectedOrder.total, currency)}</span>
                   </div>
                 </section>
               </div>
@@ -376,9 +487,9 @@ export const ToastStack = ({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: 
   };
 
   const ICON: Record<Toast['type'], { icon: React.ReactNode; bg: string }> = {
-    new:       { icon: <Bell className="w-5 h-5" />,          bg: 'bg-amber-500' },
+    new:       { icon: <Bell className="w-5 h-5" />,          bg: 'bg-primary' },
     preparing: { icon: <ChefHat className="w-5 h-5" />,       bg: 'bg-primary' },
-    delivered: { icon: <CheckCircle2 className="w-5 h-5" />,  bg: 'bg-emerald-500' },
+    delivered: { icon: <CheckCircle2 className="w-5 h-5" />,  bg: 'bg-[#303942]' },
   };
 
   return (

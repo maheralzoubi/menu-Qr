@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Wallet, ChevronRight, CreditCard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useFmt } from '../hooks/useCurrency';
 import { Skeleton } from '../components/Skeleton';
 
 export const PaymentScreen = ({ total, onComplete }: { total: number; onComplete: () => void }) => {
   const { t, i18n } = useTranslation();
+  const fmt = useFmt();
   const isRTL = i18n.language === 'ar';
   const [isLoading, setIsLoading] = useState(true);
 
@@ -73,11 +75,11 @@ export const PaymentScreen = ({ total, onComplete }: { total: number; onComplete
       <div className="bg-surface-container-lowest rounded-[2rem] p-8 space-y-4 border border-outline-variant/10">
         <div className="flex justify-between items-center text-on-surface-variant font-medium">
           <span>{t('payment.orderTotal')}</span>
-          <span className="font-headline font-bold text-on-surface">${total.toFixed(2)}</span>
+          <span className="font-headline font-bold text-on-surface">{fmt(total)}</span>
         </div>
         <div className="pt-4 border-t border-outline-variant/20 flex justify-between items-center">
           <span className="font-headline font-bold text-xl text-on-surface">{t('payment.amountDue')}</span>
-          <span className="font-headline font-extrabold text-2xl text-primary">${total.toFixed(2)}</span>
+          <span className="font-headline font-extrabold text-2xl text-primary">{fmt(total)}</span>
         </div>
       </div>
 

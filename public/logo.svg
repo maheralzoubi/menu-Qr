@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 96">
+  <rect x="8" y="8" width="80" height="80" rx="20" fill="#9b3f25"/>
+  <g stroke="white" stroke-width="3.6" stroke-linecap="round" fill="none">
+    <line x1="34" y1="26" x2="34" y2="46"/>
+    <line x1="28" y1="26" x2="28" y2="38"/>
+    <line x1="40" y1="26" x2="40" y2="38"/>
+    <path d="M28 38 Q34 46 40 38"/>
+    <line x1="34" y1="46" x2="34" y2="70"/>
+    <path d="M62 26 C62 26 68 33 68 46 L62 46" stroke-linejoin="round"/>
+    <line x1="62" y1="46" x2="62" y2="70"/>
+  </g>
+  <text x="104" y="63" font-family="'Plus Jakarta Sans', Inter, system-ui, sans-serif" font-size="38" font-weight="700" fill="#303942">Menu QR</text>
+</svg>

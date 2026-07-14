@@ -2,11 +2,13 @@ import { X, AlertTriangle, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { MenuItem } from '../types';
+import { useFmt } from '../hooks/useCurrency';
 
 export const ItemDetailsModal = ({ item, onClose, onAddToCart }: {
   item: MenuItem; onClose: () => void; onAddToCart: () => void;
 }) => {
   const { t } = useTranslation();
+  const fmt = useFmt();
 
   return (
     <motion.div
@@ -38,7 +40,7 @@ export const ItemDetailsModal = ({ item, onClose, onAddToCart }: {
           <section className="space-y-2">
             <div className="flex justify-between items-start">
               <h2 className="font-headline text-3xl font-extrabold text-on-surface tracking-tight">{item.name}</h2>
-              <span className="font-headline text-2xl font-bold text-primary">${item.price.toFixed(2)}</span>
+              <span className="font-headline text-2xl font-bold text-primary">{fmt(item.price)}</span>
             </div>
             <p className="text-on-surface-variant font-medium">{item.category}</p>
           </section>
