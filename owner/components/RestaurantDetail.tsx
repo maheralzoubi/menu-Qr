@@ -116,17 +116,17 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
   const stats = restaurant.stats;
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button onClick={onBack} className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-medium text-sm">
           <ArrowLeft className="w-4 h-4 rtl:scale-x-[-1]" /> {t('restaurantDetail.allRestaurants')}
         </button>
-        <div className="flex gap-3">
-          <button onClick={openEdit} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-primary/10 text-primary hover:bg-primary/20 transition-all">
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
+          <button onClick={openEdit} className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm bg-primary/10 text-primary hover:bg-primary/20 transition-all">
             <Pencil className="w-4 h-4" /> {t('restaurantDetail.edit')}
           </button>
           <button onClick={handleToggleStatus}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
               restaurant.status === 'active'
                 ? 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
                 : 'bg-primary/10 text-primary hover:bg-primary/20'
@@ -135,7 +135,7 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
               ? <><ToggleRight className="w-4 h-4" /> {t('restaurantDetail.deactivate')}</>
               : <><ToggleLeft className="w-4 h-4" /> {t('restaurantDetail.activate')}</>}
           </button>
-          <button onClick={handleDelete} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">
+          <button onClick={handleDelete} className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">
             <Trash2 className="w-4 h-4" /> {t('restaurantDetail.delete')}
           </button>
         </div>
@@ -143,18 +143,18 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
 
       {/* Header card */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-surface-container-low rounded-4xl p-8 flex items-start gap-6 border border-outline-variant/10">
-        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold shrink-0 overflow-hidden">
+        className="bg-surface-container-low rounded-4xl p-5 sm:p-8 flex flex-col sm:flex-row items-start gap-4 sm:gap-6 border border-outline-variant/10">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl sm:text-3xl font-bold shrink-0 overflow-hidden">
           {restaurant.logo ? <img src={restaurant.logo} className="w-full h-full object-cover" /> : restaurant.name.slice(0, 1).toUpperCase()}
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2 flex-wrap">
-            <h2 className="text-3xl font-headline font-extrabold">{restaurant.name}</h2>
+            <h2 className="text-xl sm:text-3xl font-headline font-extrabold">{restaurant.name}</h2>
             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${restaurant.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
               {t(`common.${restaurant.status}`)}
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm text-on-surface-variant">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 text-sm text-on-surface-variant">
             {restaurant.contactEmail && <p>✉ <span dir="ltr">{restaurant.contactEmail}</span></p>}
             {restaurant.contactPhone && <p>📞 <span dir="ltr">{restaurant.contactPhone}</span></p>}
             {restaurant.address && <p className="col-span-2">📍 {restaurant.address}</p>}
@@ -167,7 +167,7 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {[
             { labelKey: 'restaurantDetail.stats.totalOrders',   value: stats.totalOrders,        icon: <ShoppingBag className="w-5 h-5" /> },
             { labelKey: 'restaurantDetail.stats.totalRevenue',  value: formatCurrency(stats.totalRevenue, restaurant?.currency ?? 'USD'), icon: <DollarSign className="w-5 h-5" /> },
@@ -176,7 +176,7 @@ export const RestaurantDetail = ({ restaurantId, onBack, onDeleted }: Props) => 
             { labelKey: 'restaurantDetail.stats.reviews',       value: stats.totalReviews,       icon: <Star className="w-5 h-5" /> },
             { labelKey: 'restaurantDetail.stats.reservations',  value: stats.totalReservations,  icon: <Calendar className="w-5 h-5" /> },
           ].map(s => (
-            <div key={s.labelKey} className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10 flex items-center gap-4">
+            <div key={s.labelKey} className="bg-surface-container-low p-5 sm:p-6 rounded-3xl border border-outline-variant/10 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">{s.icon}</div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t(s.labelKey)}</p>

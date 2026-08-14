@@ -78,12 +78,12 @@ export const BannersManager = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-headline font-extrabold">{t('banners.heading')}</h2>
           <p className="text-sm text-on-surface-variant mt-0.5">{t('banners.subtext')}</p>
         </div>
-        <button onClick={openCreate} className="btn-gradient text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2">
+        <button onClick={openCreate} className="self-start btn-gradient text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2">
           <Plus className="w-4 h-4" /> {t('banners.addBanner')}
         </button>
       </div>
@@ -119,24 +119,24 @@ export const BannersManager = () => {
       ) : (
         <div className="space-y-2">
           {banners.map(b => (
-            <div key={b._id} className={`bg-surface-container rounded-2xl px-4 py-3.5 flex items-center gap-4 ${!b.isActive ? 'opacity-50' : ''}`}>
-              <GripVertical className="w-4 h-4 text-on-surface-variant/40 shrink-0" />
-              <span className="text-2xl shrink-0">{b.emoji}</span>
+            <div key={b._id} className={`bg-surface-container rounded-2xl px-3 sm:px-4 py-3.5 flex items-center gap-2 sm:gap-4 ${!b.isActive ? 'opacity-50' : ''}`}>
+              <GripVertical className="hidden sm:block w-4 h-4 text-on-surface-variant/40 shrink-0" />
+              <span className="text-xl sm:text-2xl shrink-0">{b.emoji}</span>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm truncate">{b.title}</p>
                 {b.subtitle && <p className="text-xs text-on-surface-variant truncate">{b.subtitle}</p>}
               </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${b.isActive ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
+              <span className={`hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${b.isActive ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
                 {b.isActive ? t('banners.active') : t('banners.hidden')}
               </span>
               <div className="flex items-center gap-1 shrink-0">
-                <button onClick={() => handleToggle(b)} title={b.isActive ? t('banners.hide') : t('banners.show')} className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center hover:bg-surface-container-highest transition-colors">
+                <button onClick={() => handleToggle(b)} title={b.isActive ? t('banners.hide') : t('banners.show')} className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-container-high flex items-center justify-center hover:bg-surface-container-highest transition-colors">
                   {b.isActive ? <EyeOff className="w-4 h-4 text-on-surface-variant" /> : <Eye className="w-4 h-4 text-on-surface-variant" />}
                 </button>
-                <button onClick={() => openEdit(b)} className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center hover:bg-surface-container-highest transition-colors">
+                <button onClick={() => openEdit(b)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-container-high flex items-center justify-center hover:bg-surface-container-highest transition-colors">
                   <Pencil className="w-4 h-4 text-on-surface-variant" />
                 </button>
-                <button onClick={() => setDeleteId(b._id)} className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 transition-colors">
+                <button onClick={() => setDeleteId(b._id)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 transition-colors">
                   <Trash2 className="w-4 h-4 text-red-400" />
                 </button>
               </div>

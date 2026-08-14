@@ -117,23 +117,23 @@ export const RestaurantList = ({ onSelect }: Props) => {
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
         <div>
-          <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('restaurants.heading')}</h2>
+          <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('restaurants.heading')}</h2>
           <p className="text-on-surface-variant font-medium">{t('restaurants.subtext')}</p>
         </div>
-        <div className="flex gap-3">
-          <div className="relative">
+        <div className="flex gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[160px] sm:flex-none">
             <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
             <input type="text" placeholder={t('restaurants.search')} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none" />
+              className="w-full bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none sm:w-auto" />
           </div>
           <button
             onClick={() => { if (atLimit) return; setShowPanel(true); setFormError(''); setForm(emptyForm()); }}
             disabled={atLimit}
             title={atLimit ? t('restaurants.limitReached') : undefined}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+            className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-bold text-sm transition-all ${
               atLimit
                 ? 'bg-surface-container text-on-surface-variant cursor-not-allowed opacity-60'
                 : 'btn-gradient text-white shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95'
@@ -180,15 +180,15 @@ export const RestaurantList = ({ onSelect }: Props) => {
       </AnimatePresence>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-3 gap-3 sm:gap-6">
         {[
           { labelKey: 'restaurants.total', value: restaurants.length },
           { labelKey: 'restaurants.active', value: restaurants.filter(r => r.status === 'active').length },
           { labelKey: 'restaurants.inactive', value: restaurants.filter(r => r.status === 'inactive').length },
         ].map(s => (
-          <div key={s.labelKey} className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10 shadow-sm">
+          <div key={s.labelKey} className="bg-surface-container-low p-4 sm:p-6 rounded-3xl border border-outline-variant/10 shadow-sm">
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
-            <h4 className="text-3xl font-headline font-extrabold">{s.value}</h4>
+            <h4 className="text-xl sm:text-3xl font-headline font-extrabold">{s.value}</h4>
           </div>
         ))}
       </div>
@@ -197,8 +197,8 @@ export const RestaurantList = ({ onSelect }: Props) => {
       {isLoading ? (
         <div className="space-y-3 animate-pulse">{[1,2,3].map(i => <div key={i} className="h-16 bg-surface-container-low rounded-2xl" />)}</div>
       ) : (
-        <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-outline-variant/10">
-          <table className="w-full">
+        <div className="bg-surface-container-low rounded-3xl border border-outline-variant/10 overflow-x-auto">
+          <table className="w-full min-w-[720px]">
             <thead>
               <tr className="border-b border-outline-variant/10">
                 {tableHeaders.map(h => (

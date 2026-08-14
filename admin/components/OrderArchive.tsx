@@ -112,37 +112,37 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
   const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
 
   return (
-    <div className="flex h-full gap-10">
-      <div className="flex-1 space-y-8 overflow-y-auto no-scrollbar pe-2">
+    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
+      <div className="flex-1 space-y-6 lg:space-y-8 overflow-y-auto no-scrollbar lg:pe-2 min-w-0">
         {/* Header */}
-        <div className="flex items-end justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <button onClick={onBack}
               className="flex items-center gap-1 text-sm text-on-surface-variant hover:text-on-surface mb-3 transition-colors">
               <ChevronLeft className="w-4 h-4 rtl:scale-x-[-1]" /> {t('orderArchive.backToOrders')}
             </button>
-            <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('orderArchive.heading')}</h2>
+            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('orderArchive.heading')}</h2>
             <p className="text-on-surface-variant font-medium">
               {result ? t('orderArchive.archivedCount', { total: result.total.toLocaleString() }) : t('orderArchive.loading')}
             </p>
           </div>
           <button onClick={handleExportCSV} disabled={!orders.length}
-            className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant disabled:opacity-40 transition-colors">
+            className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant disabled:opacity-40 transition-colors shrink-0">
             <Download className="w-4 h-4" /> {t('orderArchive.exportCsv')}
           </button>
         </div>
 
         {/* Summary strip */}
         {result && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             {[
               { labelKey: 'orderArchive.totalOrders', value: result.total.toLocaleString() },
               { labelKey: 'orderArchive.shown',       value: orders.length.toLocaleString() },
               { labelKey: 'orderArchive.revenuePage', value: formatCurrency(totalRevenue, currency) },
             ].map(s => (
-              <div key={s.labelKey} className="bg-surface-container-low rounded-2xl p-5 shadow-sm border border-outline-variant/10">
+              <div key={s.labelKey} className="bg-surface-container-low rounded-2xl p-3 sm:p-5 shadow-sm border border-outline-variant/10">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
-                <p className="text-2xl font-headline font-extrabold">{s.value}</p>
+                <p className="text-lg sm:text-2xl font-headline font-extrabold">{s.value}</p>
               </div>
             ))}
           </div>
@@ -150,11 +150,11 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative">
+          <div className="relative flex-1 min-w-[160px] sm:flex-none">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
             <input type="text" placeholder={t('orderArchive.searchPlaceholder')} value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-surface-container-high border-none rounded-xl py-2.5 ps-10 pe-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none w-56" />
+              className="w-full bg-surface-container-high border-none rounded-xl py-2.5 ps-10 pe-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none sm:w-56" />
             {search && (
               <button onClick={() => setSearch('')} className="absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 hover:text-on-surface">
                 <X className="w-3.5 h-3.5" />
@@ -216,14 +216,21 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
               {orders.map((order, i) => (
                 <motion.div key={order._id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
                   onClick={() => selectOrder(order)}
-                  className={`group flex items-center p-5 bg-surface-container-low rounded-2xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-lg transition-all cursor-pointer ${
+                  className={`group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 p-4 sm:p-5 bg-surface-container-low rounded-2xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-lg transition-all cursor-pointer ${
                     selectedOrder?._id === order._id ? 'ring-2 ring-primary' : ''
                   }`}>
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0 me-5">
-                    <Package className="w-5 h-5 text-on-surface-variant/60" />
+                  <div className="flex items-center gap-3 sm:contents">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0 sm:me-5">
+                      <Package className="w-5 h-5 text-on-surface-variant/60" />
+                    </div>
+                    <div className="sm:hidden min-w-0 flex-1">
+                      <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
+                      <p className="text-xs text-on-surface-variant truncate">{order.customerName || t('orders.guest')}</p>
+                    </div>
+                    <span className={`sm:hidden shrink-0 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyle(order.status)}`}>{statusLabel(order.status)}</span>
                   </div>
-                  <div className="flex-1 grid grid-cols-6 gap-3 min-w-0">
-                    <div>
+                  <div className="flex-1 grid grid-cols-2 sm:grid-cols-6 gap-3 min-w-0">
+                    <div className="hidden sm:block">
                       <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.orderId')}</p>
                       <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
                     </div>
@@ -236,7 +243,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                       <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.tableLabel')}</p>
                       <p className="font-bold text-sm">{order.tableNumber || '—'}</p>
                     </div>
-                    <div>
+                    <div className="hidden sm:block">
                       <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.customerLabel')}</p>
                       <p className="font-bold text-sm truncate">{order.customerName || t('orders.guest')}</p>
                     </div>
@@ -249,9 +256,9 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
                       <p className="font-bold text-sm text-primary">{formatCurrency(order.total, currency)}</p>
                     </div>
                   </div>
-                  <div className="ms-4 flex items-center gap-3 shrink-0">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyle(order.status)}`}>{statusLabel(order.status)}</span>
-                    <ChevronRight className="w-4 h-4 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
+                  <div className="sm:ms-4 flex items-center gap-3 shrink-0">
+                    <span className={`hidden sm:inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyle(order.status)}`}>{statusLabel(order.status)}</span>
+                    <ChevronRight className="hidden sm:block w-4 h-4 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
                   </div>
                 </motion.div>
               ))}
@@ -276,13 +283,13 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
       </div>
 
       {/* Detail panel */}
-      <div className="w-96 shrink-0">
+      <div className="lg:w-96 shrink-0">
         <AnimatePresence mode="wait">
           {selectedOrder ? (
             <motion.div key={selectedOrder._id}
               initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
-              className="bg-surface-container-low rounded-4xl p-8 flex flex-col shadow-2xl shadow-primary/5 sticky top-0">
-              <div className="flex justify-between items-start mb-8">
+              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full lg:h-auto bg-surface-container-low lg:rounded-4xl p-5 sm:p-8 flex flex-col shadow-2xl shadow-primary/5 lg:sticky lg:top-0 overflow-y-auto">
+              <div className="flex justify-between items-start mb-6 lg:mb-8">
                 <div>
                   <h3 className="text-xl font-headline font-extrabold tracking-tight">{t('orderArchive.detailHeading')}</h3>
                   <p className="font-mono text-xs text-on-surface-variant mt-0.5">#{selectedOrder._id.toUpperCase()}</p>
@@ -350,7 +357,7 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
               </div>
             </motion.div>
           ) : (
-            <div className="bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex flex-col items-center justify-center p-12 text-center text-on-surface-variant/40 h-64">
+            <div className="hidden lg:flex bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex-col items-center justify-center p-12 text-center text-on-surface-variant/40 h-64">
               <Package className="w-12 h-12 mb-3 opacity-20" />
               <p className="font-bold text-sm">{t('orderArchive.selectOrder')}</p>
             </div>

@@ -86,24 +86,24 @@ export const ReviewManager = () => {
   };
 
   return (
-    <div className="flex h-full gap-10">
-      <div className="flex-1 space-y-10 overflow-y-auto no-scrollbar pe-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
+      <div className="flex-1 space-y-6 lg:space-y-10 overflow-y-auto no-scrollbar lg:pe-4 min-w-0">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
-            <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('reviews.heading')}</h2>
+            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('reviews.heading')}</h2>
             <p className="text-on-surface-variant font-medium">{t('reviews.subtext')}</p>
           </div>
           <div className="relative">
             <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
             <input type="text" placeholder={t('reviews.searchPlaceholder')}
-              className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+              className="w-full bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
               value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
         </div>
 
         {/* Stats */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-surface-container-low p-8 rounded-4xl flex flex-col items-center justify-center text-center shadow-sm border border-outline-variant/10">
+          <div className="bg-surface-container-low p-6 sm:p-8 rounded-4xl flex flex-col items-center justify-center text-center shadow-sm border border-outline-variant/10">
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-2">{t('reviews.averageRating')}</p>
             <h4 className="text-5xl font-headline font-extrabold text-primary mb-2">{averageRating}</h4>
             <div className="flex items-center gap-1 mb-4">
@@ -114,7 +114,7 @@ export const ReviewManager = () => {
             <p className="text-xs font-bold text-on-surface-variant">{t('reviews.basedOn', { count: reviews.length })}</p>
           </div>
 
-          <div className="bg-surface-container-low p-8 rounded-4xl shadow-sm border border-outline-variant/10">
+          <div className="bg-surface-container-low p-6 sm:p-8 rounded-4xl shadow-sm border border-outline-variant/10">
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-6">{t('reviews.sentiment')}</p>
             <div className="space-y-5">
               {[
@@ -138,7 +138,7 @@ export const ReviewManager = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-low p-8 rounded-4xl shadow-sm border border-outline-variant/10 flex flex-col justify-between">
+          <div className="bg-surface-container-low p-6 sm:p-8 rounded-4xl shadow-sm border border-outline-variant/10 flex flex-col justify-between">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-4">{t('reviews.totalReviews')}</p>
               <h4 className="text-4xl font-headline font-extrabold">{reviews.length}</h4>
@@ -165,7 +165,7 @@ export const ReviewManager = () => {
 
         {/* Review grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-6 animate-pulse">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
             {[1, 2, 3, 4].map(i => <div key={i} className="h-48 bg-surface-container-low rounded-4xl" />)}
           </div>
         ) : (
@@ -174,7 +174,7 @@ export const ReviewManager = () => {
               {filteredReviews.map((review, i) => (
                 <motion.div key={reviewKey(review)} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
                   onClick={() => selectReview(review)}
-                  className={`group p-8 bg-surface-container-low rounded-4xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer relative overflow-hidden ${
+                  className={`group p-5 sm:p-8 bg-surface-container-low rounded-4xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer relative overflow-hidden ${
                     selectedReview && reviewKey(selectedReview) === reviewKey(review) ? 'ring-2 ring-primary' : ''
                   }`}>
                   <Quote className="absolute -end-4 -top-4 w-32 h-32 text-on-surface-variant/5 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -220,13 +220,13 @@ export const ReviewManager = () => {
       </div>
 
       {/* Detail panel */}
-      <div className="w-96 shrink-0 h-full">
+      <div className="lg:w-96 shrink-0 lg:h-full">
         <AnimatePresence mode="wait">
           {selectedReview ? (
             <motion.div key={reviewKey(selectedReview)}
               initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
-              className="h-full bg-surface-container-low rounded-4xl p-8 flex flex-col shadow-2xl shadow-primary/5">
-              <div className="flex justify-between items-start mb-8">
+              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-surface-container-low lg:rounded-4xl p-5 sm:p-8 flex flex-col shadow-2xl shadow-primary/5">
+              <div className="flex justify-between items-start mb-6 lg:mb-8">
                 <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('reviews.detailHeading')}</h3>
                 <button onClick={closeReview} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
                   <X className="w-5 h-5" />
@@ -260,7 +260,7 @@ export const ReviewManager = () => {
               </div>
             </motion.div>
           ) : (
-            <div className="h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
+            <div className="hidden lg:flex h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
               <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
               <p className="font-bold">{t('reviews.noSelected')}</p>
               <p className="text-sm">{t('reviews.noSelectedMsg')}</p>

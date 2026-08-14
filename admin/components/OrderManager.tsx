@@ -161,24 +161,24 @@ export const OrderManager = () => {
   if (view === 'kds') {
     return (
       <>
-        <div className="h-full flex flex-col space-y-8">
-          <div className="flex justify-between items-center">
+        <div className="h-full flex flex-col space-y-6 sm:space-y-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('orders.kdsHeading')}</h2>
+              <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('orders.kdsHeading')}</h2>
               <p className="text-on-surface-variant font-medium">{t('orders.kdsSubtext')}</p>
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-3 sm:gap-4">
               <div className="flex items-center gap-2 px-4 py-2 bg-surface-container-high rounded-xl text-sm font-bold">
                 <ChefHat className="w-4 h-4 text-primary" />
                 <span>{t('orders.preparingCount', { count: preparingOrders.length })}</span>
               </div>
               <button onClick={backToFeed}
-                className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+                className="px-4 sm:px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
                 {t('orders.backToFeed')}
               </button>
             </div>
           </div>
-          <div className="flex-1 grid grid-cols-4 gap-6 overflow-x-auto pb-6 no-scrollbar">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-6">
             {activeOrders.map((order, i) => (
               <motion.div key={order._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 className={`flex flex-col bg-surface-container-low rounded-3xl border-s-8 overflow-hidden shadow-sm ${
@@ -215,7 +215,7 @@ export const OrderManager = () => {
               </motion.div>
             ))}
             {activeOrders.length === 0 && (
-              <div className="col-span-4 flex flex-col items-center justify-center py-20 text-on-surface-variant/40">
+              <div className="col-span-full flex flex-col items-center justify-center py-20 text-on-surface-variant/40">
                 <ChefHat className="w-20 h-20 mb-4 opacity-20" />
                 <p className="text-xl font-bold">{t('orders.kitchenClear')}</p>
                 <p className="text-sm">{t('orders.noActiveOrders')}</p>
@@ -229,18 +229,18 @@ export const OrderManager = () => {
   }
 
   return (
-    <div className="flex h-full gap-10">
-      <div className="flex-1 space-y-10 overflow-y-auto no-scrollbar pe-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
+      <div className="flex-1 space-y-6 lg:space-y-10 overflow-y-auto no-scrollbar lg:pe-4 min-w-0">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
-            <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('orders.heading')}</h2>
+            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('orders.heading')}</h2>
             <p className="text-on-surface-variant font-medium">{t('orders.subtext')}</p>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <div className="relative">
+            <div className="relative flex-1 min-w-[160px] sm:flex-none">
               <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
               <input type="text" placeholder={t('orders.searchPlaceholder')}
-                className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                className="w-full bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             </div>
             <select value={tableFilter} onChange={e => setTableFilter(e.target.value)}
@@ -248,15 +248,15 @@ export const OrderManager = () => {
               {tableNames.map(tb => <option key={tb} value={tb}>{tb === 'all' ? t('orders.allTables') : tb}</option>)}
             </select>
             <button onClick={() => enterView('kds')}
-              className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+              className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <ChefHat className="w-4 h-4" /> {t('orders.kdsView')}
             </button>
             <button onClick={() => enterView('archive')}
-              className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+              className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <Archive className="w-4 h-4" /> {t('orders.archive')}
             </button>
             <button onClick={() => setArchiveConfirm(true)} disabled={orders.length === 0}
-              className="flex items-center gap-2 px-6 py-3 bg-primary/10 text-primary rounded-xl font-bold text-sm hover:bg-primary/20 disabled:opacity-30 transition-all">
+              className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-primary/10 text-primary rounded-xl font-bold text-sm hover:bg-primary/20 disabled:opacity-30 transition-all">
               <Archive className="w-4 h-4" /> {t('orders.archiveDay')}
             </button>
           </div>
@@ -265,9 +265,9 @@ export const OrderManager = () => {
         <AnimatePresence>
           {archiveConfirm && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              className="flex items-center gap-4 bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4">
+              className="flex flex-wrap items-center gap-4 bg-primary/5 border border-primary/20 rounded-2xl px-4 sm:px-6 py-4">
               <AlertTriangle className="w-5 h-5 text-primary shrink-0" />
-              <p className="flex-1 text-sm font-medium text-on-surface">
+              <p className="flex-1 min-w-[180px] text-sm font-medium text-on-surface">
                 {t('orders.archiveConfirmPrefix')} <strong>{orders.length}</strong> {t('orders.archiveConfirmSuffix')}
               </p>
               <button onClick={handleArchiveToday} disabled={archiving}
@@ -288,18 +288,18 @@ export const OrderManager = () => {
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-3 sm:gap-6">
           {[
             { labelKey: 'orders.pending',   count: pendingOrders.length,                          color: 'bg-primary' },
             { labelKey: 'orders.preparing', count: preparingOrders.length,                        color: 'bg-primary' },
             { labelKey: 'orders.ready',     count: orders.filter(o => o.status === 'Ready').length, color: 'bg-[#303942]' },
           ].map(stat => (
-            <div key={stat.labelKey} className="bg-surface-container-low p-6 rounded-3xl flex items-center justify-between shadow-sm border border-outline-variant/10">
+            <div key={stat.labelKey} className="bg-surface-container-low p-4 sm:p-6 rounded-3xl flex items-center justify-between shadow-sm border border-outline-variant/10">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(stat.labelKey)}</p>
-                <h4 className="text-3xl font-headline font-extrabold">{stat.count}</h4>
+                <h4 className="text-xl sm:text-3xl font-headline font-extrabold">{stat.count}</h4>
               </div>
-              <div className={`w-12 h-12 rounded-2xl ${stat.color} opacity-10 flex items-center justify-center`}>
+              <div className={`hidden sm:flex w-12 h-12 rounded-2xl ${stat.color} opacity-10 items-center justify-center`}>
                 <Package className="w-6 h-6" />
               </div>
             </div>
@@ -311,19 +311,34 @@ export const OrderManager = () => {
             {filteredOrders.map((order, i) => (
               <motion.div key={order._id} layout initial={{ opacity: 0, x: isRTL ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
                 onClick={() => selectOrder(order._id)}
-                className={`group flex items-center p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
+                className={`group flex flex-col sm:flex-row sm:items-center gap-4 p-4 sm:p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
                   selectedOrder?._id === order._id ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
                 }`}>
-                {/* Source icon */}
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 me-5 group-hover:scale-110 transition-transform text-white text-[10px] font-extrabold tracking-wide ${
-                  order.order_source === 'CASHIER_POS' ? 'bg-[#303942]' : order.order_source === 'QR_CODE' ? 'bg-primary' : 'bg-primary/70'
-                }`}>
-                  {order.order_source ? sourceLabel(order.order_source) : <Package className="w-5 h-5" />}
+                <div className="flex items-center gap-4">
+                  {/* Source icon */}
+                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 sm:me-5 group-hover:scale-110 transition-transform text-white text-[10px] font-extrabold tracking-wide ${
+                    order.order_source === 'CASHIER_POS' ? 'bg-[#303942]' : order.order_source === 'QR_CODE' ? 'bg-primary' : 'bg-primary/70'
+                  }`}>
+                    {order.order_source ? sourceLabel(order.order_source) : <Package className="w-5 h-5" />}
+                  </div>
+
+                  {/* Compact mobile summary */}
+                  <div className="sm:hidden min-w-0 flex-1">
+                    <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
+                    <p className="text-xs text-on-surface-variant truncate">{order.customerName || t('orders.guest')}</p>
+                  </div>
+                  <span className={`sm:hidden shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                    order.status === 'Delivered' ? 'bg-primary/10 text-primary' :
+                    order.status === 'Preparing' ? 'bg-primary/10 text-primary' :
+                    order.status === 'Ready'     ? 'bg-emerald-100 text-emerald-700' :
+                    order.status === 'Cancelled' ? 'bg-red-100 text-red-600' :
+                    'bg-[#303942]/10 text-[#303942]'
+                  }`}>{statusLabel(order.status)}</span>
                 </div>
 
-                <div className="flex-1 grid grid-cols-5 gap-4 min-w-0">
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 min-w-0">
                   {/* Order ID */}
-                  <div>
+                  <div className="hidden sm:block">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.orderId')}</p>
                     <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
                   </div>
@@ -335,7 +350,7 @@ export const OrderManager = () => {
                   </div>
 
                   {/* Customer */}
-                  <div className="min-w-0">
+                  <div className="hidden sm:block min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.customer')}</p>
                     <p className="font-bold text-sm truncate">{order.customerName || t('orders.guest')}</p>
                   </div>
@@ -355,20 +370,20 @@ export const OrderManager = () => {
                     <p className="font-extrabold text-sm text-primary">{formatCurrency(order.total, currency)}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 ms-5 flex-wrap justify-end shrink-0">
+                <div className="flex items-center gap-2 sm:ms-5 flex-wrap justify-end shrink-0">
                   {order.payment_status && (
                     <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${PAYMENT_COLOR[order.payment_status] ?? 'bg-gray-100 text-gray-600'}`}>
                       {paymentStatusLabel(order.payment_status)}
                     </span>
                   )}
-                  <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                  <span className={`hidden sm:inline-flex px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
                     order.status === 'Delivered' ? 'bg-primary/10 text-primary' :
                     order.status === 'Preparing' ? 'bg-primary/10 text-primary' :
                     order.status === 'Ready'     ? 'bg-emerald-100 text-emerald-700' :
                     order.status === 'Cancelled' ? 'bg-red-100 text-red-600' :
                     'bg-[#303942]/10 text-[#303942]'
                   }`}>{statusLabel(order.status)}</span>
-                  <ChevronRight className="w-5 h-5 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
+                  <ChevronRight className="hidden sm:block w-5 h-5 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
                 </div>
               </motion.div>
             ))}
@@ -377,13 +392,13 @@ export const OrderManager = () => {
       </div>
 
       {/* Detail panel */}
-      <div className="w-96 shrink-0 h-full">
+      <div className="lg:w-96 shrink-0 lg:h-full">
         <AnimatePresence mode="wait">
           {selectedOrder ? (
             <motion.div key={selectedOrder._id}
               initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
-              className="h-full bg-surface-container-low rounded-4xl p-8 flex flex-col shadow-2xl shadow-primary/5">
-              <div className="flex justify-between items-start mb-10">
+              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-surface-container-low lg:rounded-4xl p-5 sm:p-8 flex flex-col shadow-2xl shadow-primary/5">
+              <div className="flex justify-between items-start mb-6 lg:mb-10">
                 <div>
                   <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('orders.detailHeading')}</h3>
                   <p className="text-on-surface-variant font-mono text-sm mt-1">#{selectedOrder._id.toUpperCase()}</p>
@@ -458,7 +473,7 @@ export const OrderManager = () => {
               </div>
             </motion.div>
           ) : (
-            <div className="h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
+            <div className="hidden lg:flex h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
               <Package className="w-16 h-16 mb-4 opacity-20" />
               <p className="font-bold">{t('orders.noOrderSelected')}</p>
               <p className="text-sm">{t('orders.noOrderMsg')}</p>
@@ -493,7 +508,7 @@ export const ToastStack = ({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: 
   };
 
   return (
-    <div className="fixed bottom-8 end-8 z-[9999] flex flex-col gap-3 items-end pointer-events-none">
+    <div className="fixed bottom-4 sm:bottom-8 inset-x-4 sm:inset-x-auto sm:end-8 z-[9999] flex flex-col gap-3 items-stretch sm:items-end pointer-events-none">
       <AnimatePresence>
         {toasts.map(toast => {
           const cfg = ICON[toast.type];
@@ -501,7 +516,7 @@ export const ToastStack = ({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: 
             <motion.div key={toast.id}
               initial={{ opacity: 0, x: 60, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 60, scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="pointer-events-auto flex items-center gap-3 pr-4 pl-4 py-3.5 rounded-2xl shadow-2xl text-white min-w-[280px] max-w-sm"
+              className="pointer-events-auto flex items-center gap-3 pr-4 pl-4 py-3.5 rounded-2xl shadow-2xl text-white w-full sm:min-w-[280px] sm:max-w-sm"
               style={{ background: 'rgba(30,30,40,0.97)', backdropFilter: 'blur(12px)' }}>
               <div className={`w-9 h-9 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0`}>{cfg.icon}</div>
               <p className="flex-1 text-sm font-semibold leading-snug">{getLabel(toast)}</p>

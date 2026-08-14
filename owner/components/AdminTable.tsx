@@ -90,18 +90,18 @@ export const AdminTable = ({ restaurantId }: Props) => {
   ];
 
   return (
-    <div className="bg-surface-container-low rounded-3xl border border-outline-variant/10 p-6 space-y-6">
+    <div className="bg-surface-container-low rounded-3xl border border-outline-variant/10 p-4 sm:p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h3 className="text-xl font-headline font-extrabold">{t('admins.heading')}</h3>
           <p className="text-on-surface-variant text-sm mt-0.5">{t('admins.subtext')}</p>
         </div>
-        <div className="flex gap-3">
-          <div className="relative">
+        <div className="flex gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[160px] sm:flex-none">
             <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
             <input type="text" placeholder={t('admins.search')} value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="bg-surface-container-high border-none rounded-xl py-2.5 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none" />
+              className="w-full bg-surface-container-high border-none rounded-xl py-2.5 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none" />
           </div>
           <button
             onClick={openCreate}
@@ -124,8 +124,8 @@ export const AdminTable = ({ restaurantId }: Props) => {
           {[1, 2].map(i => <div key={i} className="h-14 bg-surface-container rounded-2xl" />)}
         </div>
       ) : (
-        <div className="bg-surface-container rounded-2xl overflow-hidden border border-outline-variant/10">
-          <table className="w-full">
+        <div className="bg-surface-container rounded-2xl border border-outline-variant/10 overflow-x-auto">
+          <table className="w-full min-w-[480px]">
             <thead>
               <tr className="border-b border-outline-variant/10">
                 {tableHeaders.slice(0, 3).map(h => (

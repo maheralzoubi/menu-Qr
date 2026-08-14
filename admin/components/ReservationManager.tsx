@@ -120,38 +120,38 @@ export const ReservationManager = () => {
 
   if (view === 'map') {
     return (
-      <div className="h-full flex flex-col space-y-8">
-        <div className="flex justify-between items-end">
+      <div className="h-full flex flex-col space-y-6 sm:space-y-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
           <div>
-            <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('reservations.tableLayout')}</h2>
+            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('reservations.tableLayout')}</h2>
             <p className="text-on-surface-variant font-medium">
               {t('reservations.confirmedToday', { count: todayConfirmed })}
             </p>
           </div>
-          <button onClick={backToListView} className="px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+          <button onClick={backToListView} className="self-start sm:self-auto px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
             {t('reservations.backToList')}
           </button>
         </div>
-        <div className="flex-1 bg-surface-container-low rounded-4xl p-10 relative overflow-hidden border border-outline-variant/10">
+        <div className="flex-1 min-h-[420px] bg-surface-container-low rounded-4xl p-5 sm:p-10 relative overflow-hidden border border-outline-variant/10">
           <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
           <div className="relative w-full h-full">
             {tableStatuses.map(table => (
               <motion.div key={table.id} initial={{ scale: 0 }} animate={{ scale: 1 }}
                 style={{ left: `${table.x}%`, top: `${table.y}%` }}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-3xl flex flex-col items-center justify-center cursor-pointer shadow-lg transition-all hover:scale-110 ${
+                className={`absolute -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center cursor-pointer shadow-lg transition-all hover:scale-110 ${
                   table.status === 'Reserved' ? 'bg-[#303942] text-white' : 'bg-surface-container-highest text-on-surface'
                 }`}>
-                <span className="text-xs font-bold opacity-60 mb-1">{table.id}</span>
-                <Users className="w-6 h-6 mb-2" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">{t('reservations.seats', { n: table.capacity })}</span>
-                <div className="absolute -bottom-2 px-2 py-0.5 bg-white rounded-full text-[8px] font-bold text-on-surface shadow-sm border border-outline-variant/10">
+                <span className="text-[10px] sm:text-xs font-bold opacity-60 mb-0.5 sm:mb-1">{table.id}</span>
+                <Users className="w-4 h-4 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
+                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-widest">{t('reservations.seats', { n: table.capacity })}</span>
+                <div className="absolute -bottom-2 px-1.5 sm:px-2 py-0.5 bg-white rounded-full text-[7px] sm:text-[8px] font-bold text-on-surface shadow-sm border border-outline-variant/10 whitespace-nowrap">
                   {table.status === 'Reserved' ? t('reservations.reserved') : t('reservations.available')}
                 </div>
               </motion.div>
             ))}
-            <div className="absolute bottom-0 end-0 p-6 bg-surface-container-lowest/80 backdrop-blur-md rounded-3xl border border-outline-variant/10 flex gap-8">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#303942]/30" /><span className="text-xs font-bold">{t('reservations.reserved')}</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-surface-container-highest" /><span className="text-xs font-bold">{t('reservations.available')}</span></div>
+            <div className="absolute bottom-0 end-0 p-3 sm:p-6 bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-outline-variant/10 flex gap-4 sm:gap-8">
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#303942]/30" /><span className="text-[10px] sm:text-xs font-bold">{t('reservations.reserved')}</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-surface-container-highest" /><span className="text-[10px] sm:text-xs font-bold">{t('reservations.available')}</span></div>
             </div>
           </div>
         </div>
@@ -160,21 +160,21 @@ export const ReservationManager = () => {
   }
 
   return (
-    <div className="flex h-full gap-10">
-      <div className="flex-1 space-y-10 overflow-y-auto no-scrollbar pe-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
+      <div className="flex-1 space-y-6 lg:space-y-10 overflow-y-auto no-scrollbar lg:pe-4 min-w-0">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
-            <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('reservations.heading')}</h2>
+            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('reservations.heading')}</h2>
             <p className="text-on-surface-variant font-medium">{t('reservations.subtext')}</p>
           </div>
-          <div className="flex gap-3">
-            <div className="relative">
+          <div className="flex gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[160px] sm:flex-none">
               <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
               <input type="text" placeholder={t('reservations.searchPlaceholder')}
-                className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                className="w-full bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <button onClick={() => enterView('map')} className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+            <button onClick={() => enterView('map')} className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
               <MapIcon className="w-4 h-4" /> {t('reservations.tableMap')}
             </button>
           </div>
@@ -188,14 +188,14 @@ export const ReservationManager = () => {
               {filteredReservations.map((res, i) => (
                 <motion.div key={resKey(res)} layout initial={{ opacity: 0, x: isRTL ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
                   onClick={() => selectRes(resKey(res))}
-                  className={`group flex items-center p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
+                  className={`group flex items-center p-4 sm:p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
                     selectedRes && resKey(selectedRes) === resKey(res) ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
                   }`}>
-                  <div className="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center shrink-0 me-6 group-hover:scale-110 transition-transform">
-                    <CalendarDays className={`w-6 h-6 ${res.status === 'Confirmed' ? 'text-primary' : res.status === 'Cancelled' ? 'text-primary' : 'text-[#303942]'}`} />
+                  <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-surface-container-high flex items-center justify-center shrink-0 me-4 sm:me-6 group-hover:scale-110 transition-transform">
+                    <CalendarDays className={`w-5 h-5 sm:w-6 sm:h-6 ${res.status === 'Confirmed' ? 'text-primary' : res.status === 'Cancelled' ? 'text-primary' : 'text-[#303942]'}`} />
                   </div>
-                  <div className="flex-1 grid grid-cols-4 gap-4">
-                    <div>
+                  <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 min-w-0">
+                    <div className="min-w-0">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('reservations.guest')}</p>
                       <p className="font-bold text-sm truncate">{res.name}</p>
                     </div>
@@ -214,7 +214,7 @@ export const ReservationManager = () => {
                       }`}>{statusLabel(res.status)}</div>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform ms-6 rtl:scale-x-[-1]" />
+                  <ChevronRight className="hidden sm:block w-5 h-5 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform ms-6 rtl:scale-x-[-1]" />
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -229,13 +229,13 @@ export const ReservationManager = () => {
       </div>
 
       {/* Detail panel */}
-      <div className="w-96 shrink-0 h-full">
+      <div className="lg:w-96 shrink-0 lg:h-full">
         <AnimatePresence mode="wait">
           {selectedRes ? (
             <motion.div key={resKey(selectedRes)}
               initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
-              className="h-full bg-surface-container-low rounded-4xl p-8 flex flex-col shadow-2xl shadow-primary/5">
-              <div className="flex justify-between items-start mb-8">
+              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-surface-container-low lg:rounded-4xl p-5 sm:p-8 flex flex-col shadow-2xl shadow-primary/5">
+              <div className="flex justify-between items-start mb-6 lg:mb-8">
                 <div>
                   <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('reservations.detailHeading')}</h3>
                   <p className="text-on-surface-variant font-mono text-sm mt-1">#{resKey(selectedRes).slice(-6).toUpperCase()}</p>
@@ -308,7 +308,7 @@ export const ReservationManager = () => {
               </button>
             </motion.div>
           ) : (
-            <div className="h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
+            <div className="hidden lg:flex h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
               <Calendar className="w-16 h-16 mb-4 opacity-20" />
               <p className="font-bold">{t('reservations.noSelected')}</p>
               <p className="text-sm">{t('reservations.noSelectedMsg')}</p>

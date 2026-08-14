@@ -205,38 +205,38 @@ export const Settings = () => {
   ];
 
   return (
-    <div className="flex h-full gap-10">
-      <div className="w-80 shrink-0 space-y-10">
+    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
+      <div className="lg:w-80 shrink-0 space-y-4 lg:space-y-10">
         <div>
-          <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('settings.heading')}</h2>
+          <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('settings.heading')}</h2>
           <p className="text-on-surface-variant font-medium">{t('settings.subtext')}</p>
         </div>
-        <nav className="space-y-2">
+        <nav className="flex lg:flex-col gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0 lg:overflow-visible">
           {sections.map(section => (
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-start ${
+              className={`shrink-0 lg:w-full lg:shrink flex items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-2xl transition-all text-start ${
                 activeSection === section.id
                   ? 'bg-surface-container-high shadow-sm ring-1 ring-outline-variant/10'
                   : 'hover:bg-surface-container-low opacity-70 hover:opacity-100'
               }`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              <div className={`w-9 h-9 lg:w-10 lg:h-10 rounded-xl flex items-center justify-center shrink-0 ${
                 activeSection === section.id ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface-variant'
               }`}>
-                <section.icon className="w-5 h-5" />
+                <section.icon className="w-4 h-4 lg:w-5 lg:h-5" />
               </div>
-              <div>
-                <p className="font-bold text-sm">{t(`settings.sections.${section.id}.label`)}</p>
-                <p className="text-[10px] text-on-surface-variant line-clamp-1">{t(`settings.sections.${section.id}.desc`)}</p>
+              <div className="min-w-0">
+                <p className="font-bold text-sm whitespace-nowrap lg:whitespace-normal">{t(`settings.sections.${section.id}.label`)}</p>
+                <p className="hidden lg:block text-[10px] text-on-surface-variant line-clamp-1">{t(`settings.sections.${section.id}.desc`)}</p>
               </div>
             </button>
           ))}
         </nav>
       </div>
 
-      <div className="flex-1 bg-surface-container-low rounded-4xl p-10 border border-outline-variant/10 shadow-sm overflow-y-auto no-scrollbar">
+      <div className="flex-1 bg-surface-container-low rounded-4xl p-5 sm:p-10 border border-outline-variant/10 shadow-sm overflow-y-auto no-scrollbar min-w-0">
 
         {activeSection === 'profile' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
@@ -249,13 +249,13 @@ export const Settings = () => {
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-8">
-                  <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold">
+                <div className="flex items-center gap-4 sm:gap-8">
+                  <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-3xl bg-primary/10 flex items-center justify-center text-primary text-xl sm:text-3xl font-bold shrink-0">
                     {form.name?.slice(0, 1).toUpperCase() || profile.email.slice(0, 1).toUpperCase()}
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-headline font-extrabold">{form.name || profile.email}</h3>
-                    <p className="text-on-surface-variant font-medium">{form.title || profile.role} • {profile.email}</p>
+                  <div className="min-w-0">
+                    <h3 className="text-lg sm:text-2xl font-headline font-extrabold truncate">{form.name || profile.email}</h3>
+                    <p className="text-on-surface-variant font-medium text-sm truncate">{form.title || profile.role} • {profile.email}</p>
                     <span className={`inline-block mt-2 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
                       profile.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-surface-container-highest text-on-surface-variant'
                     }`}>{profile.role}</span>
@@ -453,19 +453,19 @@ export const Settings = () => {
             {/* Logo */}
             <section className="space-y-5">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('settings.branding.logoLabel')}</h4>
-              <div className="flex items-center gap-6">
-                <div className="w-28 h-28 rounded-3xl bg-surface-container-highest flex items-center justify-center overflow-hidden shrink-0 border-2 border-dashed border-outline-variant/40">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6">
+                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-3xl bg-surface-container-highest flex items-center justify-center overflow-hidden shrink-0 border-2 border-dashed border-outline-variant/40">
                   {logoPreview
                     ? <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
                     : <ImageIcon className="w-8 h-8 text-on-surface-variant/30" />
                   }
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-3 text-center sm:text-start">
                   <p className="text-sm font-medium text-on-surface-variant">{t('settings.branding.logoHint')}</p>
                   <button
                     onClick={() => logoInputRef.current?.click()}
                     disabled={uploadingLogo}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-highest rounded-xl font-bold text-sm hover:bg-surface-variant disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 mx-auto sm:mx-0 px-5 py-2.5 bg-surface-container-highest rounded-xl font-bold text-sm hover:bg-surface-variant disabled:opacity-50 transition-colors"
                   >
                     <Upload className="w-4 h-4" />
                     {uploadingLogo ? t('settings.branding.uploading') : t('settings.branding.uploadLogo')}
@@ -494,7 +494,7 @@ export const Settings = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-8 gap-3">
+              <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">
                 {PALETTE.map(({ name, hex }) => (
                   <button
                     key={hex}

@@ -500,7 +500,7 @@ export const PlansManager = () => {
       )}
 
       {!loading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map(plan => (
             <motion.div key={plan.key} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
               <PlanCard plan={plan} onEdit={() => setEditing(plan)} />

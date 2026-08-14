@@ -264,36 +264,36 @@ export const MenuManager = () => {
 
   if (view === 'add') {
     return (
-      <div className="space-y-10">
-        <div className="flex justify-between items-end mb-12">
+      <div className="space-y-8 sm:space-y-10">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-8 sm:mb-12">
           <div>
             <nav className="flex items-center gap-2 text-xs font-medium text-on-surface-variant/60 mb-2 uppercase tracking-widest">
               <button onClick={() => { closeAddView(); setNewItem(emptyItem()); }} className="hover:text-primary transition-colors">{t('menu.breadcrumbMenu')}</button>
               <ChevronRight className="w-3 h-3 rtl:scale-x-[-1]" /><span className="text-primary">{t('menu.breadcrumbNew')}</span>
             </nav>
-            <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('menu.addNewDish')}</h2>
+            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('menu.addNewDish')}</h2>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-3 sm:gap-4">
             <button onClick={() => { closeAddView(); setNewItem(emptyItem()); }}
-              className="px-8 py-3 rounded-xl font-semibold bg-surface-container-high hover:bg-surface-container-highest transition-all">
+              className="flex-1 sm:flex-none px-5 sm:px-8 py-3 rounded-xl font-semibold bg-surface-container-high hover:bg-surface-container-highest transition-all">
               {t('menu.cancel')}
             </button>
             <button onClick={handleSave}
-              className="px-8 py-3 rounded-xl font-semibold text-on-primary btn-gradient shadow-lg shadow-primary/20 active:scale-95 transition-all">
+              className="flex-1 sm:flex-none px-5 sm:px-8 py-3 rounded-xl font-semibold text-on-primary btn-gradient shadow-lg shadow-primary/20 active:scale-95 transition-all">
               {t('menu.saveDish')}
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-12 gap-10">
-          <div className="col-span-8 space-y-8">
-            <section className="bg-surface-container-low p-8 rounded-4xl space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+          <div className="lg:col-span-8 space-y-6 sm:space-y-8">
+            <section className="bg-surface-container-low p-5 sm:p-8 rounded-4xl space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant ms-1">{t('menu.dishName')}</label>
                 <input type="text" placeholder={t('menu.dishNamePlaceholder')}
                   className="w-full bg-surface-container-lowest border-none rounded-xl py-4 px-6 text-lg font-medium focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/30"
                   value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} />
               </div>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant ms-1">{t('menu.category')}</label>
                   <select className="w-full bg-surface-container-lowest border-none rounded-xl py-4 px-6 font-medium focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
@@ -325,7 +325,7 @@ export const MenuManager = () => {
                 onFile={addImg.upload} onClear={() => setNewItem(p => ({ ...p, image: '' }))} />
             </section>
           </div>
-          <div className="col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-6">
             <div className="bg-surface-container-low p-6 rounded-4xl space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('menu.status')}</h3>
               <div className="flex items-center justify-between p-4 bg-surface-container-lowest rounded-2xl">
@@ -348,18 +348,18 @@ export const MenuManager = () => {
 
   return (
     <div className="relative">
-      <div className={`transition-all duration-300 ease-in-out space-y-8 ${panel !== 'none' ? 'pe-[440px]' : ''}`}>
+      <div className={`transition-all duration-300 ease-in-out space-y-6 sm:space-y-8 ${panel !== 'none' ? 'lg:pe-[440px]' : ''}`}>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h2 className="text-4xl font-extrabold tracking-tight font-headline">{t('menu.heading')}</h2>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight font-headline">{t('menu.heading')}</h2>
             <p className="text-on-surface-variant mt-1">{t('menu.subtext')}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative">
+            <div className="relative flex-1 min-w-[160px] sm:flex-none">
               <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
               <input type="text" placeholder={t('menu.searchPlaceholder')} value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="bg-surface-container-high border-none rounded-xl py-2.5 ps-11 pe-5 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none w-52" />
+                className="w-full bg-surface-container-high border-none rounded-xl py-2.5 ps-11 pe-5 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none sm:w-52" />
             </div>
             <button onClick={() => openPanel('categories')}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${panel === 'categories' ? 'bg-primary text-white shadow-md' : 'bg-surface-container-high hover:bg-surface-container-highest'}`}>
@@ -457,21 +457,21 @@ export const MenuManager = () => {
       <AnimatePresence>
         {panel !== 'none' && (
           <motion.div key={panel}
-            initial={{ x: isRTL ? -440 : 440 }} animate={{ x: 0 }} exit={{ x: isRTL ? -440 : 440 }}
+            initial={{ x: isRTL ? '-100%' : '100%' }} animate={{ x: 0 }} exit={{ x: isRTL ? '-100%' : '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className={`fixed top-0 ${isRTL ? 'left-0 border-r' : 'right-0 border-l'} h-screen w-[420px] bg-surface border-surface-container shadow-2xl z-30 flex flex-col`}>
+            className={`fixed top-0 ${isRTL ? 'left-0 border-r' : 'right-0 border-l'} h-screen w-full sm:w-[420px] bg-surface border-surface-container shadow-2xl z-30 flex flex-col`}>
 
             {/* CATEGORIES PANEL */}
             {panel === 'categories' && (
               <>
-                <div className="flex items-center justify-between px-7 py-5 border-b border-surface-container">
+                <div className="flex items-center justify-between px-5 sm:px-7 py-5 border-b border-surface-container">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Tag className="w-4 h-4" /></div>
                     <h3 className="font-extrabold text-lg font-headline">{t('menu.categories')}</h3>
                   </div>
                   <button onClick={() => setPanel('none')} className="p-2 hover:bg-surface-container rounded-xl transition-colors"><X className="w-5 h-5" /></button>
                 </div>
-                <div className="flex-1 overflow-y-auto no-scrollbar px-7 py-6 space-y-3">
+                <div className="flex-1 overflow-y-auto no-scrollbar px-5 sm:px-7 py-6 space-y-3">
                   {categories.length === 0 && (
                     <p className="text-sm text-on-surface-variant/50 text-center py-8">{t('menu.noCategoriesYet')}</p>
                   )}
@@ -522,7 +522,7 @@ export const MenuManager = () => {
                     ))}
                   </AnimatePresence>
                 </div>
-                <div className="px-7 py-5 border-t border-surface-container space-y-3">
+                <div className="px-5 sm:px-7 py-5 border-t border-surface-container space-y-3">
                   <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('menu.newCategory')}</p>
                   <input type="text" placeholder={t('menu.categoryName')} value={catName} onChange={e => setCatName(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleAddCategory(); }}
@@ -542,21 +542,21 @@ export const MenuManager = () => {
             {/* EDIT PANEL */}
             {panel === 'edit' && (
               <>
-                <div className="flex items-center justify-between px-7 py-5 border-b border-surface-container">
+                <div className="flex items-center justify-between px-5 sm:px-7 py-5 border-b border-surface-container">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Edit2 className="w-4 h-4" /></div>
                     <h3 className="font-extrabold text-lg font-headline">{t('menu.editDish')}</h3>
                   </div>
                   <button onClick={closeEditPanel} className="p-2 hover:bg-surface-container rounded-xl transition-colors"><X className="w-5 h-5" /></button>
                 </div>
-                <form onSubmit={handleEditSave} className="flex-1 overflow-y-auto no-scrollbar px-7 py-6 space-y-5">
+                <form onSubmit={handleEditSave} className="flex-1 overflow-y-auto no-scrollbar px-5 sm:px-7 py-6 space-y-5">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">{t('menu.dishName')}</label>
                     <input type="text" placeholder={t('menu.dishName')} value={editItem.name ?? ''}
                       onChange={e => setEditItem(p => ({ ...p, name: e.target.value }))}
                       className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all" />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">{t('menu.category')}</label>
                       <select value={editItem.category ?? ''} onChange={e => setEditItem(p => ({ ...p, category: e.target.value }))}
@@ -607,7 +607,7 @@ export const MenuManager = () => {
                     )}
                   </AnimatePresence>
                 </form>
-                <div className="px-7 py-5 border-t border-surface-container flex gap-3">
+                <div className="px-5 sm:px-7 py-5 border-t border-surface-container flex gap-3">
                   <button type="button" onClick={closeEditPanel}
                     className="flex-1 py-3 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-all">
                     {t('menu.cancel')}

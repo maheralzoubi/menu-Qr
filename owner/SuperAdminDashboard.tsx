@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Building2, TrendingUp, LogOut, Shield, Users, CreditCard, Megaphone, UserCircle } from 'lucide-react';
+import { Building2, TrendingUp, LogOut, Shield, Users, CreditCard, Megaphone, UserCircle, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { RestaurantList } from './components/RestaurantList';
@@ -49,6 +49,7 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const superAdmin = isSuperAdmin();
   const { t } = useTranslation();
   const [showAccount, setShowAccount] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   useEffect(() => {
     window.history.replaceState({ tab: activeTab, restaurant: selectedRestaurant } satisfies NavState, '', window.location.href);
@@ -74,6 +75,7 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setActiveTab(tab);
     setSelectedRestaurant(null);
     pushNav({ tab, restaurant: null }, true);
+    setNavOpen(false);
   }, [pushNav]);
 
   const selectRestaurant = useCallback((r: SelectedRestaurant) => {
@@ -106,13 +108,29 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
 
   return (
     <div className="min-h-screen bg-surface flex text-on-surface">
+      {/* Mobile/tablet backdrop */}
+      <AnimatePresence>
+        {navOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setNavOpen(false)}
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
-      <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50 bg-surface border-r border-surface-container rtl:border-r-0 rtl:border-l">
-        <div className="px-6 mb-10">
+      <aside className={`h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50 bg-surface border-r border-surface-container rtl:border-r-0 rtl:border-l transition-transform duration-300 lg:translate-x-0 ${
+        navOpen ? 'translate-x-0' : 'rtl:translate-x-full -translate-x-full'
+      }`}>
+        <div className="px-6 mb-10 flex items-center justify-between">
           <img src="/logo.svg" alt="Menu QR" className="h-9 w-auto" />
+          <button onClick={() => setNavOpen(false)} className="p-1.5 rounded-lg hover:bg-surface-container lg:hidden">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1">
+        <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
           {visibleNavItems.map(item => (
             <button key={item.id} onClick={() => changeTab(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-xl ${
@@ -137,27 +155,32 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 ml-64 rtl:ml-0 rtl:mr-64 min-h-screen">
-        <header className="w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-surface-container flex items-center justify-between px-8 py-4">
-          <span className="text-xl font-bold font-headline">
-            {selectedRestaurant ? selectedRestaurant.name : t('header.ownerDashboard')}
-          </span>
-          <div className="flex items-center gap-3">
+      <main className="flex-1 lg:ml-64 rtl:lg:ml-0 rtl:lg:mr-64 min-h-screen min-w-0">
+        <header className="w-full sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-surface-container flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={() => setNavOpen(true)} className="p-2 -ms-2 rounded-xl hover:bg-surface-container lg:hidden shrink-0">
+              <Menu className="w-5 h-5" />
+            </button>
+            <span className="text-lg sm:text-xl font-bold font-headline truncate">
+              {selectedRestaurant ? selectedRestaurant.name : t('header.ownerDashboard')}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button onClick={() => setShowAccount(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-surface-container text-on-surface-variant rounded-full hover:bg-surface-container-high transition-colors">
               <UserCircle className="w-4 h-4" />
-              <span className="text-xs font-bold">{t('account.title')}</span>
+              <span className="hidden sm:inline text-xs font-bold">{t('account.title')}</span>
             </button>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full">
               <Shield className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase tracking-widest">
+              <span className="hidden sm:inline text-xs font-bold uppercase tracking-widest">
                 {superAdmin ? t('header.superAdmin') : t('header.appOwner')}
               </span>
             </div>
           </div>
         </header>
 
-        <div className="max-w-7xl mx-auto px-8 py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
           <AnimatePresence mode="wait">
             <motion.div key={selectedRestaurant?._id ?? activeTab}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>

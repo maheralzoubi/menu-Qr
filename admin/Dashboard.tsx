@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Utensils, ShoppingBag, Calendar,
-  Star, LogOut, TrendingUp, Settings as SettingsIcon, QrCode, Tag, MonitorSmartphone
+  Star, LogOut, TrendingUp, Settings as SettingsIcon, QrCode, Tag, MonitorSmartphone,
+  Menu, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
@@ -35,15 +36,8 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [stats, setStats] = useState<any>(null);
   const [currency, setCurrency] = useState('USD');
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const { t } = useTranslation();
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 1024);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   // Attach nav state to the current history entry without touching the URL on first load.
   useEffect(() => {
@@ -62,6 +56,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const changeTab = (tab: DashboardTab) => {
     setActiveTab(tab);
     pushNavParam('tab', tab);
+    setNavOpen(false);
   };
 
   useEffect(() => {
@@ -100,29 +95,28 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const initials = displayName.slice(0, 2).toUpperCase();
   const restaurantId = user?.restaurantId ?? '';
 
-  if (isMobile) {
-    return (
-      <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-8 text-center space-y-6">
-        <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center text-primary">
-          <LayoutDashboard className="w-10 h-10" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-headline font-extrabold tracking-tight">{t('dashboard.desktopOnly')}</h2>
-          <p className="text-on-surface-variant text-sm max-w-xs mx-auto">{t('dashboard.desktopOnlyMsg')}</p>
-        </div>
-        <button onClick={onLogout} className="btn-gradient text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-primary/20">
-          {t('dashboard.backToApp')}
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-surface flex text-on-surface">
+      {/* Mobile/tablet backdrop */}
+      <AnimatePresence>
+        {navOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setNavOpen(false)}
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
-      <aside className="h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50 bg-surface border-r border-surface-container rtl:border-r-0 rtl:border-l">
-        <div className="px-6 mb-10">
+      <aside className={`h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50 bg-surface border-r border-surface-container rtl:border-r-0 rtl:border-l transition-transform duration-300 lg:translate-x-0 ${
+        navOpen ? 'translate-x-0' : 'rtl:translate-x-full -translate-x-full'
+      }`}>
+        <div className="px-6 mb-10 flex items-center justify-between">
           <img src="/logo.svg" alt="Menu QR" className="h-9 w-auto" />
+          <button onClick={() => setNavOpen(false)} className="p-1.5 rounded-lg hover:bg-surface-container lg:hidden">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
@@ -152,10 +146,15 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 ml-64 rtl:ml-0 rtl:mr-64 min-h-screen">
-        <header className="w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-surface-container flex justify-between items-center px-8 py-4">
-          <span className="text-xl font-bold font-headline">{t('dashboard.headerTitle')}</span>
-          <div className="flex items-center gap-3">
+      <main className="flex-1 lg:ml-64 rtl:lg:ml-0 rtl:lg:mr-64 min-h-screen min-w-0">
+        <header className="w-full sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-surface-container flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={() => setNavOpen(true)} className="p-2 -ms-2 rounded-xl hover:bg-surface-container lg:hidden shrink-0">
+              <Menu className="w-5 h-5" />
+            </button>
+            <span className="text-lg sm:text-xl font-bold font-headline truncate">{t('dashboard.headerTitle')}</span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
             <div className="text-end hidden xl:block">
               <p className="text-sm font-bold leading-tight">{displayName}</p>
               <p className="text-[10px] text-on-surface-variant uppercase tracking-tighter">{displayTitle}</p>
@@ -170,7 +169,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           </div>
         </header>
 
-        <div className="max-w-7xl mx-auto px-8 py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

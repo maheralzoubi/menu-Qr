@@ -182,35 +182,35 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
         <div>
-          <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('customers.heading')}</h2>
+          <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('customers.heading')}</h2>
           <p className="text-on-surface-variant font-medium">{t('customers.subtext')}</p>
         </div>
         <div className="relative">
           <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
           <input type="text" placeholder={t('customers.search')} value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none w-72" />
+            className="w-full bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none sm:w-72" />
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-3 gap-3 sm:gap-6">
         {[
           { labelKey: 'customers.stats.total',  value: subscribers.length, icon: <Users className="w-6 h-6" />,     color: 'text-primary',      filter: 'all' },
           { labelKey: 'customers.stats.active', value: active,             icon: <UserCheck className="w-6 h-6" />, color: 'text-primary',  filter: 'active' },
           { labelKey: 'customers.stats.locked', value: locked,             icon: <UserX className="w-6 h-6" />,     color: 'text-on-surface-variant',     filter: 'locked' },
         ].map(s => (
           <button key={s.labelKey} onClick={() => setFilterStatus(s.filter as any)}
-            className={`p-6 rounded-3xl flex items-center justify-between shadow-sm border transition-all ${filterStatus === s.filter ? 'bg-surface-container-lowest border-primary ring-2 ring-primary' : 'bg-surface-container-low border-outline-variant/10 hover:bg-surface-container-lowest'}`}>
+            className={`p-4 sm:p-6 rounded-3xl flex items-center justify-between shadow-sm border transition-all ${filterStatus === s.filter ? 'bg-surface-container-lowest border-primary ring-2 ring-primary' : 'bg-surface-container-low border-outline-variant/10 hover:bg-surface-container-lowest'}`}>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
-              <h4 className="text-3xl font-headline font-extrabold">{s.value}</h4>
+              <h4 className="text-xl sm:text-3xl font-headline font-extrabold">{s.value}</h4>
             </div>
-            <div className={`${s.color} opacity-60`}>{s.icon}</div>
+            <div className={`hidden sm:block ${s.color} opacity-60`}>{s.icon}</div>
           </button>
         ))}
       </div>
@@ -221,8 +221,8 @@ export const CustomerTable = ({ isSuperAdmin }: Props) => {
           {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-surface-container-low rounded-2xl" />)}
         </div>
       ) : (
-        <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-outline-variant/10">
-          <table className="w-full">
+        <div className="bg-surface-container-low rounded-3xl border border-outline-variant/10 overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b border-outline-variant/10">
                 {tableHeaders.map(h => (

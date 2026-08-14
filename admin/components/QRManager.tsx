@@ -225,29 +225,29 @@ export const QRManager = ({ restaurantId }: Props) => {
   const free = tables.filter(tb => tb.status === 'free').length;
 
   return (
-    <div className="flex h-full gap-10">
+    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
       {/* Main content */}
-      <div className="flex-1 space-y-8 overflow-y-auto no-scrollbar pe-2">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex-1 space-y-6 lg:space-y-8 overflow-y-auto no-scrollbar lg:pe-2 min-w-0">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
-            <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('qr.heading')}</h2>
+            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('qr.heading')}</h2>
             <p className="text-on-surface-variant font-medium">{t('qr.subtext')}</p>
           </div>
           <button onClick={() => { setAdding(true); setTimeout(() => inputRef.current?.focus(), 50); }}
-            className="flex items-center gap-2 btn-gradient text-white px-6 py-3 rounded-xl font-bold text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
+            className="flex items-center gap-2 btn-gradient text-white px-6 py-3 rounded-xl font-bold text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all self-start">
             <Plus className="w-4 h-4" /> {t('qr.addTable')}
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-3 sm:gap-6">
           {[
             { labelKey: 'qr.totalTables', value: tables.length },
             { labelKey: 'qr.occupied',    value: occupied, color: 'text-primary' },
             { labelKey: 'qr.free',        value: free,     color: 'text-primary' },
           ].map(s => (
-            <div key={s.labelKey} className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10 shadow-sm">
+            <div key={s.labelKey} className="bg-surface-container-low p-4 sm:p-6 rounded-3xl border border-outline-variant/10 shadow-sm">
               <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
-              <h4 className={`text-3xl font-headline font-extrabold ${s.color ?? ''}`}>{s.value}</h4>
+              <h4 className={`text-xl sm:text-3xl font-headline font-extrabold ${s.color ?? ''}`}>{s.value}</h4>
             </div>
           ))}
         </div>
@@ -256,11 +256,11 @@ export const QRManager = ({ restaurantId }: Props) => {
           {adding && (
             <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
               onSubmit={handleAdd}
-              className="flex items-center gap-3 bg-surface-container-low p-4 rounded-2xl border border-primary/20">
+              className="flex flex-wrap items-center gap-3 bg-surface-container-low p-4 rounded-2xl border border-primary/20">
               <QrCode className="w-5 h-5 text-primary shrink-0" />
               <input ref={inputRef} type="text" value={newTableName} onChange={e => setNewTableName(e.target.value)}
                 placeholder={t('qr.tablePlaceholder')}
-                className="flex-1 bg-transparent border-none outline-none text-sm font-medium placeholder:text-on-surface-variant/40" />
+                className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm font-medium placeholder:text-on-surface-variant/40" />
               <button type="submit" className="px-5 py-2 rounded-xl btn-gradient text-white font-bold text-sm">{t('qr.add')}</button>
               <button type="button" onClick={() => { setAdding(false); setNewTableName(''); }}
                 className="px-4 py-2 rounded-xl bg-surface-container-high font-bold text-sm">{t('qr.cancel')}</button>
@@ -269,7 +269,7 @@ export const QRManager = ({ restaurantId }: Props) => {
         </AnimatePresence>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
             {[1,2,3,4].map(i => <div key={i} className="h-80 bg-surface-container-low rounded-3xl" />)}
           </div>
         ) : tables.length === 0 ? (
@@ -281,7 +281,7 @@ export const QRManager = ({ restaurantId }: Props) => {
               className="mt-2 text-primary font-bold text-sm hover:underline">{t('qr.addFirstTable')}</button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence>
               {tables.map((table, i) => {
                 const isOccupied = table.status === 'occupied';
@@ -355,12 +355,12 @@ export const QRManager = ({ restaurantId }: Props) => {
       </div>
 
       {/* Customization side panel */}
-      <div className="w-96 shrink-0 h-full">
+      <div className="lg:w-96 shrink-0 lg:h-full">
         <AnimatePresence mode="wait">
           {selectedTable ? (
             <motion.div key={selectedTable._id}
               initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
-              className="h-full bg-surface-container-low rounded-4xl p-8 flex flex-col shadow-2xl shadow-primary/5 overflow-y-auto no-scrollbar">
+              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-surface-container-low lg:rounded-4xl p-5 sm:p-8 flex flex-col shadow-2xl shadow-primary/5 overflow-y-auto no-scrollbar">
 
               <div className="flex justify-between items-start mb-6 shrink-0">
                 <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('qr.styleHeading')}</h3>
@@ -471,7 +471,7 @@ export const QRManager = ({ restaurantId }: Props) => {
               </div>
             </motion.div>
           ) : (
-            <div className="h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
+            <div className="hidden lg:flex h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
               <QrCode className="w-16 h-16 mb-4 opacity-20" />
               <p className="font-bold">{t('qr.noTableSelected')}</p>
               <p className="text-sm">{t('qr.noTableSelectedMsg')}</p>

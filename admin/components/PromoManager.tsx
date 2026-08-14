@@ -86,14 +86,14 @@ export const PromoManager = () => {
     promo.expiryDate ? new Date() > new Date(promo.expiryDate) : false;
 
   return (
-    <div className="space-y-10">
-      <div className="flex items-end justify-between">
+    <div className="space-y-6 sm:space-y-10">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('promos.heading')}</h2>
+          <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('promos.heading')}</h2>
           <p className="text-on-surface-variant font-medium">{t('promos.subtext')}</p>
         </div>
         <button onClick={() => { setShowForm(true); setError(''); }}
-          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-headline font-bold text-sm hover:bg-primary/90 transition-colors">
+          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-headline font-bold text-sm hover:bg-primary/90 transition-colors self-start">
           <Plus className="w-4 h-4" /> {t('promos.newCode')}
         </button>
       </div>
@@ -101,9 +101,9 @@ export const PromoManager = () => {
       <AnimatePresence>
         {showForm && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className="bg-surface-container-low rounded-2xl p-6 space-y-5">
+            className="bg-surface-container-low rounded-2xl p-4 sm:p-6 space-y-5">
             <h3 className="font-headline font-bold text-lg">{t('promos.createHeading')}</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">{t('promos.code')}</label>
                 <input type="text" placeholder={t('promos.codePlaceholder')} value={form.code}
@@ -168,17 +168,17 @@ export const PromoManager = () => {
               const expired = isExpired(promo);
               return (
                 <motion.div key={promo._id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
-                  className={`flex items-center gap-4 bg-surface-container-low rounded-2xl px-6 py-4 ${expired ? 'opacity-50' : ''}`}>
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <Tag className="w-5 h-5" />
+                  className={`flex items-center gap-3 sm:gap-4 bg-surface-container-low rounded-2xl px-4 sm:px-6 py-4 ${expired ? 'opacity-50' : ''}`}>
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-headline font-extrabold text-lg tracking-wider">{promo.code}</span>
                       {expired && <span className="text-[10px] font-bold uppercase tracking-wider bg-error/10 text-error px-2 py-0.5 rounded-full">{t('promos.expired')}</span>}
                       {!promo.isActive && !expired && <span className="text-[10px] font-bold uppercase tracking-wider bg-on-surface/10 text-on-surface-variant px-2 py-0.5 rounded-full">{t('promos.inactive')}</span>}
                     </div>
-                    <div className="flex items-center gap-4 mt-0.5 text-xs text-on-surface-variant font-medium">
+                    <div className="flex items-center gap-3 sm:gap-4 mt-0.5 text-xs text-on-surface-variant font-medium flex-wrap">
                       <span className="text-primary font-bold">{t('promos.off', { discount: formatDiscount(promo) })}</span>
                       <span className="flex items-center gap-1">
                         <Hash className="w-3 h-3" />

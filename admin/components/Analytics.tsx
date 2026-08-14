@@ -41,7 +41,7 @@ export const Analytics = () => {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="h-12 w-80 bg-surface-container-low rounded-2xl" />
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-surface-container-low rounded-4xl" />)}
         </div>
         <div className="h-96 bg-surface-container-low rounded-4xl" />
@@ -60,9 +60,9 @@ export const Analytics = () => {
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
         <div>
-          <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('analytics.heading')}</h2>
+          <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('analytics.heading')}</h2>
           <p className="text-on-surface-variant font-medium">{t('analytics.subtext')}</p>
         </div>
         <div className="flex gap-3">
@@ -102,7 +102,7 @@ export const Analytics = () => {
 
       {/* Revenue chart + Category breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-surface-container-low p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
+        <div className="lg:col-span-2 bg-surface-container-low p-5 sm:p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
           <h3 className="text-xl font-headline font-extrabold mb-8">{t('analytics.revenueGrowth')}</h3>
           <div className="h-[350px] w-full">
             {(data?.revenueByDay.length ?? 0) === 0 ? (
@@ -127,7 +127,7 @@ export const Analytics = () => {
           </div>
         </div>
 
-        <div className="bg-surface-container-low p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
+        <div className="bg-surface-container-low p-5 sm:p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
           <h3 className="text-xl font-headline font-extrabold mb-6">{t('analytics.salesByCategory')}</h3>
           {(data?.categoryStats.length ?? 0) === 0 ? (
             <div className="h-40 flex items-center justify-center text-on-surface-variant/40 text-sm">{t('analytics.noCategoryData')}</div>
@@ -161,7 +161,7 @@ export const Analytics = () => {
 
       {/* Hourly orders + Insight card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-surface-container-low p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
+        <div className="bg-surface-container-low p-5 sm:p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
           <h3 className="text-xl font-headline font-extrabold mb-8">{t('analytics.popularTimes')}</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -176,7 +176,7 @@ export const Analytics = () => {
           </div>
         </div>
 
-        <div className="bg-primary p-8 rounded-4xl shadow-2xl shadow-primary/20 text-on-primary flex flex-col justify-between">
+        <div className="bg-primary p-5 sm:p-8 rounded-4xl shadow-2xl shadow-primary/20 text-on-primary flex flex-col justify-between">
           <div>
             <h3 className="text-2xl font-headline font-extrabold mb-2">{t('analytics.snapshot')}</h3>
             <p className="text-on-primary/70 text-sm leading-relaxed">

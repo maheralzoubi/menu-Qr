@@ -31,7 +31,7 @@ export const PlatformAnalytics = () => {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="h-12 w-80 bg-surface-container-low rounded-2xl" />
-        <div className="grid grid-cols-4 gap-6">{[1,2,3,4].map(i => <div key={i} className="h-32 bg-surface-container-low rounded-4xl" />)}</div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">{[1,2,3,4].map(i => <div key={i} className="h-32 bg-surface-container-low rounded-4xl" />)}</div>
         <div className="h-72 bg-surface-container-low rounded-4xl" />
       </div>
     );
@@ -53,27 +53,27 @@ export const PlatformAnalytics = () => {
   ];
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 sm:space-y-10">
       <div>
-        <h2 className="text-4xl font-headline font-extrabold tracking-tight">{t('analytics.heading')}</h2>
+        <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('analytics.heading')}</h2>
         <p className="text-on-surface-variant font-medium">{t('analytics.subtext')}</p>
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {kpis.map((k, i) => (
           <motion.div key={k.labelKey} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-            className="bg-surface-container-low p-6 rounded-4xl border border-outline-variant/10 shadow-sm">
-            <div className="text-primary mb-4">{k.icon}</div>
+            className="bg-surface-container-low p-4 sm:p-6 rounded-4xl border border-outline-variant/10 shadow-sm">
+            <div className="text-primary mb-2 sm:mb-4">{k.icon}</div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t(k.labelKey)}</p>
-            <h4 className="text-2xl font-headline font-extrabold mt-1">{k.value}</h4>
+            <h4 className="text-xl sm:text-2xl font-headline font-extrabold mt-1">{k.value}</h4>
           </motion.div>
         ))}
       </div>
 
       {/* New restaurants per month */}
-      <div className="bg-surface-container-low p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
-        <h3 className="text-xl font-headline font-extrabold mb-8">{t('analytics.newRestaurantsChart')}</h3>
+      <div className="bg-surface-container-low p-5 sm:p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
+        <h3 className="text-lg sm:text-xl font-headline font-extrabold mb-6 sm:mb-8">{t('analytics.newRestaurantsChart')}</h3>
         <div className="h-[250px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data?.restaurantsPerMonth ?? []}>
@@ -91,11 +91,11 @@ export const PlatformAnalytics = () => {
       </div>
 
       {/* Per-restaurant table */}
-      <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-outline-variant/10">
+      <div className="bg-surface-container-low rounded-3xl border border-outline-variant/10 overflow-x-auto">
         <div className="p-6 border-b border-outline-variant/10">
           <h3 className="text-lg font-headline font-extrabold">{t('analytics.perRestaurant')}</h3>
         </div>
-        <table className="w-full">
+        <table className="w-full min-w-[560px]">
           <thead>
             <tr className="border-b border-outline-variant/10">
               {tableHeaders.map(h => (
