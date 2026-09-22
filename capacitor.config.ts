@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.menuqr.app',
-  appName: 'Menu QR',
+  appName: 'Menu Go',
   webDir: 'dist',
   server: {
     androidScheme: 'http',   // avoids mixed-content block when API is plain HTTP

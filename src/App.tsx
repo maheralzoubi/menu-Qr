@@ -158,7 +158,7 @@ export default function App() {
           >
             <motion.img
               src="/logo-dark.svg"
-              alt="Menu QR"
+              alt="Menu Go"
               className="h-14 w-auto"
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1, transition: { duration: 0.35 } }}

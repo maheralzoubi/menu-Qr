@@ -21,7 +21,7 @@ export const Header = ({ title, logo, restaurantName, onInfo }: HeaderProps) => 
           {logo ? (
             <img src={logo} alt={restaurantName ?? title} className="w-full h-full object-cover" />
           ) : (
-            <img src="/favicon.svg" alt="Menu QR" className="w-5 h-5 object-contain" />
+            <img src="/favicon.svg" alt="Menu Go" className="w-5 h-5 object-contain" />
           )}
         </div>
 

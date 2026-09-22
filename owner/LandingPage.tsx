@@ -381,7 +381,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         <nav className="fixed top-0 start-0 end-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center">
-              <img src="/logo-dark.svg" alt="Menu QR" className="h-8 w-auto" />
+              <img src="/logo-dark.svg" alt="Menu Go" className="h-8 w-auto" />
             </div>
             <div className="flex items-center gap-3">
               <LanguageSwitcher />
@@ -556,7 +556,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         <nav className="fixed top-0 start-0 end-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center">
-              <img src="/logo-dark.svg" alt="Menu QR" className="h-8 w-auto" />
+              <img src="/logo-dark.svg" alt="Menu Go" className="h-8 w-auto" />
             </div>
             <button onClick={onLoginClick} className="text-sm text-on-surface-variant hover:text-on-surface transition-colors">
               {t('checkout.alreadyHaveAccount')} <span className="font-bold text-primary">{t('checkout.signIn')}</span>
@@ -660,7 +660,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
         <nav className="fixed top-0 start-0 end-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center">
-              <img src="/logo-dark.svg" alt="Menu QR" className="h-8 w-auto" />
+              <img src="/logo-dark.svg" alt="Menu Go" className="h-8 w-auto" />
             </div>
             <button onClick={onLoginClick} className="text-sm text-on-surface-variant hover:text-on-surface transition-colors">
               {t('checkout.alreadyHaveAccount')} <span className="font-bold text-primary">{t('checkout.signIn')}</span>
@@ -685,7 +685,7 @@ export const LandingPage = ({ onLoginClick }: { onLoginClick: () => void }) => {
                   <div className="flex items-center gap-3 mb-6 pb-5 border-b border-outline-variant">
                     <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">{selected.icon}</div>
                     <div>
-                      <p className="font-bold">Menu QR {t(`plans.${selected.id}.name`)}</p>
+                      <p className="font-bold">Menu Go {t(`plans.${selected.id}.name`)}</p>
                       <p className="text-xs text-on-surface-variant">{t(`checkout.${billing}Billing`)}</p>
                     </div>
                   </div>

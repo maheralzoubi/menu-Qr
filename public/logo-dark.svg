@@ -9,5 +9,5 @@
     <path d="M62 26 C62 26 68 33 68 46 L62 46" stroke-linejoin="round"/>
     <line x1="62" y1="46" x2="62" y2="70"/>
   </g>
-  <text x="104" y="63" font-family="'Plus Jakarta Sans', Inter, system-ui, sans-serif" font-size="38" font-weight="700" fill="#ece8e2">Menu QR</text>
+  <text x="104" y="63" font-family="'Plus Jakarta Sans', Inter, system-ui, sans-serif" font-size="38" font-weight="700" fill="#ece8e2">Menu Go</text>
 </svg>

@@ -16,7 +16,7 @@
     }
   },
   "mode": {
-    "appName": "Menu QR",
+    "appName": "Menu Go",
     "toggleTheme": "Toggle theme",
     "heading": "How are you\ndining today?",
     "scanLabel": "Inside a restaurant",
@@ -26,7 +26,7 @@
     "browseLabel": "Browse restaurants",
     "browseTitle": "Order Online",
     "browseDesc": "Explore all restaurants and place your order",
-    "poweredBy": "Powered by Menu QR · v1.0"
+    "poweredBy": "Powered by Menu Go · v1.0"
   },
   "home": {
     "welcomeTo": "Welcome to",
@@ -184,7 +184,7 @@
     "largePartyDesc": "For groups larger than 6, please call us directly to ensure we can accommodate your party."
   },
   "restaurants": {
-    "appName": "Menu QR",
+    "appName": "Menu Go",
     "back": "Back",
     "findMeal": "Find your next meal",
     "searchPlaceholder": "Search restaurants or cuisine…",
@@ -280,7 +280,7 @@
     "about": "About",
     "appVersion": "App Version",
     "helpSupport": "Help & Support",
-    "poweredBy": "Powered by Menu QR"
+    "poweredBy": "Powered by Menu Go"
   },
   "welcome": {
     "tagline": "Pre-order · Skip the Wait",

@@ -1,4 +1,4 @@
-# Menu QR — Restaurant QR Code System
+# Menu Go — Restaurant QR Code System
 
 A full-stack restaurant platform. Customers scan a QR code at their table to browse the menu, order food, make reservations, and leave reviews. Owners manage everything through two separate dashboards.
 

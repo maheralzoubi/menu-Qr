@@ -9,7 +9,7 @@ export const ProfileScreen = () => {
     <div className="bg-surface min-h-screen">
       {/* Logo */}
       <div className="flex justify-center pt-16 pb-8">
-        <img src="/logo-dark.svg" alt="Menu QR" className="h-10 w-auto" />
+        <img src="/logo-dark.svg" alt="Menu Go" className="h-10 w-auto" />
       </div>
 
       <div className="px-5 space-y-4">

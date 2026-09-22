@@ -113,7 +113,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         navOpen ? 'translate-x-0' : 'rtl:translate-x-full -translate-x-full'
       }`}>
         <div className="px-6 mb-10 flex items-center justify-between">
-          <img src="/logo.svg" alt="Menu QR" className="h-9 w-auto" />
+          <img src="/logo.svg" alt="Menu Go" className="h-9 w-auto" />
           <button onClick={() => setNavOpen(false)} className="p-1.5 rounded-lg hover:bg-surface-container lg:hidden">
             <X className="w-5 h-5" />
           </button>

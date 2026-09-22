@@ -1,5 +1,5 @@
 /**
- * One-time script — creates MenuQR products and prices in Stripe,
+ * One-time script — creates Menu Go products and prices in Stripe,
  * then prints the .env lines to paste into your .env file.
  *
  * Run:  npx tsx server/scripts/stripeSetup.ts
@@ -19,21 +19,21 @@ const stripe = new Stripe(secret);
 const PLANS = [
   {
     id:          'starter',
-    name:        'MenuQR Starter',
+    name:        'Menu Go Starter',
     description: 'Perfect for single-location restaurants.',
     monthly:     2900,   // cents
     annual:      2300,
   },
   {
     id:          'pro',
-    name:        'MenuQR Pro',
+    name:        'Menu Go Pro',
     description: 'For growing restaurants that need more.',
     monthly:     7900,
     annual:      6300,
   },
   {
     id:          'enterprise',
-    name:        'MenuQR Enterprise',
+    name:        'Menu Go Enterprise',
     description: 'Multi-location operations at scale.',
     monthly:     19900,
     annual:      15900,

@@ -30,7 +30,7 @@ Full restaurant app opens directly
 **URL:** `localhost:3000` (no params)
 
 **Header:**
-- App name: **Menu QR**
+- App name: **Menu Go**
 - Tagline: "Discover great restaurants"
 - Search bar below: filters cards by restaurant name in real time
 

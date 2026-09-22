@@ -125,7 +125,7 @@ export const AdminLoginScreen = ({
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <img src="/logo-dark.svg" alt="Menu QR" className="h-20 w-auto" />
+            <img src="/logo-dark.svg" alt="Menu Go" className="h-20 w-auto" />
           </div>
           <h1 className="text-2xl font-headline font-extrabold">{title}</h1>
           <p className="text-sm text-on-surface-variant">{subtitle}</p>

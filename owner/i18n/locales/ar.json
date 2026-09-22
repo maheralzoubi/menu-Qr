@@ -94,7 +94,7 @@
     "signIn": "تسجيل الدخول",
     "heroTag": "منصة المطاعم",
     "heroHeading1": "أدر مطعمك",
-    "heroHeading2": "بذكاء مع Menu QR",
+    "heroHeading2": "بذكاء مع Menu Go",
     "heroSubtext": "قوائم رقمية، وإدارة الطلبات الفورية، والتحليلات، ودعم تعدد الفروع — كل ذلك في مكان واحد.",
     "startTrial": "ابدأ التجربة المجانية",
     "featuresHeading": "كل ما تحتاجه للنمو",
@@ -111,7 +111,7 @@
     "cancelAnytime": "إلغاء في أي وقت",
     "alreadyHaveAccount": "هل لديك حساب؟",
     "signInLink": "سجّل دخولك",
-    "copyright": "© {{year}} Menu QR · جميع الحقوق محفوظة",
+    "copyright": "© {{year}} Menu Go · جميع الحقوق محفوظة",
     "features": {
       "qrMenus": {
         "title": "قوائم QR الذكية",
@@ -164,7 +164,7 @@
     "stepPayment": "الدفع",
     "stepSetup": "إعداد الحساب",
     "heading": "أعدّ حسابك",
-    "subtext": "أنشئ بيانات تسجيل الدخول الخاصة بك لمنصة Menu QR {{plan}}.",
+    "subtext": "أنشئ بيانات تسجيل الدخول الخاصة بك لمنصة Menu Go {{plan}}.",
     "fullName": "الاسم الكامل",
     "emailAddress": "عنوان البريد الإلكتروني",
     "password": "كلمة المرور",
@@ -188,7 +188,7 @@
   "success": {
     "badge": "تم إنشاء الحساب",
     "heading": "أنت جاهز!",
-    "description": "تم إنشاء حسابك في Menu QR {{plan}}.",
+    "description": "تم إنشاء حسابك في Menu Go {{plan}}.",
     "ready": "حسابك جاهز. سجّل دخولك للبدء.",
     "goToSignIn": "الذهاب إلى تسجيل الدخول"
   },
@@ -380,7 +380,7 @@
   },
   "customers": {
     "heading": "المشتركون",
-    "subtext": "جميع مشتركي منصة Menu QR.",
+    "subtext": "جميع مشتركي منصة Menu Go.",
     "search": "ابحث بالاسم، البريد، أو المطعم...",
     "stats": {
       "total": "الإجمالي",

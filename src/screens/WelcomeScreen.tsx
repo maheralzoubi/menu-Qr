@@ -53,7 +53,7 @@ export const WelcomeScreen = ({ onLogin, onRegister, onGuest }: Props) => {
           className="space-y-3 mb-10"
         >
           <h1 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface">
-            Menu QR
+            Menu Go
           </h1>
           <p className="text-lg font-semibold text-primary">{t('welcome.tagline')}</p>
           <p className="text-sm text-on-surface-variant max-w-xs mx-auto leading-relaxed">

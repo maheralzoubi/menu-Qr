@@ -25,8 +25,8 @@ export async function sendVerificationCode(to: string, code: string): Promise<vo
   await sendCode(
     to,
     code,
-    'Your Menu QR verification code',
-    `<p>Thanks for signing up for Menu QR.</p><p>Your verification code is:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px;">${code}</p><p>This code expires in 15 minutes.</p>`,
+    'Your Menu Go verification code',
+    `<p>Thanks for signing up for Menu Go.</p><p>Your verification code is:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px;">${code}</p><p>This code expires in 15 minutes.</p>`,
     'verification code'
   );
 }
@@ -35,8 +35,8 @@ export async function sendPasswordResetCode(to: string, code: string): Promise<v
   await sendCode(
     to,
     code,
-    'Reset your Menu QR password',
-    `<p>We received a request to reset your Menu QR password.</p><p>Your reset code is:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px;">${code}</p><p>This code expires in 15 minutes. If you didn't request this, you can safely ignore this email.</p>`,
+    'Reset your Menu Go password',
+    `<p>We received a request to reset your Menu Go password.</p><p>Your reset code is:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px;">${code}</p><p>This code expires in 15 minutes. If you didn't request this, you can safely ignore this email.</p>`,
     'password reset code'
   );
 }

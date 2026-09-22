@@ -26,7 +26,7 @@ function saveToStorage(ctx: RestaurantContext) {
 }
 
 function applyBranding(name: string, logo: string, primaryColor?: string) {
-  document.title = name || 'Menu QR';
+  document.title = name || 'Menu Go';
   const existing = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
   const favicon = existing ?? Object.assign(document.createElement('link'), { rel: 'icon' });
   favicon.href = logo || '/favicon.svg';

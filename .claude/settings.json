@@ -21,7 +21,9 @@
       "Bash(cp /Users/maheralzoubi/Desktop/projects/menu_qr/android/app/build/outputs/apk/debug/app-debug.apk ~/Desktop/MenuQR-debug.apk && echo \"Copied to Desktop\" && ls -lh ~/Desktop/MenuQR-debug.apk)",
       "Bash(adb devices *)",
       "Bash(open -R ~/Desktop/MenuQR-debug.apk)",
-      "Bash(ipconfig getifaddr *)"
+      "Bash(ipconfig getifaddr *)",
+      "Bash(node -e ' *)",
+      "Bash(echo \"EXIT: $?\")"
     ],
     "additionalDirectories": [
       "/tmp",
