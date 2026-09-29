@@ -106,7 +106,7 @@ export const PhoneInput = ({ value, onChange, placeholder, required }: Props) =>
       <select
         value={dial}
         onChange={e => { setDial(e.target.value); emit(e.target.value, number); }}
-        className="bg-surface-container-low border-none rounded-2xl px-3 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30 shrink-0"
+        className="ds-select w-auto shrink-0"
       >
         {COUNTRY_DIAL_CODES.map(c => (
           <option key={`${c.name}-${c.dial}`} value={c.dial}>{c.dial} {c.name}</option>
@@ -118,7 +118,7 @@ export const PhoneInput = ({ value, onChange, placeholder, required }: Props) =>
         value={number}
         onChange={e => { setNumber(e.target.value); emit(dial, e.target.value); }}
         placeholder={placeholder}
-        className="w-full min-w-0 bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+        className="ds-input min-w-0"
       />
     </div>
   );

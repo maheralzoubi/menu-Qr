@@ -16,23 +16,43 @@ interface Order {
   _id: string; items: CartItem[]; total: number; status: string;
   customerName?: string; address?: string; tableNumber?: string; createdAt: string;
   order_source?: string; payment_status?: string; payment_method?: string; cashier_name?: string;
-  order_note?: string;
+  order_note?: string; order_type?: string; pickup_time?: string;
 }
 
 const SOURCE_LABEL_KEY: Record<string, string> = { CASHIER_POS: 'CASHIER_POS', QR_CODE: 'QR_CODE', CUSTOMER_APP: 'CUSTOMER_APP' };
 const STATUS_LABEL_KEY: Record<string, string> = { Pending: 'pending', Preparing: 'preparing', Ready: 'ready', Delivered: 'delivered', Cancelled: 'cancelled' };
 const SOURCE_COLOR: Record<string, string> = {
-  CASHIER_POS: 'bg-[#303942] text-white',
-  QR_CODE:     'bg-primary/10 text-primary',
-  CUSTOMER_APP:'bg-[#303942]/10 text-[#303942]',
+  CASHIER_POS: 'ds-chip-neutral',
+  QR_CODE:     'ds-chip-brand',
+  CUSTOMER_APP:'ds-chip-info',
+};
+// Source tile (order list): tinted square carrying the short source label
+const SOURCE_TILE: Record<string, string> = {
+  CASHIER_POS: 'bg-surface-container text-on-surface',
+  QR_CODE:     'bg-acc-soft text-acc',
+  CUSTOMER_APP:'bg-info1 text-info7',
 };
 const PAYMENT_COLOR: Record<string, string> = {
-  PAID:                       'bg-primary/10 text-primary',
-  UNPAID:                     'bg-[#303942]/10 text-[#303942]',
-  PENDING_CASH:               'bg-primary/10 text-primary',
-  PENDING_CARD_PAYMENT:       'bg-primary/15 text-primary',
-  PENDING_CLIQ_VERIFICATION:  'bg-primary/20 text-primary',
-  REFUNDED:                   'bg-[#303942]/10 text-[#303942]',
+  PAID:                       'ds-chip-pos',
+  UNPAID:                     'ds-chip-warn',
+  PENDING_CASH:               'ds-chip-warn',
+  PENDING_CARD_PAYMENT:       'ds-chip-warn',
+  PENDING_CLIQ_VERIFICATION:  'ds-chip-warn',
+  REFUNDED:                   'ds-chip-neutral',
+};
+const STATUS_CHIP: Record<string, string> = {
+  Pending:   'ds-chip-warn',
+  Preparing: 'ds-chip-info',
+  Ready:     'ds-chip-pos',
+  Delivered: 'ds-chip-neutral',
+  Cancelled: 'ds-chip-neg',
+};
+// KDS ticket accent (inline-start border) per status
+const STATUS_ACCENT: Record<string, string> = {
+  Pending:   'border-s-warn5',
+  Preparing: 'border-s-info5',
+  Ready:     'border-s-pos5',
+  Cancelled: 'border-s-neg5',
 };
 
 type OrderView = 'feed' | 'kds' | 'archive';
@@ -161,64 +181,61 @@ export const OrderManager = () => {
   if (view === 'kds') {
     return (
       <>
-        <div className="h-full flex flex-col space-y-6 sm:space-y-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="h-full flex flex-col space-y-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('orders.kdsHeading')}</h2>
-              <p className="text-on-surface-variant font-medium">{t('orders.kdsSubtext')}</p>
+              <h1 className="ds-page-title">{t('orders.kdsHeading')}</h1>
+              <p className="ds-page-sub">{t('orders.kdsSubtext')}</p>
             </div>
-            <div className="flex gap-3 sm:gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-surface-container-high rounded-xl text-sm font-bold">
-                <ChefHat className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-2">
+              <span className="ds-chip ds-chip-info h-9 px-3 text-[13px]">
+                <ChefHat className="w-4 h-4" />
                 <span>{t('orders.preparingCount', { count: preparingOrders.length })}</span>
-              </div>
-              <button onClick={backToFeed}
-                className="px-4 sm:px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+              </span>
+              <button onClick={backToFeed} className="ds-btn ds-btn-outline ds-btn-sm">
                 {t('orders.backToFeed')}
               </button>
             </div>
           </div>
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-6">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-6 content-start">
             {activeOrders.map((order, i) => (
-              <motion.div key={order._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className={`flex flex-col bg-surface-container-low rounded-3xl border-s-8 overflow-hidden shadow-sm ${
-                  order.status === 'Preparing' ? 'border-primary' : 'border-[#303942]'
-                }`}>
-                <div className="p-5 border-b border-outline-variant/20 flex justify-between items-center">
+              <motion.div key={order._id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                className={`ds-card flex flex-col overflow-hidden border-s-4 ${STATUS_ACCENT[order.status] ?? 'border-s-line'}`}>
+                <div className="px-4 py-3 border-b border-line flex justify-between items-start gap-3">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orders.orderLabel')}</span>
-                    <h4 className="font-mono font-bold text-lg">#{order._id.slice(-4).toUpperCase()}</h4>
+                    <span className="ds-overline">{t('orders.orderLabel')}</span>
+                    <h4 className="font-mono font-semibold text-base text-on-surface">#{order._id.slice(-4).toUpperCase()}</h4>
                   </div>
-                  <div className="text-end">
-                    <div className="flex items-center gap-1 text-xs font-bold text-on-surface-variant">
-                      <Timer className="w-3 h-3" />
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-1 text-xs font-medium text-on-surface-variant tabular">
+                      <Timer className="w-3.5 h-3.5" />
                       <span>{Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000)}m</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">{statusLabel(order.status)}</span>
-                    {order.order_source && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${SOURCE_COLOR[order.order_source] ?? 'bg-gray-100 text-gray-600'}`}>{sourceLabel(order.order_source)}</span>}
+                    <span className={`ds-chip ${STATUS_CHIP[order.status] ?? 'ds-chip-neutral'}`}>{statusLabel(order.status)}</span>
+                    {order.order_source && <span className={`ds-chip ${SOURCE_COLOR[order.order_source] ?? 'ds-chip-neutral'}`}>{sourceLabel(order.order_source)}</span>}
                   </div>
                 </div>
-                <div className="p-5 flex-1 space-y-4 overflow-y-auto no-scrollbar">
+                <div className="p-4 flex-1 space-y-3 overflow-y-auto no-scrollbar">
                   {order.items.map((item, idx) => (
                     <div key={idx} className="flex items-start gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center font-bold text-sm shrink-0">{item.quantity}</span>
-                      <p className="font-bold text-sm leading-tight">{item.name}</p>
+                      <span className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center font-semibold text-[13px] tabular shrink-0">{item.quantity}</span>
+                      <p className="font-medium text-sm leading-snug text-on-surface pt-1">{item.name}</p>
                     </div>
                   ))}
                 </div>
-                <div className="p-4 bg-surface-container-high/50">
+                <div className="p-3 border-t border-line">
                   <button onClick={() => handleUpdateStatus(order._id, order.status === 'Pending' ? 'Preparing' : 'Delivered')}
-                    className="w-full py-3 rounded-xl btn-gradient text-white font-bold text-sm shadow-lg shadow-primary/10 active:scale-95 transition-all">
+                    className="ds-btn ds-btn-primary w-full">
                     {order.status === 'Pending' ? t('orders.startCooking') : t('orders.markReady')}
                   </button>
                 </div>
               </motion.div>
             ))}
             {activeOrders.length === 0 && (
-              <div className="col-span-full flex flex-col items-center justify-center py-20 text-on-surface-variant/40">
-                <ChefHat className="w-20 h-20 mb-4 opacity-20" />
-                <p className="text-xl font-bold">{t('orders.kitchenClear')}</p>
-                <p className="text-sm">{t('orders.noActiveOrders')}</p>
+              <div className="col-span-full ds-empty">
+                <ChefHat className="w-8 h-8 opacity-40" />
+                <p className="text-sm font-semibold text-on-surface">{t('orders.kitchenClear')}</p>
+                <p className="text-[13px]">{t('orders.noActiveOrders')}</p>
               </div>
             )}
           </div>
@@ -229,34 +246,32 @@ export const OrderManager = () => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
-      <div className="flex-1 space-y-6 lg:space-y-10 overflow-y-auto no-scrollbar lg:pe-4 min-w-0">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+    <div className="flex flex-col lg:flex-row h-full gap-6">
+      <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar lg:pe-2 min-w-0">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('orders.heading')}</h2>
-            <p className="text-on-surface-variant font-medium">{t('orders.subtext')}</p>
+            <h1 className="ds-page-title">{t('orders.heading')}</h1>
+            <p className="ds-page-sub">{t('orders.subtext')}</p>
           </div>
-          <div className="flex gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[160px] sm:flex-none">
-              <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
+          <div className="flex gap-2 flex-wrap items-center">
+            <div className="relative flex-1 min-w-[160px] sm:flex-none sm:w-56">
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
               <input type="text" placeholder={t('orders.searchPlaceholder')}
-                className="w-full bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                className="ds-input h-9 ps-9"
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             </div>
             <select value={tableFilter} onChange={e => setTableFilter(e.target.value)}
-              className="bg-surface-container-high border-none rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none">
+              className="ds-select h-9 w-auto">
               {tableNames.map(tb => <option key={tb} value={tb}>{tb === 'all' ? t('orders.allTables') : tb}</option>)}
             </select>
-            <button onClick={() => enterView('kds')}
-              className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+            <button onClick={() => enterView('kds')} className="ds-btn ds-btn-outline ds-btn-sm">
               <ChefHat className="w-4 h-4" /> {t('orders.kdsView')}
             </button>
-            <button onClick={() => enterView('archive')}
-              className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-all">
+            <button onClick={() => enterView('archive')} className="ds-btn ds-btn-outline ds-btn-sm">
               <Archive className="w-4 h-4" /> {t('orders.archive')}
             </button>
             <button onClick={() => setArchiveConfirm(true)} disabled={orders.length === 0}
-              className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-primary/10 text-primary rounded-xl font-bold text-sm hover:bg-primary/20 disabled:opacity-30 transition-all">
+              className="ds-btn ds-btn-primary ds-btn-sm">
               <Archive className="w-4 h-4" /> {t('orders.archiveDay')}
             </button>
           </div>
@@ -265,100 +280,92 @@ export const OrderManager = () => {
         <AnimatePresence>
           {archiveConfirm && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              className="flex flex-wrap items-center gap-4 bg-primary/5 border border-primary/20 rounded-2xl px-4 sm:px-6 py-4">
-              <AlertTriangle className="w-5 h-5 text-primary shrink-0" />
-              <p className="flex-1 min-w-[180px] text-sm font-medium text-on-surface">
-                {t('orders.archiveConfirmPrefix')} <strong>{orders.length}</strong> {t('orders.archiveConfirmSuffix')}
+              className="flex flex-wrap items-center gap-3 bg-warn1 rounded-2xl px-4 py-3">
+              <AlertTriangle className="w-5 h-5 text-warn7 shrink-0" />
+              <p className="flex-1 min-w-[180px] text-sm text-on-surface">
+                {t('orders.archiveConfirmPrefix')} <strong className="font-semibold">{orders.length}</strong> {t('orders.archiveConfirmSuffix')}
               </p>
-              <button onClick={handleArchiveToday} disabled={archiving}
-                className="px-5 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-container disabled:opacity-50 transition-colors">
+              <button onClick={handleArchiveToday} disabled={archiving} className="ds-btn ds-btn-primary ds-btn-sm">
                 {archiving ? t('orders.archiving') : t('orders.confirm')}
               </button>
-              <button onClick={() => setArchiveConfirm(false)}
-                className="px-5 py-2 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant transition-colors">
+              <button onClick={() => setArchiveConfirm(false)} className="ds-btn ds-btn-outline ds-btn-sm">
                 {t('orders.cancel')}
               </button>
             </motion.div>
           )}
           {archiveMsg && !archiveConfirm && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-2xl px-6 py-3 text-primary font-medium text-sm">
-              <CheckCircle2 className="w-4 h-4" />{archiveMsg}
+              className="ds-card flex items-center gap-3 px-4 py-3 text-sm font-medium text-on-surface">
+              <CheckCircle2 className="w-4 h-4 text-pos6 shrink-0" />{archiveMsg}
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-3 gap-3 sm:gap-6">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
           {[
-            { labelKey: 'orders.pending',   count: pendingOrders.length,                          color: 'bg-primary' },
-            { labelKey: 'orders.preparing', count: preparingOrders.length,                        color: 'bg-primary' },
-            { labelKey: 'orders.ready',     count: orders.filter(o => o.status === 'Ready').length, color: 'bg-[#303942]' },
+            { labelKey: 'orders.pending',   count: pendingOrders.length,                          tile: 'bg-warn1 text-warn7', icon: <Clock className="w-5 h-5" /> },
+            { labelKey: 'orders.preparing', count: preparingOrders.length,                        tile: 'bg-info1 text-info7', icon: <ChefHat className="w-5 h-5" /> },
+            { labelKey: 'orders.ready',     count: orders.filter(o => o.status === 'Ready').length, tile: 'bg-pos1 text-pos7',   icon: <CheckCircle2 className="w-5 h-5" /> },
           ].map(stat => (
-            <div key={stat.labelKey} className="bg-surface-container-low p-4 sm:p-6 rounded-3xl flex items-center justify-between shadow-sm border border-outline-variant/10">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(stat.labelKey)}</p>
-                <h4 className="text-xl sm:text-3xl font-headline font-extrabold">{stat.count}</h4>
+            <div key={stat.labelKey} className="ds-card p-3.5 sm:p-5 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="ds-metric-lbl truncate">{t(stat.labelKey)}</p>
+                <p className="ds-metric-val tabular mt-1 text-xl sm:text-[28px]">{stat.count}</p>
               </div>
-              <div className={`hidden sm:flex w-12 h-12 rounded-2xl ${stat.color} opacity-10 items-center justify-center`}>
-                <Package className="w-6 h-6" />
+              <div className={`hidden sm:flex ds-icon-tile ${stat.tile}`}>
+                {stat.icon}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <AnimatePresence mode="popLayout">
             {filteredOrders.map((order, i) => (
-              <motion.div key={order._id} layout initial={{ opacity: 0, x: isRTL ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+              <motion.div key={order._id} layout initial={{ opacity: 0, x: isRTL ? 8 : -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
                 onClick={() => selectOrder(order._id)}
-                className={`group flex flex-col sm:flex-row sm:items-center gap-4 p-4 sm:p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer ${
-                  selectedOrder?._id === order._id ? 'ring-2 ring-primary bg-surface-container-lowest' : ''
+                className={`group ds-card flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 hover:bg-surface-container-low transition-colors cursor-pointer ${
+                  selectedOrder?._id === order._id ? 'ring-2 ring-primary' : ''
                 }`}>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   {/* Source icon */}
-                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 sm:me-5 group-hover:scale-110 transition-transform text-white text-[10px] font-extrabold tracking-wide ${
-                    order.order_source === 'CASHIER_POS' ? 'bg-[#303942]' : order.order_source === 'QR_CODE' ? 'bg-primary' : 'bg-primary/70'
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-[10px] font-semibold tracking-wide ${
+                    (order.order_source && SOURCE_TILE[order.order_source]) || 'bg-acc-soft text-acc'
                   }`}>
                     {order.order_source ? sourceLabel(order.order_source) : <Package className="w-5 h-5" />}
                   </div>
 
                   {/* Compact mobile summary */}
                   <div className="sm:hidden min-w-0 flex-1">
-                    <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
+                    <p className="font-mono font-semibold text-sm text-on-surface">#{order._id.slice(-6).toUpperCase()}</p>
                     <p className="text-xs text-on-surface-variant truncate">{order.customerName || t('orders.guest')}</p>
                   </div>
-                  <span className={`sm:hidden shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                    order.status === 'Delivered' ? 'bg-primary/10 text-primary' :
-                    order.status === 'Preparing' ? 'bg-primary/10 text-primary' :
-                    order.status === 'Ready'     ? 'bg-emerald-100 text-emerald-700' :
-                    order.status === 'Cancelled' ? 'bg-red-100 text-red-600' :
-                    'bg-[#303942]/10 text-[#303942]'
-                  }`}>{statusLabel(order.status)}</span>
+                  <span className={`sm:hidden shrink-0 ds-chip ${STATUS_CHIP[order.status] ?? 'ds-chip-neutral'}`}>{statusLabel(order.status)}</span>
                 </div>
 
                 <div className="flex-1 grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 min-w-0">
                   {/* Order ID */}
                   <div className="hidden sm:block">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.orderId')}</p>
-                    <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
+                    <p className="ds-overline mb-0.5">{t('orders.orderId')}</p>
+                    <p className="font-mono font-semibold text-sm text-on-surface">#{order._id.slice(-6).toUpperCase()}</p>
                   </div>
 
                   {/* Table */}
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.table')}</p>
-                    <p className="font-bold text-sm">{order.tableNumber || '—'}</p>
+                    <p className="ds-overline mb-0.5">{t('orders.table')}</p>
+                    <p className="font-semibold text-sm text-on-surface">{order.tableNumber || '—'}</p>
                   </div>
 
                   {/* Customer */}
                   <div className="hidden sm:block min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.customer')}</p>
-                    <p className="font-bold text-sm truncate">{order.customerName || t('orders.guest')}</p>
+                    <p className="ds-overline mb-0.5">{t('orders.customer')}</p>
+                    <p className="font-semibold text-sm text-on-surface truncate">{order.customerName || t('orders.guest')}</p>
                   </div>
 
                   {/* Items */}
                   <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.items')}</p>
-                    <p className="font-semibold text-sm truncate text-on-surface-variant">
+                    <p className="ds-overline mb-0.5">{t('orders.items')}</p>
+                    <p className="text-sm truncate text-on-surface-variant">
                       {order.items.slice(0, 2).map(i => i.name).join(', ')}
                       {order.items.length > 2 && ` +${order.items.length - 2}`}
                     </p>
@@ -366,24 +373,18 @@ export const OrderManager = () => {
 
                   {/* Total */}
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-0.5">{t('orders.total')}</p>
-                    <p className="font-extrabold text-sm text-primary">{formatCurrency(order.total, currency)}</p>
+                    <p className="ds-overline mb-0.5">{t('orders.total')}</p>
+                    <p className="font-semibold text-sm tabular text-on-surface">{formatCurrency(order.total, currency)}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 sm:ms-5 flex-wrap justify-end shrink-0">
+                <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
                   {order.payment_status && (
-                    <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${PAYMENT_COLOR[order.payment_status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`ds-chip ${PAYMENT_COLOR[order.payment_status] ?? 'ds-chip-neutral'}`}>
                       {paymentStatusLabel(order.payment_status)}
                     </span>
                   )}
-                  <span className={`hidden sm:inline-flex px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                    order.status === 'Delivered' ? 'bg-primary/10 text-primary' :
-                    order.status === 'Preparing' ? 'bg-primary/10 text-primary' :
-                    order.status === 'Ready'     ? 'bg-emerald-100 text-emerald-700' :
-                    order.status === 'Cancelled' ? 'bg-red-100 text-red-600' :
-                    'bg-[#303942]/10 text-[#303942]'
-                  }`}>{statusLabel(order.status)}</span>
-                  <ChevronRight className="hidden sm:block w-5 h-5 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
+                  <span className={`hidden sm:inline-flex ds-chip ${STATUS_CHIP[order.status] ?? 'ds-chip-neutral'}`}>{statusLabel(order.status)}</span>
+                  <ChevronRight className="hidden sm:block w-4 h-4 text-on-surface-variant transition-transform rtl:-scale-x-100" />
                 </div>
               </motion.div>
             ))}
@@ -396,41 +397,47 @@ export const OrderManager = () => {
         <AnimatePresence mode="wait">
           {selectedOrder ? (
             <motion.div key={selectedOrder._id}
-              initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
-              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-surface-container-low lg:rounded-4xl p-5 sm:p-8 flex flex-col shadow-2xl shadow-primary/5">
-              <div className="flex justify-between items-start mb-6 lg:mb-10">
-                <div>
-                  <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('orders.detailHeading')}</h3>
-                  <p className="text-on-surface-variant font-mono text-sm mt-1">#{selectedOrder._id.toUpperCase()}</p>
+              initial={{ opacity: 0, x: isRTL ? -8 : 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -8 : 8 }}
+              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-card lg:border lg:border-line lg:rounded-2xl lg:shadow-sm flex flex-col overflow-hidden">
+              <div className="px-5 py-4 border-b border-line flex justify-between items-start gap-3 shrink-0">
+                <div className="min-w-0">
+                  <h3 className="ds-section-title">{t('orders.detailHeading')}</h3>
+                  <p className="text-on-surface-variant font-mono text-xs mt-0.5 truncate">#{selectedOrder._id.toUpperCase()}</p>
                 </div>
-                <button onClick={closeOrder} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
-                  <XIcon className="w-6 h-6" />
+                <button onClick={closeOrder} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm shrink-0">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 space-y-8 overflow-y-auto no-scrollbar">
-                <section className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('orders.guestInfo')}</h4>
-                  <div className="bg-surface-container-lowest p-4 rounded-2xl flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      <User className="w-6 h-6" />
+              <div className="flex-1 p-5 space-y-6 overflow-y-auto no-scrollbar">
+                <section className="space-y-2">
+                  <h4 className="ds-overline">{t('orders.guestInfo')}</h4>
+                  <div className="ds-inset p-3.5 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-acc-soft text-acc flex items-center justify-center shrink-0">
+                      <User className="w-5 h-5" />
                     </div>
-                    <div>
-                      <p className="font-bold">{selectedOrder.customerName || t('orders.guest')}</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-on-surface">{selectedOrder.customerName || t('orders.guest')}</p>
                       <p className="text-xs text-on-surface-variant">{selectedOrder.address || '—'}</p>
+                      {(selectedOrder.order_type || selectedOrder.pickup_time) && (
+                        <p className="text-xs font-semibold text-acc mt-1">
+                          {selectedOrder.order_type ? t(`orders.types.${selectedOrder.order_type}`, { defaultValue: selectedOrder.order_type }) : ''}
+                          {selectedOrder.pickup_time ? ` · ${t('orders.pickupTime')}: ${selectedOrder.pickup_time}` : ''}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </section>
-                <section className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('orders.orderItems')}</h4>
-                  <div className="space-y-3">
+                <section className="space-y-2">
+                  <h4 className="ds-overline">{t('orders.orderItems')}</h4>
+                  <div className="ds-inset px-3.5">
                     {selectedOrder.items.map((item, idx) => (
-                      <div key={idx} className="bg-surface-container-lowest p-4 rounded-2xl space-y-1.5">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-3">
-                            <span className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center font-bold text-xs shrink-0">{item.quantity}x</span>
-                            <span className="font-semibold text-sm">{item.name}</span>
+                      <div key={idx} className="py-3 space-y-1 border-b border-line last:border-0">
+                        <div className="flex justify-between items-center gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="w-8 h-8 rounded-lg bg-card border border-line flex items-center justify-center font-semibold text-xs tabular shrink-0">{item.quantity}x</span>
+                            <span className="font-medium text-sm text-on-surface">{item.name}</span>
                           </div>
-                          <span className="font-bold text-sm">{formatCurrency(item.price * item.quantity, currency)}</span>
+                          <span className="font-semibold text-sm tabular text-on-surface shrink-0">{formatCurrency(item.price * item.quantity, currency)}</span>
                         </div>
                         {item.note && (
                           <p className="text-xs text-on-surface-variant ms-11 italic">"{item.note}"</p>
@@ -441,42 +448,42 @@ export const OrderManager = () => {
                 </section>
                 {selectedOrder.order_note && (
                   <section className="space-y-2">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('orders.orderNote')}</h4>
-                    <div className="bg-surface-container-lowest p-4 rounded-2xl flex items-start gap-3">
+                    <h4 className="ds-overline">{t('orders.orderNote')}</h4>
+                    <div className="ds-inset p-3.5 flex items-start gap-3">
                       <ChefHat className="w-4 h-4 text-on-surface-variant shrink-0 mt-0.5" />
                       <p className="text-sm text-on-surface-variant italic">"{selectedOrder.order_note}"</p>
                     </div>
                   </section>
                 )}
 
-                <section className="bg-primary/5 p-6 rounded-3xl space-y-4">
+                <section className="ds-inset p-4 space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-on-surface-variant font-medium">{t('orders.subtotal')}</span>
-                    <span className="font-bold">{formatCurrency(selectedOrder.total, currency)}</span>
+                    <span className="text-on-surface-variant">{t('orders.subtotal')}</span>
+                    <span className="font-semibold tabular text-on-surface">{formatCurrency(selectedOrder.total, currency)}</span>
                   </div>
-                  <div className="h-[1px] bg-primary/10 w-full" />
+                  <div className="h-px bg-line w-full" />
                   <div className="flex justify-between items-end">
-                    <span className="text-lg font-bold">{t('orders.total')}</span>
-                    <span className="text-2xl font-headline font-extrabold text-primary">{formatCurrency(selectedOrder.total, currency)}</span>
+                    <span className="text-sm font-semibold text-on-surface">{t('orders.total')}</span>
+                    <span className="text-2xl font-display font-bold tabular text-on-surface">{formatCurrency(selectedOrder.total, currency)}</span>
                   </div>
                 </section>
               </div>
-              <div className="mt-10 grid grid-cols-2 gap-4">
+              <div className="px-5 py-4 border-t border-line grid grid-cols-2 gap-3 shrink-0">
                 <button onClick={() => handleUpdateStatus(selectedOrder._id, 'Preparing')}
-                  className="py-4 rounded-2xl bg-surface-container-high font-bold text-sm hover:bg-surface-variant transition-all">
+                  className="ds-btn ds-btn-secondary ds-btn-lg">
                   {t('orders.prepare')}
                 </button>
                 <button onClick={() => handleUpdateStatus(selectedOrder._id, 'Delivered')}
-                  className="py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                  className="ds-btn ds-btn-primary ds-btn-lg">
                   {t('orders.complete')}
                 </button>
               </div>
             </motion.div>
           ) : (
-            <div className="hidden lg:flex h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
-              <Package className="w-16 h-16 mb-4 opacity-20" />
-              <p className="font-bold">{t('orders.noOrderSelected')}</p>
-              <p className="text-sm">{t('orders.noOrderMsg')}</p>
+            <div className="hidden lg:flex h-full ds-empty">
+              <Package className="w-8 h-8 opacity-40" />
+              <p className="text-sm font-semibold text-on-surface">{t('orders.noOrderSelected')}</p>
+              <p className="text-[13px]">{t('orders.noOrderMsg')}</p>
             </div>
           )}
         </AnimatePresence>
@@ -485,12 +492,6 @@ export const OrderManager = () => {
     </div>
   );
 };
-
-const XIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
 
 export const ToastStack = ({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: number) => void }) => {
   const { t } = useTranslation();
@@ -502,25 +503,24 @@ export const ToastStack = ({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: 
   };
 
   const ICON: Record<Toast['type'], { icon: React.ReactNode; bg: string }> = {
-    new:       { icon: <Bell className="w-5 h-5" />,          bg: 'bg-primary' },
-    preparing: { icon: <ChefHat className="w-5 h-5" />,       bg: 'bg-primary' },
-    delivered: { icon: <CheckCircle2 className="w-5 h-5" />,  bg: 'bg-[#303942]' },
+    new:       { icon: <Bell className="w-4 h-4" />,          bg: 'bg-primary text-on-primary' },
+    preparing: { icon: <ChefHat className="w-4 h-4" />,       bg: 'bg-info1 text-info7' },
+    delivered: { icon: <CheckCircle2 className="w-4 h-4" />,  bg: 'bg-pos1 text-pos7' },
   };
 
   return (
-    <div className="fixed bottom-4 sm:bottom-8 inset-x-4 sm:inset-x-auto sm:end-8 z-[9999] flex flex-col gap-3 items-stretch sm:items-end pointer-events-none">
+    <div className="fixed bottom-4 sm:bottom-6 inset-x-4 sm:inset-x-auto sm:end-6 z-[9999] flex flex-col gap-2 items-stretch sm:items-end pointer-events-none">
       <AnimatePresence>
         {toasts.map(toast => {
           const cfg = ICON[toast.type];
           return (
             <motion.div key={toast.id}
-              initial={{ opacity: 0, x: 60, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 60, scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="pointer-events-auto flex items-center gap-3 pr-4 pl-4 py-3.5 rounded-2xl shadow-2xl text-white w-full sm:min-w-[280px] sm:max-w-sm"
-              style={{ background: 'rgba(30,30,40,0.97)', backdropFilter: 'blur(12px)' }}>
-              <div className={`w-9 h-9 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0`}>{cfg.icon}</div>
-              <p className="flex-1 text-sm font-semibold leading-snug">{getLabel(toast)}</p>
-              <button onClick={() => onDismiss(toast.id)} className="text-white/40 hover:text-white transition-colors ms-1 shrink-0">
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.18 }}
+              className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl bg-card border border-line shadow-lg text-on-surface w-full sm:min-w-[280px] sm:max-w-sm">
+              <div className={`w-8 h-8 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0`}>{cfg.icon}</div>
+              <p className="flex-1 text-sm font-medium leading-snug">{getLabel(toast)}</p>
+              <button onClick={() => onDismiss(toast.id)} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm w-8 h-8 text-on-surface-variant hover:text-on-surface ms-1 shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </motion.div>

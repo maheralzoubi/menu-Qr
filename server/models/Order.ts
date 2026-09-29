@@ -22,7 +22,9 @@ export interface IOrder extends Document {
   status: 'Pending' | 'Preparing' | 'Ready' | 'Delivered' | 'Cancelled';
   tableNumber?: string;
   customerName?: string;
+  customerEmail?: string;
   address?: string;
+  pickup_time?: string;
   fcmToken?: string;
   restaurantId: mongoose.Types.ObjectId;
   archivedAt?: Date;
@@ -67,7 +69,9 @@ const OrderSchema = new Schema<IOrder>(
     status: { type: String, enum: ['Pending', 'Preparing', 'Ready', 'Delivered', 'Cancelled'], default: 'Pending' },
     tableNumber: { type: String },
     customerName: { type: String },
+    customerEmail: { type: String, lowercase: true, trim: true, index: true },
     address: { type: String, default: '' },
+    pickup_time: { type: String },
     fcmToken: { type: String },
     restaurantId: { type: Schema.Types.ObjectId, ref: 'Restaurant', required: true },
     archivedAt: { type: Date },

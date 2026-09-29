@@ -11,6 +11,7 @@ import { initSocket } from './socket/index';
 import apiRouter from './routes/api';
 import authRouter from './routes/auth';
 import customerRouter from './routes/customer';
+import appRouter from './routes/app';
 import ownerRouter from './routes/owner';
 import stripeRouter from './routes/stripe';
 import { getPublicPlans } from './controllers/planController';
@@ -43,6 +44,7 @@ async function startServer() {
 
   app.use('/api/auth', authRouter);
   app.use('/api/customer', customerRouter);
+  app.use('/api/app', appRouter);
   app.use('/api/owner', ownerRouter);
   app.get('/api/plans', getPublicPlans);
   app.use('/api', apiRouter);

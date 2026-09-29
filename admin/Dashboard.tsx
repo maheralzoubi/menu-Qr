@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Utensils, ShoppingBag, Calendar,
-  Star, LogOut, TrendingUp, Settings as SettingsIcon, QrCode, Tag, MonitorSmartphone,
-  Menu, X
+  Star, TrendingUp, Settings as SettingsIcon, QrCode, Tag, MonitorSmartphone, ExternalLink,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../src/lib/auth';
 import { pushNavParam } from './lib/navHistory';
@@ -18,7 +17,7 @@ import { Settings } from './components/Settings';
 import { QRManager } from './components/QRManager';
 import { PromoManager } from './components/PromoManager';
 import { CashierPOS } from './components/CashierPOS';
-import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { DashboardShell, type NavGroup } from '../src/dashboard/DashboardShell';
 
 export type DashboardTab = 'overview' | 'orders' | 'menu' | 'reservations' | 'reviews' | 'analytics' | 'qr' | 'promos' | 'cashier' | 'settings';
 
@@ -36,7 +35,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [stats, setStats] = useState<any>(null);
   const [currency, setCurrency] = useState('USD');
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [navOpen, setNavOpen] = useState(false);
+  const [restaurantName, setRestaurantName] = useState('');
   const { t } = useTranslation();
 
   // Attach nav state to the current history entry without touching the URL on first load.
@@ -56,7 +55,6 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const changeTab = (tab: DashboardTab) => {
     setActiveTab(tab);
     pushNavParam('tab', tab);
-    setNavOpen(false);
   };
 
   useEffect(() => {
@@ -68,7 +66,7 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           authFetch('/api/settings/restaurant'),
         ]);
         if (statsRes.ok) setStats(await statsRes.json());
-        if (settingsRes.ok) { const s = await settingsRes.json(); if (s.currency) setCurrency(s.currency); }
+        if (settingsRes.ok) { const s = await settingsRes.json(); if (s.currency) setCurrency(s.currency); if (s.name) setRestaurantName(s.name); }
         if (meRes.ok) setUser(await meRes.json());
       } catch (e) {
         console.error('Dashboard fetch error:', e);
@@ -77,121 +75,59 @@ export const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     fetchData();
   }, []);
 
-  const navItems = [
-    { id: 'overview',     icon: <LayoutDashboard className="w-5 h-5" /> },
-    { id: 'orders',       icon: <ShoppingBag className="w-5 h-5" /> },
-    { id: 'menu',         icon: <Utensils className="w-5 h-5" /> },
-    { id: 'reservations', icon: <Calendar className="w-5 h-5" /> },
-    { id: 'reviews',      icon: <Star className="w-5 h-5" /> },
-    { id: 'analytics',    icon: <TrendingUp className="w-5 h-5" /> },
-    { id: 'qr',           icon: <QrCode className="w-5 h-5" /> },
-    { id: 'promos',       icon: <Tag className="w-5 h-5" /> },
-    { id: 'cashier',      icon: <MonitorSmartphone className="w-5 h-5" /> },
-    { id: 'settings',     icon: <SettingsIcon className="w-5 h-5" /> },
+  const navIcon = (id: DashboardTab) => ({
+    overview: <LayoutDashboard />, orders: <ShoppingBag />, menu: <Utensils />, reservations: <Calendar />,
+    reviews: <Star />, analytics: <TrendingUp />, qr: <QrCode />, promos: <Tag />, cashier: <MonitorSmartphone />,
+    settings: <SettingsIcon />,
+  }[id]);
+  const item = (id: DashboardTab) => ({ id, label: t(`dashboard.tabs.${id}`), icon: navIcon(id) });
+  const groups: NavGroup[] = [
+    { label: t('dashboard.groups.operations'), items: (['overview', 'orders', 'cashier', 'reservations'] as DashboardTab[]).map(item) },
+    { label: t('dashboard.groups.menuGrowth'), items: (['menu', 'promos', 'qr'] as DashboardTab[]).map(item) },
+    { label: t('dashboard.groups.insights'), items: (['analytics', 'reviews'] as DashboardTab[]).map(item) },
+    { label: t('dashboard.groups.restaurant'), items: [item('settings')] },
   ];
 
   const displayName = user?.name || user?.email || t('dashboard.defaultName');
   const displayTitle = user?.title || user?.role || t('dashboard.defaultTitle');
-  const initials = displayName.slice(0, 2).toUpperCase();
   const restaurantId = user?.restaurantId ?? '';
 
   return (
-    <div className="min-h-screen bg-surface flex text-on-surface">
-      {/* Mobile/tablet backdrop */}
-      <AnimatePresence>
-        {navOpen && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setNavOpen(false)}
-            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <aside className={`h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50 bg-surface border-r border-surface-container rtl:border-r-0 rtl:border-l transition-transform duration-300 lg:translate-x-0 ${
-        navOpen ? 'translate-x-0' : 'rtl:translate-x-full -translate-x-full'
-      }`}>
-        <div className="px-6 mb-10 flex items-center justify-between">
-          <img src="/logo.svg" alt="Menu Go" className="h-9 w-auto" />
-          <button onClick={() => setNavOpen(false)} className="p-1.5 rounded-lg hover:bg-surface-container lg:hidden">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => changeTab(item.id as DashboardTab)}
-              className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-xl ${
-                activeTab === item.id
-                  ? 'text-primary font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-primary/10'
-                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-              }`}
-            >
-              <span className="shrink-0">{item.icon}</span>
-              <span className="text-sm">{t(`dashboard.tabs.${item.id}`)}</span>
-            </button>
-          ))}
-        </nav>
-
-        <div className="px-4 mt-auto pt-6 border-t border-surface-container space-y-2">
-          <LanguageSwitcher className="w-full justify-center text-on-surface border-outline-variant hover:bg-surface-container" />
-          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded-xl transition-all">
-            <LogOut className="w-5 h-5" />
-            <span className="text-sm">{t('dashboard.logout')}</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <main className="flex-1 lg:ml-64 rtl:lg:ml-0 rtl:lg:mr-64 min-h-screen min-w-0">
-        <header className="w-full sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-surface-container flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4 gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => setNavOpen(true)} className="p-2 -ms-2 rounded-xl hover:bg-surface-container lg:hidden shrink-0">
-              <Menu className="w-5 h-5" />
-            </button>
-            <span className="text-lg sm:text-xl font-bold font-headline truncate">{t('dashboard.headerTitle')}</span>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="text-end hidden xl:block">
-              <p className="text-sm font-bold leading-tight">{displayName}</p>
-              <p className="text-[10px] text-on-surface-variant uppercase tracking-tighter">{displayTitle}</p>
-            </div>
-            {user?.avatar ? (
-              <img alt={t('dashboard.profileAlt')} className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10" src={user.avatar} />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm ring-2 ring-primary/10">
-                {initials}
-              </div>
-            )}
-          </div>
-        </header>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {activeTab === 'overview'     && <StatsGrid stats={stats} currency={currency} />}
-              {activeTab === 'orders'       && <OrderManager />}
-              {activeTab === 'menu'         && <MenuManager />}
-              {activeTab === 'reservations' && <ReservationManager />}
-              {activeTab === 'reviews'      && <ReviewManager />}
-              {activeTab === 'analytics'    && <Analytics />}
-              {activeTab === 'qr'           && <QRManager restaurantId={restaurantId} />}
-              {activeTab === 'promos'       && <PromoManager />}
-              {activeTab === 'cashier'      && <CashierPOS />}
-              {activeTab === 'settings'     && <Settings />}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </main>
-    </div>
+    <DashboardShell
+      context={restaurantName || t('dashboard.adminPanel')}
+      groups={groups}
+      activeId={activeTab}
+      onSelect={id => changeTab(id as DashboardTab)}
+      crumbs={[
+        { label: t('dashboard.headerTitle'), onClick: activeTab === 'overview' ? undefined : () => changeTab('overview') },
+        ...(activeTab === 'overview' ? [] : [{ label: t(`dashboard.tabs.${activeTab}`) }]),
+      ]}
+      actions={
+        <>
+          <span className="ds-chip ds-chip-brand max-sm:hidden"><span className="ds-dot" />{displayTitle}</span>
+          {restaurantId && (
+            <a href={`/?restaurant=${restaurantId}`} target="_blank" rel="noreferrer" className="ds-btn ds-btn-outline ds-btn-sm">
+              <ExternalLink className="w-4 h-4" /><span className="max-sm:hidden">{t('dashboard.viewMenu')}</span>
+            </a>
+          )}
+        </>
+      }
+      user={{ name: displayName, sub: user?.email && user.email !== displayName ? user.email : displayTitle, avatar: user?.avatar }}
+      onLogout={onLogout}
+      labels={{ logout: t('dashboard.logout'), theme: t('dashboard.shell.theme'), language: t('dashboard.shell.language'), collapse: t('dashboard.shell.collapse'), menu: t('dashboard.shell.menu'), close: t('dashboard.shell.close') }}
+    >
+      <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
+        {activeTab === 'overview'     && <StatsGrid stats={stats} currency={currency} />}
+        {activeTab === 'orders'       && <OrderManager />}
+        {activeTab === 'menu'         && <MenuManager />}
+        {activeTab === 'reservations' && <ReservationManager />}
+        {activeTab === 'reviews'      && <ReviewManager />}
+        {activeTab === 'analytics'    && <Analytics />}
+        {activeTab === 'qr'           && <QRManager restaurantId={restaurantId} />}
+        {activeTab === 'promos'       && <PromoManager />}
+        {activeTab === 'cashier'      && <CashierPOS />}
+        {activeTab === 'settings'     && <Settings />}
+      </motion.div>
+    </DashboardShell>
   );
 };

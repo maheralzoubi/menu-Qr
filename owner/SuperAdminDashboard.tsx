@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Building2, TrendingUp, LogOut, Shield, Users, CreditCard, Megaphone, UserCircle, Menu, X } from 'lucide-react';
+import { Building2, TrendingUp, Shield, Users, CreditCard, Megaphone, UserCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { RestaurantList } from './components/RestaurantList';
@@ -8,9 +8,9 @@ import { PlatformAnalytics } from './components/PlatformAnalytics';
 import { CustomerTable } from './components/CustomerTable';
 import { PlansManager } from './components/PlansManager';
 import { BannersManager } from './components/BannersManager';
-import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { DashboardShell, type NavGroup } from '../src/dashboard/DashboardShell';
 import { MyAccountModal } from './components/MyAccountModal';
-import { clearOwnerToken as clearToken, isSuperAdmin } from '../src/lib/ownerAuth';
+import { clearOwnerToken as clearToken, getOwnerEmail, isSuperAdmin } from '../src/lib/ownerAuth';
 
 type Tab = 'restaurants' | 'analytics' | 'customers' | 'plans' | 'banners';
 interface SelectedRestaurant { _id: string; name: string; }
@@ -49,7 +49,6 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const superAdmin = isSuperAdmin();
   const { t } = useTranslation();
   const [showAccount, setShowAccount] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
 
   useEffect(() => {
     window.history.replaceState({ tab: activeTab, restaurant: selectedRestaurant } satisfies NavState, '', window.location.href);
@@ -75,7 +74,6 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setActiveTab(tab);
     setSelectedRestaurant(null);
     pushNav({ tab, restaurant: null }, true);
-    setNavOpen(false);
   }, [pushNav]);
 
   const selectRestaurant = useCallback((r: SelectedRestaurant) => {
@@ -92,121 +90,65 @@ export const SuperAdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     pushNav({ tab: 'restaurants', restaurant: null }, true);
   }, [pushNav]);
 
-  const navItems: { id: Tab; icon: React.ReactNode }[] = [
-    { id: 'restaurants', icon: <Building2 className="w-5 h-5" /> },
-    { id: 'analytics',   icon: <TrendingUp className="w-5 h-5" /> },
-    { id: 'customers',   icon: <Users className="w-5 h-5" /> },
-    { id: 'plans',       icon: <CreditCard className="w-5 h-5" /> },
-    { id: 'banners',     icon: <Megaphone className="w-5 h-5" /> },
+  const navIcon: Record<Tab, React.ReactNode> = {
+    restaurants: <Building2 />, analytics: <TrendingUp />, customers: <Users />, plans: <CreditCard />, banners: <Megaphone />,
+  };
+  const superAdminOnly = new Set<Tab>(['customers', 'plans', 'banners']);
+  const item = (id: Tab) => ({ id, label: t(`nav.${id}`), icon: navIcon[id] });
+  const groups: NavGroup[] = [
+    { label: t('sidebar.groups.platform'), items: (['restaurants', 'analytics'] as Tab[]).map(item) },
+    ...(superAdmin ? [{ label: t('sidebar.groups.administration'), items: (['customers', 'plans', 'banners'] as Tab[]).filter(id => superAdminOnly.has(id)).map(item) }] : []),
+  ];
+  const handleLogout = () => { clearToken(); onLogout(); };
+  const roleLabel = superAdmin ? t('header.superAdmin') : t('header.appOwner');
+
+  const crumbs = [
+    { label: t('sidebar.ownerPanel') },
+    { label: t(`nav.${activeTab}`), onClick: selectedRestaurant ? backToList : undefined },
+    ...(selectedRestaurant ? [{ label: selectedRestaurant.name }] : []),
   ];
 
-  const superAdminOnly = new Set<Tab>(['customers', 'plans', 'banners']);
-  const visibleNavItems = navItems.filter(
-    item => !superAdminOnly.has(item.id) || superAdmin
-  );
-  const handleLogout = () => { clearToken(); onLogout(); };
-
   return (
-    <div className="min-h-screen bg-surface flex text-on-surface">
-      {/* Mobile/tablet backdrop */}
-      <AnimatePresence>
-        {navOpen && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setNavOpen(false)}
-            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <aside className={`h-screen w-64 fixed left-0 rtl:left-auto rtl:right-0 top-0 flex flex-col py-8 z-50 bg-surface border-r border-surface-container rtl:border-r-0 rtl:border-l transition-transform duration-300 lg:translate-x-0 ${
-        navOpen ? 'translate-x-0' : 'rtl:translate-x-full -translate-x-full'
-      }`}>
-        <div className="px-6 mb-10 flex items-center justify-between">
-          <img src="/logo.svg" alt="Menu Go" className="h-9 w-auto" />
-          <button onClick={() => setNavOpen(false)} className="p-1.5 rounded-lg hover:bg-surface-container lg:hidden">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
-          {visibleNavItems.map(item => (
-            <button key={item.id} onClick={() => changeTab(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-xl ${
-                activeTab === item.id
-                  ? 'text-primary font-semibold border-r-4 rtl:border-r-0 rtl:border-l-4 border-primary bg-primary/10'
-                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-              }`}>
-              <span className="shrink-0">{item.icon}</span>
-              <span className="text-sm">{t(`nav.${item.id}`)}</span>
+    <>
+      <DashboardShell
+        context={t('sidebar.ownerPanel')}
+        groups={groups}
+        activeId={activeTab}
+        onSelect={id => changeTab(id as Tab)}
+        crumbs={crumbs}
+        actions={
+          <>
+            <span className="ds-chip ds-chip-brand max-sm:hidden"><Shield className="w-3 h-3" />{roleLabel}</span>
+            <button onClick={() => setShowAccount(true)} className="ds-btn ds-btn-outline ds-btn-sm">
+              <UserCircle className="w-4 h-4" /><span className="max-sm:hidden">{t('account.title')}</span>
             </button>
-          ))}
-        </nav>
-
-        <div className="px-4 mt-auto pt-6 border-t border-surface-container space-y-2">
-          <div className="px-0">
-            <LanguageSwitcher className="w-full justify-center text-on-surface border-outline-variant hover:bg-surface-container" />
-          </div>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container hover:text-on-surface rounded-xl transition-all">
-            <LogOut className="w-5 h-5" /><span className="text-sm">{t('nav.logout')}</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <main className="flex-1 lg:ml-64 rtl:lg:ml-0 rtl:lg:mr-64 min-h-screen min-w-0">
-        <header className="w-full sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-surface-container flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => setNavOpen(true)} className="p-2 -ms-2 rounded-xl hover:bg-surface-container lg:hidden shrink-0">
-              <Menu className="w-5 h-5" />
-            </button>
-            <span className="text-lg sm:text-xl font-bold font-headline truncate">
-              {selectedRestaurant ? selectedRestaurant.name : t('header.ownerDashboard')}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <button onClick={() => setShowAccount(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-surface-container text-on-surface-variant rounded-full hover:bg-surface-container-high transition-colors">
-              <UserCircle className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs font-bold">{t('account.title')}</span>
-            </button>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full">
-              <Shield className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs font-bold uppercase tracking-widest">
-                {superAdmin ? t('header.superAdmin') : t('header.appOwner')}
-              </span>
-            </div>
-          </div>
-        </header>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-          <AnimatePresence mode="wait">
-            <motion.div key={selectedRestaurant?._id ?? activeTab}
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-
-              {activeTab === 'restaurants' && !selectedRestaurant && (
-                <RestaurantList onSelect={selectRestaurant} />
-              )}
-              {activeTab === 'restaurants' && selectedRestaurant && (
-                <RestaurantDetail
-                  restaurantId={selectedRestaurant._id}
-                  onBack={backToList}
-                  onDeleted={restaurantDeleted}
-                />
-              )}
-              {activeTab === 'analytics' && <PlatformAnalytics />}
-              {activeTab === 'customers' && <CustomerTable isSuperAdmin={superAdmin} />}
-              {activeTab === 'plans' && <PlansManager />}
-              {activeTab === 'banners' && <BannersManager />}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </main>
+          </>
+        }
+        user={{ name: getOwnerEmail() || t('account.title'), sub: roleLabel }}
+        onLogout={handleLogout}
+        labels={{ logout: t('nav.logout'), theme: t('shell.theme'), language: t('shell.language'), collapse: t('shell.collapse'), menu: t('shell.menu'), close: t('shell.close') }}
+      >
+        <motion.div key={selectedRestaurant?._id ?? activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
+          {activeTab === 'restaurants' && !selectedRestaurant && (
+            <RestaurantList onSelect={selectRestaurant} />
+          )}
+          {activeTab === 'restaurants' && selectedRestaurant && (
+            <RestaurantDetail
+              restaurantId={selectedRestaurant._id}
+              onBack={backToList}
+              onDeleted={restaurantDeleted}
+            />
+          )}
+          {activeTab === 'analytics' && <PlatformAnalytics />}
+          {activeTab === 'customers' && <CustomerTable isSuperAdmin={superAdmin} />}
+          {activeTab === 'plans' && <PlansManager />}
+          {activeTab === 'banners' && <BannersManager />}
+        </motion.div>
+      </DashboardShell>
 
       <AnimatePresence>
         {showAccount && <MyAccountModal onClose={() => setShowAccount(false)} />}
       </AnimatePresence>
-    </div>
+    </>
   );
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Eye, EyeOff, Globe } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Eye, EyeOff } from 'lucide-react';
+import { AuthLayout } from '../dashboard/AuthLayout';
 import { useTranslation } from 'react-i18next';
 import { ForgotPasswordScreen } from './ForgotPasswordScreen';
 
@@ -37,8 +37,7 @@ export const AdminLoginScreen = ({
   title,
   subtitle,
 }: Props) => {
-  const { t, i18n } = useTranslation();
-  const isArabic = i18n.language === 'ar';
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -99,87 +98,57 @@ export const AdminLoginScreen = ({
     }
   };
 
-  const toggleLanguage = () => {
-    const next = isArabic ? 'en' : 'ar';
-    i18n.changeLanguage(next);
-    localStorage.setItem('lang', next);
-    document.documentElement.dir = next === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = next;
-  };
-
   if (mode === 'forgot') {
     return <ForgotPasswordScreen onBack={() => setMode('login')} />;
   }
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-8 relative">
-      <button
-        type="button"
-        onClick={toggleLanguage}
-        title={isArabic ? 'Switch to English' : 'التبديل إلى العربية'}
-        className="absolute top-6 end-6 flex items-center gap-2 px-3 py-2 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-all"
-      >
-        <Globe className="w-4 h-4 shrink-0" />
-        <span>{isArabic ? 'EN' : 'عربي'}</span>
-      </button>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm space-y-8">
-        <div className="text-center space-y-3">
-          <div className="flex justify-center">
-            <img src="/logo-dark.svg" alt="Menu Go" className="h-20 w-auto" />
+    <AuthLayout overline={t('login.signIn')} title={title ?? t('login.title')} subtitle={subtitle}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+        <div>
+          <label htmlFor="login-email" className="ds-label">{t('login.emailLabel')}</label>
+          <input id="login-email" type="email" required autoComplete="email" dir="ltr" value={email} onChange={e => setEmail(e.target.value)}
+            className="ds-input" placeholder="admin@restaurant.com" />
+        </div>
+        <div>
+          <label htmlFor="login-password" className="ds-label">{t('login.passwordLabel')}</label>
+          <div className="relative">
+            <input id="login-password" type={showPassword ? 'text' : 'password'} required autoComplete="current-password" value={password}
+              onChange={e => setPassword(e.target.value)} className="ds-input pe-10" placeholder="••••••••" />
+            <button type="button" onClick={() => setShowPassword(v => !v)} aria-label="Toggle password visibility"
+              className="absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface">
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
-          <h1 className="text-2xl font-headline font-extrabold">{title}</h1>
-          <p className="text-sm text-on-surface-variant">{subtitle}</p>
+        </div>
+        <div className="flex justify-end -mt-1">
+          <button type="button" onClick={() => setMode('forgot')} className="text-[13px] text-on-surface-variant underline underline-offset-[3px] hover:text-on-surface">
+            {t('forgotPassword.link')}
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('login.emailLabel')}</label>
-            <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-              className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-              placeholder="admin@restaurant.com" />
+        {error && (
+          <div role="alert" className="rounded-xl bg-neg1 text-neg7 px-3.5 py-3 text-[13px] leading-5 space-y-1.5">
+            <p className="font-medium">{error}</p>
+            {errorCode === 'EMAIL_NOT_VERIFIED' && (
+              resendSent ? (
+                <p className="text-pos7 font-medium">{t('login.resendSent')}</p>
+              ) : (
+                <button type="button" onClick={handleResend} disabled={isResending} className="font-semibold underline disabled:opacity-60">
+                  {t('login.resendVerification')}
+                </button>
+              )
+            )}
           </div>
+        )}
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('login.passwordLabel')}</label>
-            <div className="relative">
-              <input type={showPassword ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)}
-                className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="••••••••" />
-              <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40">
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            <div className="text-end">
-              <button type="button" onClick={() => setMode('forgot')} className="text-xs font-bold text-primary underline">
-                {t('forgotPassword.link')}
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="text-center space-y-2">
-              <p className="text-sm text-red-500 font-medium">{error}</p>
-              {errorCode === 'EMAIL_NOT_VERIFIED' && (
-                resendSent ? (
-                  <p className="text-sm text-tertiary font-medium">{t('login.resendSent')}</p>
-                ) : (
-                  <button type="button" onClick={handleResend} disabled={isResending}
-                    className="text-sm font-bold text-primary underline disabled:opacity-60">
-                    {t('login.resendVerification')}
-                  </button>
-                )
-              )}
-            </div>
-          )}
-
-          <button type="submit" disabled={isLoading}
-            className="w-full py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 disabled:opacity-60 transition-all">
-            {isLoading ? t('login.signingIn') : t('login.signIn')}
-          </button>
-        </form>
-
-
-      </motion.div>
-    </div>
+        <button type="submit" disabled={isLoading} className="ds-btn ds-btn-primary ds-btn-lg w-full mt-1">
+          {isLoading ? t('login.signingIn') : t('login.signIn')}
+        </button>
+        {onBack && appId === 'owner' && (
+          <button type="button" onClick={onBack} className="ds-btn ds-btn-ghost w-full">{t('login.back')}</button>
+        )}
+      </form>
+    </AuthLayout>
   );
 };

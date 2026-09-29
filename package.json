@@ -9,6 +9,7 @@
     "admin": "vite --config vite.admin.config.ts",
     "owner": "vite --config vite.owner.config.ts",
     "seed": "tsx server/scripts/seed.ts",
+    "seed:demo": "tsx server/scripts/seedDemoVendors.ts",
     "build": "vite build",
     "build:admin": "vite build --config vite.admin.config.ts --base /admin/",
     "build:owner": "vite build --config vite.owner.config.ts --base /owner/",

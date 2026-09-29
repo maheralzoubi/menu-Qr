@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="ic_launcher_background">#FF5E1A</color>
+    <color name="brand_amber">#FFA41B</color>
+    <color name="brand_orange">#FF5E1A</color>
+    <color name="brand_tomato">#E8342E</color>
+    <color name="brand_ink">#1A120D</color>
+    <color name="brand_paper">#FAF6F1</color>
 </resources>

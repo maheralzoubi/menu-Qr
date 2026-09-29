@@ -1,411 +1,425 @@
-import { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MessageSquare, Clock, AlertCircle, Bike, Tag, CheckCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useApp, useMg, type Order, type OrderType, type PayMethod } from '../contexts/AppContext';
 import { useCart } from '../contexts/CartContext';
-import { applyPrimaryColor } from '../lib/branding';
-import { formatCurrency } from '../lib/currency';
+import { useNav } from '../navigation';
+import { useViewport } from '../hooks/useViewport';
+import { appFetch } from '../lib/appAuth';
+import { useOrderTypes } from '../components/mg/Chrome';
+import { AddressSheet } from '../components/mg/AddressSheet';
+import { IArrowLeft, IBag, ICheck, IMapPin } from '../components/mg/Icons';
+import { RadioDot, Segmented, Stepper, money } from '../components/mg/ui';
 
-interface Props {
-  onBack: () => void;
-  onOrderPlaced: (orderId: string) => void;
-}
-
-const PICKUP_TIMES = ['ASAP', '15 min', '30 min', '45 min', '1 hour'];
-const TIP_OPTIONS = [0, 10, 15, 20];
+const TIMES = ['asap', '15', '30', '45'] as const;
+const TIPS = [0, 10, 15, 20];
 const TAX_RATE = 0.10;
 
-interface AppliedPromo {
-  code: string;
-  discountAmount: number;
-  discountType: string;
-  discountValue: number;
-}
+interface AppliedPromo { code: string; discountAmount: number }
 
-export const CartScreen = ({ onBack, onOrderPlaced }: Props) => {
-  const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
-  const { items, restaurantName, restaurantId, updateQty, removeItem, updateNote, clearCart, total: subtotal } = useCart();
+const ORDER_TYPE_API: Record<OrderType, string> = { pickup: 'PICKUP', dinein: 'DINE_IN', delivery: 'DELIVERY' };
 
-  // Read restaurant context (branding + currency)
-  const restaurantCtx = useMemo(() => {
-    try { return JSON.parse(localStorage.getItem('restaurant_context') || 'null'); } catch { return null; }
-  }, [restaurantId]);
+export const CartScreen = () => {
+  const tm = useMg();
+  const { t } = useTranslation();
+  const nav = useNav();
+  const { mid } = useViewport();
+  const app = useApp();
+  const cart = useCart();
+  const types = useOrderTypes();
+  const { orderType, setOrderType, table, setTable, addresses, user } = app;
 
-  const currency = restaurantCtx?.currency ?? 'USD';
+  const currency = app.restaurantById(cart.restaurantId)?.currency ?? 'USD';
+  const M = (n: number) => money(n, currency);
 
-  useEffect(() => {
-    if (restaurantCtx?.primaryColor && restaurantCtx?.restaurantId === restaurantId) {
-      applyPrimaryColor(restaurantCtx.primaryColor);
-    }
-  }, [restaurantId, restaurantCtx]);
-
-  // Detect dine-in mode (arrived via QR code with a table context)
-  const { isDineIn, tableNumber } = useMemo(() => {
-    try {
-      const ctx = JSON.parse(localStorage.getItem('restaurant_context') || 'null');
-      if (ctx?.tableName && ctx?.restaurantId === restaurantId) {
-        return { isDineIn: true, tableNumber: ctx.tableName as string };
-      }
-    } catch { /* ignore */ }
-    return { isDineIn: false, tableNumber: undefined };
-  }, [restaurantId]);
-
-  // Shared state
-  const [orderNote, setOrderNote] = useState('');
-  const [activeNote, setActiveNote] = useState<string | null>(null);
+  const [pickupTime, setPickupTime] = useState<typeof TIMES[number]>('asap');
+  const [tableErr, setTableErr] = useState(false);
+  const [note, setNote] = useState('');
+  const [pay, setPay] = useState<PayMethod>(app.defaultPay);
+  const [tip, setTip] = useState(0);
+  const [promoIn, setPromoIn] = useState('');
+  const [promo, setPromo] = useState<AppliedPromo | null>(null);
+  const [promoErr, setPromoErr] = useState('');
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [addressId, setAddressId] = useState<string | null>(addresses[0]?.id ?? null);
+  const [addrErr, setAddrErr] = useState(false);
+  const [addrSheet, setAddrSheet] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState('');
 
-  // Promo — shared across both modes
-  const [promoInput, setPromoInput] = useState('');
-  const [promoLoading, setPromoLoading] = useState(false);
-  const [promoError, setPromoError] = useState('');
-  const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
+  useEffect(() => {
+    if (!addresses.some(a => a.id === addressId)) setAddressId(addresses[0]?.id ?? null);
+  }, [addresses, addressId]);
+  const address = addresses.find(a => a.id === addressId) ?? null;
 
-  // Pickup-only
-  const [pickupTime, setPickupTime] = useState('ASAP');
+  const sub = cart.total;
+  const disc = promo?.discountAmount ?? 0;
+  const dinein = orderType === 'dinein';
+  const tax = dinein ? +(sub * TAX_RATE).toFixed(2) : 0;
+  const tipAmt = dinein ? +(sub * tip / 100).toFixed(2) : 0;
+  const total = Math.max(0, +(sub - disc + tax + tipAmt).toFixed(2));
 
-  // Dine-in–only
-  const [tipPercent, setTipPercent] = useState(0);
-
-  // Totals
-  const discountAmt = appliedPromo?.discountAmount ?? 0;
-  const taxAmount   = isDineIn ? parseFloat((subtotal * TAX_RATE).toFixed(2)) : 0;
-  const tipAmount   = isDineIn ? parseFloat((subtotal * (tipPercent / 100)).toFixed(2)) : 0;
-  const finalTotal  = parseFloat(
-    (subtotal + taxAmount + tipAmount - discountAmt).toFixed(2)
-  );
-
-  const handleApplyPromo = async () => {
-    const code = promoInput.trim();
+  const validatePromo = async (code: string, silent = false) => {
     if (!code) return;
-    setPromoError(''); setPromoLoading(true);
+    if (!silent) { setPromoErr(''); setPromoBusy(true); }
     try {
       const res = await fetch('/api/promos/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, restaurantId, subtotal }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, restaurantId: cart.restaurantId, subtotal: sub }),
       });
       const data = await res.json();
-      if (data.valid) {
-        setAppliedPromo({
-          code: code.toUpperCase(),
-          discountAmount: data.discountAmount,
-          discountType: data.discountType,
-          discountValue: data.discountValue,
-        });
-        setPromoInput('');
-      } else {
-        setPromoError(data.message || t('cart.promoInvalid'));
-      }
+      if (data.valid) { setPromo({ code: code.toUpperCase(), discountAmount: data.discountAmount }); setPromoIn(''); }
+      else { setPromo(null); setPromoErr(data.message || t('cart.promoInvalid')); }
     } catch {
-      setPromoError(t('cart.promoError'));
-    } finally {
-      setPromoLoading(false);
-    }
+      if (!silent) setPromoErr(t('cart.promoError'));
+    } finally { setPromoBusy(false); }
   };
 
-  const handlePlace = async () => {
-    if (items.length === 0) return;
+  // Re-check an applied code when the basket changes (discounts depend on the subtotal).
+  const lastSub = useRef(sub);
+  useEffect(() => {
+    if (lastSub.current === sub) return;
+    lastSub.current = sub;
+    if (promo && sub > 0) validatePromo(promo.code, true);
+  }, [sub]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const pickType = (k: OrderType) => { setOrderType(k); setTableErr(false); setAddrErr(false); };
+
+  const place = async () => {
+    if (!cart.items.length || placing) return;
+    if (dinein && !table.trim()) { setTableErr(true); return; }
+    if (orderType === 'delivery' && !address) { setAddrErr(true); return; }
+    if (!user && !app.guestCheckout) { nav.go({ name: 'signin', after: 'cart' }); return; }
     setError(''); setPlacing(true);
     try {
       const payload: Record<string, unknown> = {
-        items: items.map(i => ({ ...i })),
-        total: finalTotal,
-        restaurantId,
-        customerName: 'Guest',
+        items: cart.items.map(({ key: _key, ...line }) => line),
+        total,
+        restaurantId: cart.restaurantId,
+        customerName: user?.name || user?.email || 'Guest',
         order_source: 'CUSTOMER_APP',
-        order_type: isDineIn ? 'DINE_IN' : 'PICKUP',
-        payment_method: 'PAY_LATER',
-        payment_status: 'UNPAID',
-        order_note: orderNote || undefined,
-        tableNumber,
+        order_type: ORDER_TYPE_API[orderType],
+        payment_method: pay === 'card' ? 'CARD' : 'PAY_LATER',
+        payment_status: pay === 'card' ? 'PENDING_CARD_PAYMENT' : 'UNPAID',
+        order_note: note.trim() || undefined,
+        tableNumber: dinein ? table.trim() : undefined,
+        address: orderType === 'delivery' && address ? (address.label ? `${address.label} · ${address.line}` : address.line) : undefined,
+        pickup_time: orderType === 'pickup' ? (pickupTime === 'asap' ? 'ASAP' : `${pickupTime} min`) : undefined,
       };
-      if (appliedPromo) {
-        payload.discount      = appliedPromo.discountAmount;
-        payload.promoCode     = appliedPromo.code;
-        payload.discount_type = 'CODE';
+      if (promo) { payload.discount = promo.discountAmount; payload.promoCode = promo.code; payload.discount_type = 'CODE'; }
+      const res = await appFetch('/api/orders', { method: 'POST', body: JSON.stringify(payload) });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.message || tm('orderFailed'));
+        return;
       }
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) { const d = await res.json(); setError(d.message || t('cart.orderFailed')); return; }
-      const order = await res.json();
-      try {
-        const history: string[] = JSON.parse(localStorage.getItem('order_history') || '[]');
-        history.unshift(order._id);
-        localStorage.setItem('order_history', JSON.stringify(history.slice(0, 20)));
-      } catch { /* ignore */ }
-      clearCart();
-      onOrderPlaced(order._id);
-    } catch { setError(t('common.networkError')); }
+      const order: Order = await res.json();
+      app.trackOrder(order);
+      cart.clearCart();
+      app.toast(tm('orderPlaced'));
+      nav.go({ name: 'track', orderId: order._id }, { replace: true });
+    } catch { setError(tm('networkError')); }
     finally { setPlacing(false); }
   };
 
-  // Shared promo code block (used in both modes)
-  const promoBlock = (
-    <div className="bg-surface-container rounded-2xl p-4">
-      <p className="text-sm font-extrabold mb-2">{t('cart.promoCode')}</p>
-      {appliedPromo ? (
-        <div className="flex items-center justify-between bg-primary/10 rounded-xl px-3 py-2.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <CheckCircle className="w-4 h-4 text-primary shrink-0" />
-            <span className="text-sm font-bold text-primary truncate">{appliedPromo.code}</span>
-            <span className="text-xs text-on-surface-variant shrink-0">
-              -{formatCurrency(appliedPromo.discountAmount, currency)}
-            </span>
-          </div>
-          <button onClick={() => setAppliedPromo(null)} className="text-xs text-red-400 font-bold ps-3 shrink-0">✕</button>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center bg-surface-container-high rounded-xl overflow-hidden">
-            <input
-              value={promoInput}
-              onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(''); }}
-              onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
-              placeholder={t('cart.promoPlaceholder')}
-              className="flex-1 bg-transparent px-3 py-2.5 text-sm focus:outline-none uppercase min-w-0"
-            />
-            <button
-              onClick={handleApplyPromo}
-              disabled={promoLoading || !promoInput.trim()}
-              className="px-4 py-2.5 btn-gradient text-white text-sm font-bold disabled:opacity-40 flex items-center gap-1.5 shrink-0"
-            >
-              <Tag className="w-3.5 h-3.5" />
-              {t('cart.apply')}
-            </button>
-          </div>
-          {promoError && (
-            <p className="text-xs text-red-400 flex items-center gap-1 mt-2">
-              <AlertCircle className="w-3 h-3 shrink-0" />{promoError}
-            </p>
-          )}
-        </>
-      )}
+  const payOptions: { k: PayMethod; label: string; sub: string }[] = [
+    { k: 'cash', label: orderType === 'delivery' ? tm('payCod') : tm('payCounter'), sub: orderType === 'delivery' ? tm('payCodSub') : tm('payCounterSub') },
+    { k: 'card', label: tm('payCard'), sub: orderType === 'delivery' ? tm('payCardDeliverySub') : tm('payCardCounterSub') },
+  ];
+  const timeLabel = (k: typeof TIMES[number]) => k === 'asap' ? tm('asap') : `${k} ${tm('min')}`;
+  const tipLabel = (p: number) => p === 0 ? tm('noTip') : `${p}%`;
+  const addressText = address ? (address.label ? `${address.label} · ${address.line}` : address.line) : tm('addAddress');
+
+  const summaryRows = (web: boolean) => (
+    <>
+      <div className="flex justify-between"><span className="text-muted-fg">{tm('subtotal')}</span><span>{M(sub)}</span></div>
+      {promo && <div className="flex justify-between text-pos6"><span>{tm('discount')}</span><span>− {M(disc)}</span></div>}
+      {dinein && <div className="flex justify-between"><span className="text-muted-fg">{tm('taxService')}</span><span>{M(tax)}</span></div>}
+      {tipAmt > 0 && <div className="flex justify-between"><span className="text-muted-fg">{tm('tip')} ({tip}%)</span><span>{M(tipAmt)}</span></div>}
+      <div className={`flex justify-between ${web ? 'font-display font-bold text-[22px] leading-7 mt-1.5' : 'font-semibold text-[16px] leading-[22px] mt-1'}`}>
+        <span>{tm('total')}</span><span>{M(total)}</span>
+      </div>
+    </>
+  );
+
+  const promoApplied = (web: boolean) => promo && (
+    <div role="status" className={`flex items-center gap-2.5 rounded-[14px] bg-pos1 text-pos7 ${web ? 'px-4 py-3' : 'px-3.5 py-3'}`}>
+      <ICheck size={18} sw={2.5} />
+      <span className="flex-1 font-semibold text-[14px] leading-5">{promo.code} · {t('cart.promoApplied', { value: M(disc) })}</span>
+      <button onClick={() => { setPromo(null); setPromoIn(''); }}
+        className={`border-0 bg-transparent text-inherit font-semibold underline ${web ? 'text-[13px] leading-none py-1.5' : 'text-[12px] leading-4 py-2'}`}>{tm('remove')}</button>
     </div>
   );
 
-  return (
-    <div className="flex flex-col h-screen bg-surface">
-      {/* Header */}
-      <div className="bg-surface px-5 pt-12 pb-4 shadow-sm shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={onBack} className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center active:scale-90 transition-transform">
-            <ArrowLeft className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-lg font-extrabold font-headline">{t('pickup.cartTitle')}</h1>
-            <p className="text-xs text-on-surface-variant">
-              {restaurantName}{isDineIn && tableNumber ? ` · ${tableNumber}` : ''}
-            </p>
-          </div>
-          <ShoppingBag className="w-5 h-5 text-primary" />
-        </div>
-      </div>
+  const addressSheet = addrSheet && (
+    <AddressSheet web={mid} onClose={() => setAddrSheet(false)} selectedId={addressId} onSelect={id => { setAddressId(id); setAddrErr(false); }} />
+  );
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-on-surface-variant gap-4">
-            <div className="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center">
-              <ShoppingBag className="w-10 h-10 opacity-30" />
-            </div>
-            <p className="text-sm font-medium">{t('pickup.emptyCart')}</p>
-            <button onClick={onBack} className="btn-gradient text-white px-6 py-2.5 rounded-2xl text-sm font-bold">
-              {t('pickup.browseMenu')}
-            </button>
+  // ── Web ───────────────────────────────────────────────────────────
+  if (mid) {
+    const card = 'p-6 rounded-3xl border border-line bg-card flex flex-col';
+    const h2 = 'm-0 font-display font-bold text-[20px] leading-[26px] tracking-[-0.02em]';
+    const chip = (on: boolean) => `h-10 px-[18px] rounded-full border text-[14px] leading-none ${on ? 'border-fg bg-fg text-bg font-semibold' : 'border-line bg-card text-fg font-medium hover:border-fg'}`;
+    return (
+      <div data-screen-label="Checkout" className="max-w-[1100px] mx-auto px-[clamp(16px,4vw,32px)] pt-[clamp(20px,3vw,32px)] pb-24 animate-mg-in-slow">
+        {cart.restaurantId && (
+          <button onClick={() => nav.go({ name: 'rest', id: cart.restaurantId! })}
+            className="flex items-center gap-1.5 border-0 bg-transparent p-0 text-muted-fg font-medium text-[14px] leading-5 mb-3 hover:text-fg">
+            <IArrowLeft size={16} />{cart.restaurantName}
+          </button>
+        )}
+        <h1 className="m-0 mb-7 font-display font-extrabold text-[clamp(32px,4vw,48px)] leading-[1.05] tracking-[-0.035em]">{tm('cart')}</h1>
+
+        {cart.items.length === 0 ? (
+          <div className="py-20 px-6 flex flex-col items-center text-center gap-2.5 border border-dashed border-input rounded-[28px]">
+            <span className="w-[72px] h-[72px] rounded-full bg-acc-soft text-acc flex items-center justify-center mb-2"><IBag size={30} /></span>
+            <span className="font-display font-bold text-[24px] leading-[30px]">{tm('emptyCart')}</span>
+            <span className="text-[15px] leading-[22px] text-muted-fg max-w-[360px]">{tm('emptyCartSub')}</span>
+            <button onClick={() => nav.tab('home')} className="mt-4 h-[52px] px-7 border-0 rounded-full bg-primary text-white font-semibold text-[16px] leading-none">{tm('browse')}</button>
           </div>
         ) : (
-          <>
-            {/* Items */}
-            <div className="bg-surface-container rounded-2xl overflow-hidden">
-              <AnimatePresence>
-                {items.map((item, idx) => (
-                  <motion.div key={item.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }}
-                    className={`px-4 py-3.5 ${idx < items.length - 1 ? 'border-b border-surface-container-high' : ''}`}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-surface-container-high shrink-0">
-                        {item.image
-                          ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                          : <div className="w-full h-full flex items-center justify-center text-xl">🍴</div>}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm">{item.name}</p>
-                        <p className="text-sm font-extrabold text-primary mt-0.5">{formatCurrency(item.price * item.quantity, currency)}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => updateQty(item.id, item.quantity - 1)} className="w-7 h-7 rounded-lg bg-surface-container-high flex items-center justify-center active:scale-90">
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="w-5 text-center font-extrabold text-sm tabular-nums">{item.quantity}</span>
-                        <button onClick={() => updateQty(item.id, item.quantity + 1)} className="w-7 h-7 rounded-lg bg-surface-container-high flex items-center justify-center active:scale-90">
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => setActiveNote(activeNote === item.id ? null : item.id)}
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center active:scale-90 ${item.note || activeNote === item.id ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
-                          <MessageSquare className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => removeItem(item.id)} className="w-7 h-7 rounded-lg bg-surface-container-high flex items-center justify-center active:scale-90">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+          <div className="flex flex-wrap gap-8 items-start">
+            <div className="flex-[1_1_480px] min-w-0 flex flex-col gap-5">
+              <section className={`${card} gap-4`}>
+                <h2 className={h2}>{tm('orderType')}</h2>
+                <Segmented variant="cards" options={types} value={orderType} onChange={pickType} />
+                {orderType === 'pickup' && (
+                  <>
+                    <span className="font-semibold text-[14px] leading-5 text-muted-fg">{tm('pickupTime')}</span>
+                    <div className="flex gap-2 flex-wrap">
+                      {TIMES.map(k => <button key={k} aria-pressed={pickupTime === k} onClick={() => setPickupTime(k)} className={chip(pickupTime === k)}>{timeLabel(k)}</button>)}
                     </div>
-                    <AnimatePresence>
-                      {activeNote === item.id && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-2 ms-[60px]">
-                          <input value={item.note} onChange={e => updateNote(item.id, e.target.value)}
-                            placeholder={t('pickup.itemNotePlaceholder')}
-                            className="w-full bg-surface-container-high rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                  </>
+                )}
+                {dinein && (
+                  <>
+                    <label htmlFor="mg-table" className="font-semibold text-[14px] leading-5 text-muted-fg">{tm('tableNo')}</label>
+                    <input id="mg-table" value={table} onChange={e => { setTable(e.target.value.slice(0, 20)); setTableErr(false); }} placeholder={tm('tablePh')}
+                      aria-invalid={tableErr} className={`h-[52px] max-w-[240px] px-4 border rounded-[14px] bg-card text-fg text-[16px] leading-none ${tableErr ? 'border-destructive' : 'border-input'}`} />
+                    {tableErr && <span role="alert" className="font-medium text-[13px] leading-[18px] text-destructive">{tm('tableErr')}</span>}
+                  </>
+                )}
+                {orderType === 'delivery' && (
+                  <>
+                    <div className={`flex items-center gap-3.5 p-4 border rounded-2xl ${addrErr ? 'border-destructive' : 'border-line'}`}>
+                      <span className="w-10 h-10 rounded-xl bg-acc-soft text-acc flex items-center justify-center shrink-0"><IMapPin size={20} /></span>
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        <span className="font-semibold text-[15px] leading-[22px]">{tm('address')}</span>
+                        <span className="text-[13px] leading-[18px] text-muted-fg">{addressText}</span>
+                      </div>
+                      <button onClick={() => setAddrSheet(true)} className="h-9 px-3.5 border-0 rounded-full bg-transparent text-acc font-semibold text-[14px] leading-none hover:bg-acc-soft">{tm('change')}</button>
+                    </div>
+                    {addrErr && <span role="alert" className="font-medium text-[13px] leading-[18px] text-destructive">{tm('addressErr')}</span>}
+                  </>
+                )}
+              </section>
+
+              {dinein && (
+                <section className={`${card} gap-3.5`}>
+                  <h2 className={h2}>{tm('addTip')}</h2>
+                  <div className="flex gap-2 flex-wrap">
+                    {TIPS.map(p => <button key={p} aria-pressed={tip === p} onClick={() => setTip(p)} className={chip(tip === p)}>{tipLabel(p)}</button>)}
+                  </div>
+                </section>
+              )}
+
+              <section className={`${card} gap-3.5`}>
+                <h2 className={h2}>{tm('payment')}</h2>
+                <div role="radiogroup" className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
+                  {payOptions.map(p => (
+                    <button key={p.k} role="radio" aria-checked={pay === p.k} onClick={() => setPay(p.k)}
+                      className={`flex items-center gap-3 p-4 rounded-2xl text-fg text-start ${pay === p.k ? 'border-2 border-primary bg-acc-soft' : 'border border-line bg-card hover:border-fg'}`}>
+                      <RadioDot on={pay === p.k} web />
+                      <span className="flex flex-col">
+                        <span className="font-semibold text-[15px] leading-5">{p.label}</span>
+                        <span className="text-[13px] leading-[18px] text-muted-fg">{p.sub}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className={`${card} gap-3`}>
+                <label htmlFor="mg-note" className="font-display font-bold text-[20px] leading-[26px] tracking-[-0.02em]">
+                  {tm('note')} <span className="font-sans font-normal text-[13px] leading-none text-muted-fg tracking-normal">· {tm('optional')}</span>
+                </label>
+                <textarea id="mg-note" rows={3} value={note} onChange={e => setNote(e.target.value.slice(0, 500))} placeholder={tm('notePh')}
+                  className="resize-y px-4 py-3.5 border border-input rounded-[14px] bg-card text-fg text-[16px] leading-[22px]" />
+              </section>
             </div>
 
-            {isDineIn ? (
-              <>
-                {/* Tips */}
-                <div className="bg-surface-container rounded-2xl p-4">
-                  <p className="text-sm font-extrabold mb-3">{t('cart.addTip')}</p>
+            <aside className="flex-[1_1_340px] min-w-0 sticky top-24 p-6 rounded-3xl border border-line bg-card shadow-mg-md flex flex-col gap-[18px]">
+              <h2 className={h2}>{tm('summary')}</h2>
+              <div>
+                {cart.items.map(l => (
+                  <div key={l.key} className="flex gap-3 items-center py-3 border-t border-line">
+                    <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                      <span className="font-semibold text-[14px] leading-5">{l.name}</span>
+                      {l.note && <span className="text-[12px] leading-4 text-muted-fg"><bdi>“{l.note}”</bdi></span>}
+                      <span className="font-medium text-[13px] leading-[18px]">{M(l.price * l.quantity)}</span>
+                    </div>
+                    <Stepper variant="webLine" qty={l.quantity} onDec={() => cart.updateQty(l.key, l.quantity - 1)} onInc={() => cart.updateQty(l.key, l.quantity + 1)} />
+                  </div>
+                ))}
+              </div>
+              {promo ? promoApplied(true) : (
+                <>
                   <div className="flex gap-2">
-                    {TIP_OPTIONS.map(pct => (
-                      <button key={pct} onClick={() => setTipPercent(pct)}
-                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
-                          tipPercent === pct ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface-variant'
-                        }`}>
-                        {pct === 0 ? t('cart.noTip') : `${pct}%`}
-                      </button>
-                    ))}
+                    <input aria-label={tm('promo')} value={promoIn} onChange={e => { setPromoIn(e.target.value.toUpperCase()); setPromoErr(''); }}
+                      onKeyDown={e => e.key === 'Enter' && validatePromo(promoIn.trim())} placeholder={tm('promo')}
+                      className="flex-1 min-w-0 h-[46px] px-4 border border-input rounded-full bg-card text-fg text-[15px] leading-none uppercase" />
+                    <button onClick={() => validatePromo(promoIn.trim())} disabled={promoBusy || !promoIn.trim()}
+                      className="h-[46px] px-[18px] border-0 rounded-full bg-muted text-fg font-semibold text-[14px] leading-none hover:bg-input disabled:opacity-50">{tm('apply')}</button>
                   </div>
-                </div>
-
-                {promoBlock}
-
-                {/* Order Note */}
-                <div className="bg-surface-container rounded-2xl p-4">
-                  <p className="text-sm font-extrabold mb-2">{t('cart.kitchenInstructions')}</p>
-                  <textarea value={orderNote} onChange={e => setOrderNote(e.target.value)}
-                    placeholder={t('cart.specialRequests')} rows={2}
-                    className="w-full bg-surface-container-high rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                {/* Bill Breakdown */}
-                <div className="bg-surface-container rounded-2xl p-4 space-y-2.5">
-                  <div className="flex justify-between text-sm text-on-surface-variant">
-                    <span>{t('cart.subtotal')}</span>
-                    <span className="tabular-nums">{formatCurrency(subtotal, currency)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-on-surface-variant">
-                    <span>{t('cart.taxService')} (10%)</span>
-                    <span className="tabular-nums">{formatCurrency(taxAmount, currency)}</span>
-                  </div>
-                  {tipAmount > 0 && (
-                    <div className="flex justify-between text-sm text-on-surface-variant">
-                      <span>{t('cart.gratuity')} ({tipPercent}%)</span>
-                      <span className="tabular-nums">{formatCurrency(tipAmount, currency)}</span>
-                    </div>
-                  )}
-                  {appliedPromo && (
-                    <div className="flex justify-between text-sm text-primary">
-                      <span>{t('cart.promo', { code: appliedPromo.code })}</span>
-                      <span className="tabular-nums">-{formatCurrency(appliedPromo.discountAmount, currency)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-extrabold text-base pt-2.5 border-t border-surface-container-high">
-                    <span>{t('cart.total')}</span>
-                    <span className="text-primary tabular-nums">{formatCurrency(finalTotal, currency)}</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Pickup Time */}
-                <div className="bg-surface-container rounded-2xl p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Clock className="w-4 h-4 text-primary" />
-                    <p className="text-sm font-extrabold">{t('pickup.pickupTime')}</p>
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                    {PICKUP_TIMES.map(time => (
-                      <button key={time} onClick={() => setPickupTime(time)}
-                        className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                          pickupTime === time ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface-variant'
-                        }`}>
-                        {time}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Order Note */}
-                <div className="bg-surface-container rounded-2xl p-4">
-                  <p className="text-sm font-extrabold mb-2">{t('pickup.orderNote')}</p>
-                  <textarea value={orderNote} onChange={e => setOrderNote(e.target.value)}
-                    placeholder={t('pickup.orderNotePlaceholder')} rows={2}
-                    className="w-full bg-surface-container-high rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                {promoBlock}
-
-                {/* Pay at Pickup */}
-                <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center shrink-0">
-                    <Bike className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-extrabold text-primary">{t('pickup.payAtPickup')}</p>
-                    <p className="text-xs text-on-surface-variant mt-0.5">{t('pickup.payAtPickupDesc')}</p>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <div className="bg-surface-container rounded-2xl p-4 space-y-2">
-                  {items.map(item => (
-                    <div key={item.id} className="flex justify-between text-xs text-on-surface-variant">
-                      <span>{item.quantity}× {item.name}</span>
-                      <span className="tabular-nums">{formatCurrency(item.price * item.quantity, currency)}</span>
-                    </div>
-                  ))}
-                  {appliedPromo && (
-                    <div className="flex justify-between text-sm text-primary">
-                      <span>{t('cart.promo', { code: appliedPromo.code })}</span>
-                      <span className="tabular-nums">-{formatCurrency(appliedPromo.discountAmount, currency)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-extrabold text-base pt-2 border-t border-surface-container-high">
-                    <span>{t('pickup.total')}</span>
-                    <span className="text-primary tabular-nums">{formatCurrency(finalTotal, currency)}</span>
-                  </div>
-                </div>
-              </>
-            )}
-          </>
+                  {promoErr && <span role="alert" className="font-medium text-[13px] leading-[18px] text-destructive -mt-2">{promoErr}</span>}
+                </>
+              )}
+              <div className="flex flex-col gap-2 text-[15px] leading-[22px] pt-3.5 border-t border-line">{summaryRows(true)}</div>
+              {error && <span role="alert" className="font-medium text-[13px] leading-[18px] text-destructive">{error}</span>}
+              <button onClick={place} disabled={placing}
+                className="h-14 border-0 rounded-full bg-primary text-white font-semibold text-[17px] leading-none flex items-center justify-between px-[26px] hover:opacity-[.92] disabled:opacity-60">
+                <span>{placing ? tm('placing') : tm('placeOrder')}</span><span>{M(total)}</span>
+              </button>
+            </aside>
+          </div>
         )}
+        {addressSheet}
+      </div>
+    );
+  }
+
+  // ── Phone ─────────────────────────────────────────────────────────
+  const chip = (on: boolean) => `h-10 px-4 rounded-full border text-[14px] leading-none ${on ? 'border-primary bg-primary text-on-primary font-semibold' : 'border-line bg-bg text-fg font-normal hover:bg-accent'}`;
+  const h2 = 'm-0 font-semibold text-[16px] leading-[22px]';
+  return (
+    <div className="animate-mg-in">
+      <div className="sticky top-0 z-[5] bg-bg pt-2 px-5 pb-3 flex items-center gap-3 border-b border-line">
+        <button aria-label="Back" onClick={nav.back}
+          className="w-11 h-11 shrink-0 rounded-[14px] border border-line bg-bg text-fg flex items-center justify-center hover:bg-accent">
+          <IArrowLeft size={20} />
+        </button>
+        <div className="flex flex-col min-w-0">
+          <h1 className="m-0 font-display font-bold text-[20px] leading-7 tracking-[-0.02em]">{tm('cart')}</h1>
+          {cart.items.length > 0 && <span className="text-[12px] leading-4 text-muted-fg">{cart.restaurantName}</span>}
+        </div>
       </div>
 
-      {/* Footer CTA */}
-      {items.length > 0 && (
-        <div className="bg-surface px-5 pb-8 pt-4 shadow-[0_-4px_20px_rgba(0,0,0,0.3)] shrink-0">
-          {error && (
-            <p className="text-red-400 text-xs flex items-center gap-1 mb-3">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0" />{error}
-            </p>
-          )}
-          <button onClick={handlePlace} disabled={placing}
-            className="w-full btn-gradient text-white rounded-2xl py-4 font-extrabold text-base shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-98 transition-transform">
-            {placing ? '...' : `${t('pickup.placeOrder')} · ${formatCurrency(finalTotal, currency)}`}
-          </button>
+      {cart.items.length === 0 ? (
+        <div className="py-24 px-8 flex flex-col items-center text-center gap-2">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-fg mb-2"><IBag size={28} /></div>
+          <span className="font-semibold text-[16px] leading-[22px]">{tm('emptyCart')}</span>
+          <span className="text-[14px] leading-5 text-muted-fg max-w-[260px]">{tm('emptyCartSub')}</span>
+          <button onClick={() => nav.tab('home')} className="mt-4 h-12 px-6 border-0 rounded-[14px] bg-primary text-on-primary font-semibold text-[16px] leading-none">{tm('browse')}</button>
         </div>
+      ) : (
+        <>
+          <div className="pt-4 px-5 pb-6 flex flex-col gap-6">
+            <div className="flex flex-col">
+              {cart.items.map(l => (
+                <div key={l.key} className="flex gap-3 items-center py-3.5 border-b border-line">
+                  <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                    <span className="font-semibold text-[14px] leading-5">{l.name}</span>
+                    {l.note && <span className="text-[12px] leading-4 text-muted-fg"><bdi>“{l.note}”</bdi></span>}
+                    <span className="font-semibold text-[14px] leading-5 mt-0.5">{M(l.price * l.quantity)}</span>
+                  </div>
+                  <Stepper qty={l.quantity} trashAtOne onDec={() => cart.updateQty(l.key, l.quantity - 1)} onInc={() => cart.updateQty(l.key, l.quantity + 1)} />
+                </div>
+              ))}
+            </div>
+
+            <section className="flex flex-col gap-3">
+              <h2 className={h2}>{tm('orderType')}</h2>
+              <Segmented options={types} value={orderType} onChange={pickType} />
+              {orderType === 'pickup' && (
+                <>
+                  <span className="font-semibold text-[12px] leading-4 text-muted-fg mt-1">{tm('pickupTime')}</span>
+                  <div className="flex gap-2 flex-wrap">
+                    {TIMES.map(k => <button key={k} aria-pressed={pickupTime === k} onClick={() => setPickupTime(k)} className={chip(pickupTime === k)}>{timeLabel(k)}</button>)}
+                  </div>
+                </>
+              )}
+              {dinein && (
+                <>
+                  <label htmlFor="mg-table" className="font-semibold text-[12px] leading-4 text-muted-fg mt-1">{tm('tableNo')}</label>
+                  <input id="mg-table" value={table} onChange={e => { setTable(e.target.value.slice(0, 20)); setTableErr(false); }} placeholder={tm('tablePh')}
+                    aria-invalid={tableErr} className={`h-12 px-3.5 border rounded-[14px] bg-bg text-fg text-[16px] leading-none ${tableErr ? 'border-destructive' : 'border-input'}`} />
+                  {tableErr && <span role="alert" className="text-[12px] leading-4 text-destructive">{tm('tableErr')}</span>}
+                </>
+              )}
+              {orderType === 'delivery' && (
+                <>
+                  <div className={`flex items-center gap-3 px-4 py-3.5 border rounded-[14px] ${addrErr ? 'border-destructive' : 'border-line'}`}>
+                    <IMapPin size={20} className="shrink-0" />
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <span className="font-semibold text-[14px] leading-5">{tm('address')}</span>
+                      <span className="text-[12px] leading-4 text-muted-fg">{addressText}</span>
+                    </div>
+                    <button onClick={() => setAddrSheet(true)} className="h-9 px-3 border-0 rounded-[14px] bg-transparent text-acc font-semibold text-[14px] leading-none">{tm('change')}</button>
+                  </div>
+                  {addrErr && <span role="alert" className="text-[12px] leading-4 text-destructive">{tm('addressErr')}</span>}
+                </>
+              )}
+            </section>
+
+            {dinein && (
+              <section className="flex flex-col gap-3">
+                <h2 className={h2}>{tm('addTip')}</h2>
+                <div className="flex gap-2 flex-wrap">
+                  {TIPS.map(p => <button key={p} aria-pressed={tip === p} onClick={() => setTip(p)} className={chip(tip === p)}>{tipLabel(p)}</button>)}
+                </div>
+              </section>
+            )}
+
+            <section className="flex flex-col gap-3">
+              <h2 className={h2}>{tm('payment')}</h2>
+              <div role="radiogroup" className="border border-line rounded-[14px] overflow-hidden">
+                {payOptions.map(p => (
+                  <button key={p.k} role="radio" aria-checked={pay === p.k} onClick={() => setPay(p.k)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 border-0 border-b border-line -mb-px bg-transparent text-fg text-start hover:bg-accent">
+                    <RadioDot on={pay === p.k} />
+                    <span className="flex-1 flex flex-col">
+                      <span className="font-semibold text-[14px] leading-5">{p.label}</span>
+                      <span className="text-[12px] leading-4 text-muted-fg">{p.sub}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <label htmlFor="mg-note" className="font-semibold text-[16px] leading-[22px]">{tm('note')} <span className="font-normal text-muted-fg text-[12px]">· {tm('optional')}</span></label>
+              <textarea id="mg-note" rows={2} value={note} onChange={e => setNote(e.target.value.slice(0, 500))} placeholder={tm('notePh')}
+                className="resize-none px-3.5 py-3 border border-input rounded-[14px] bg-bg text-fg text-[16px] leading-[22px]" />
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <label htmlFor="mg-promo" className="font-semibold text-[16px] leading-[22px]">{tm('promo')}</label>
+              {promo ? promoApplied(false) : (
+                <>
+                  <div className="flex gap-2">
+                    <input id="mg-promo" value={promoIn} onChange={e => { setPromoIn(e.target.value.toUpperCase()); setPromoErr(''); }}
+                      onKeyDown={e => e.key === 'Enter' && validatePromo(promoIn.trim())} placeholder={tm('promoPh')}
+                      className="flex-1 min-w-0 h-12 px-3.5 border border-input rounded-[14px] bg-bg text-fg text-[16px] leading-none uppercase" />
+                    <button onClick={() => validatePromo(promoIn.trim())} disabled={promoBusy || !promoIn.trim()}
+                      className="h-12 px-5 border border-line rounded-[14px] bg-secondary text-fg font-semibold text-[14px] leading-none hover:bg-accent disabled:opacity-50">{tm('apply')}</button>
+                  </div>
+                  {promoErr && <span role="alert" className="text-[12px] leading-4 text-destructive">{promoErr}</span>}
+                </>
+              )}
+            </section>
+
+            <section className="flex flex-col gap-2 pt-4 border-t border-line text-[14px] leading-5">{summaryRows(false)}</section>
+          </div>
+
+          <div className="sticky bottom-0 pt-3 px-5 bg-bg border-t border-line" style={{ paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))' }}>
+            {error && <p role="alert" className="m-0 mb-2 text-[12px] leading-4 text-destructive">{error}</p>}
+            <button onClick={place} disabled={placing}
+              className="w-full h-[52px] border-0 rounded-[14px] bg-primary text-on-primary font-semibold text-[16px] leading-none flex items-center justify-between px-5 hover:opacity-90 disabled:opacity-60">
+              <span>{placing ? tm('placing') : tm('placeOrder')}</span><span>{M(total)}</span>
+            </button>
+          </div>
+        </>
       )}
+      {addressSheet}
     </div>
   );
 };

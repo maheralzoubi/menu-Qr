@@ -16,6 +16,7 @@
     "noResults": "No results",
     "switchLanguage": "Switch to Arabic"
   },
+  "shell": { "theme": "Toggle Light/Dark", "language": "Language", "collapse": "Collapse Sidebar", "menu": "Menu", "close": "Close" },
   "nav": {
     "restaurants": "Restaurants",
     "analytics": "Analytics",
@@ -25,6 +26,7 @@
     "logout": "Logout"
   },
   "sidebar": {
+    "groups": { "platform": "Platform", "administration": "Administration" },
     "ownerPanel": "Owner Panel",
     "appManagement": "App Management"
   },
@@ -47,6 +49,10 @@
     "networkError": "Network error. Please try again."
   },
   "login": {
+    "brandContext": "Owner Panel",
+    "brandHeadline": "Every restaurant, one platform.",
+    "brandBody": "Restaurants, plans, customers and analytics across the whole Menu Go network.",
+    "back": "Back",
     "title": "Owner Access",
     "subtitle": "Sign in to the App Owner Panel",
     "emailLabel": "Email",
@@ -87,6 +93,7 @@
       "weakPassword": "Password must be at least 6 characters.",
       "passwordMismatch": "Passwords do not match.",
       "emailNotFound": "No account found with this email.",
+      "emailFailed": "We couldn't send the email. Please try again in a moment.",
       "generic": "Something went wrong. Please try again."
     }
   },

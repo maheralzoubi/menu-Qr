@@ -1,0 +1,109 @@
+/* Menu Go customer app — design tokens from the "Menu Go v2" / "Menu Go Web" designs.
+   Admin and owner panels keep using src/index.css. */
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Readex Pro", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Readex Pro", sans-serif;
+
+  --color-bg: hsl(36 33% 97%);
+  --color-card: hsl(0 0% 100%);
+  --color-fg: hsl(20 14% 10%);
+  --color-muted: hsl(30 22% 92%);
+  --color-muted-fg: hsl(20 6% 38%);
+  --color-line: hsl(30 16% 88%);
+  --color-input: hsl(30 12% 82%);
+  --color-primary: hsl(16 88% 50%);
+  --color-on-primary: hsl(0 0% 100%);
+  --color-secondary: hsl(30 22% 92%);
+  --color-accent: hsl(30 25% 94%);
+  --color-ring: hsl(16 88% 50%);
+  --color-destructive: hsl(0 72% 46%);
+  --color-popover: hsl(20 14% 10%);
+  --color-popover-fg: hsl(36 33% 97%);
+  --color-acc: hsl(16 88% 46%);
+  --color-acc-soft: hsl(18 100% 94%);
+  --color-neutral2: #E7E1D9;
+  --color-neutral9: #15110E;
+  --color-pos1: #DDF4E4;
+  --color-pos5: #17A34A;
+  --color-pos6: #13803B;
+  --color-pos7: #0D5C2B;
+  --color-warn1: #FFF0D9;
+  --color-warn5: #F2A20C;
+  --color-warn7: #7A4300;
+  --color-info1: #E4EDFF;
+  --color-info7: #1D4A9E;
+  --color-neg5: #E5484D;
+
+  --shadow-mg-sm: 0 1px 2px rgb(60 30 10 / .05);
+  --shadow-mg: 0 1px 3px rgb(60 30 10 / .10);
+  --shadow-mg-md: 0 6px 16px -4px rgb(60 30 10 / .16);
+  --shadow-mg-lg: 0 18px 40px -12px rgb(60 30 10 / .30);
+
+  --animate-mg-in: mgIn 200ms ease-out;
+  --animate-mg-in-slow: mgIn 220ms ease-out;
+  --animate-mg-fade: mgFade 180ms ease-out;
+  --animate-mg-up: mgUp 240ms cubic-bezier(.2, .8, .2, 1);
+  --animate-mg-pulse: mgPulse 1.4s ease-in-out infinite;
+  --animate-mg-blink: mgPulse 1s infinite;
+
+  @keyframes mgPulse { 0%, 100% { opacity: 1 } 50% { opacity: .45 } }
+  @keyframes mgUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+  @keyframes mgFade { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes mgIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: hsl(24 10% 6%);
+  --color-card: hsl(24 8% 10%);
+  --color-fg: hsl(36 30% 95%);
+  --color-muted: hsl(24 7% 14%);
+  --color-muted-fg: hsl(30 8% 66%);
+  --color-line: hsl(24 6% 17%);
+  --color-input: hsl(24 6% 24%);
+  --color-primary: hsl(18 95% 56%);
+  --color-secondary: hsl(24 7% 14%);
+  --color-accent: hsl(24 7% 16%);
+  --color-ring: hsl(18 95% 56%);
+  --color-destructive: hsl(0 80% 66%);
+  --color-popover: hsl(36 30% 95%);
+  --color-popover-fg: hsl(24 10% 8%);
+  --color-acc: hsl(20 100% 62%);
+  --color-acc-soft: hsl(18 60% 14%);
+  --color-neutral2: #1B1714;
+  --color-pos1: #11301E;
+  --color-pos6: #6FD89A;
+  --color-pos7: #8BE6B0;
+  --color-warn1: #3A2810;
+  --color-warn7: #FFC878;
+  --color-info1: #14223B;
+  --color-info7: #A3C4FF;
+  --shadow-mg-lg: 0 18px 40px -12px rgb(0 0 0 / .6);
+}
+
+@layer base {
+  html, body { font-family: var(--font-sans); color: var(--color-fg); }
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; }
+  input, textarea { font-family: inherit; }
+  input::placeholder, textarea::placeholder { color: var(--color-muted-fg); }
+  :focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
+  a { color: var(--color-acc); text-decoration: none; }
+}
+
+@layer utilities {
+  .mg-scroll { scrollbar-width: none; }
+  .mg-scroll::-webkit-scrollbar { display: none; }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .text-pretty { text-wrap: pretty; }
+  .text-balance { text-wrap: balance; }
+  .bidi-isolate { unicode-bidi: isolate; }
+}

@@ -117,27 +117,23 @@ export const RestaurantList = ({ onSelect }: Props) => {
   ];
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('restaurants.heading')}</h2>
-          <p className="text-on-surface-variant font-medium">{t('restaurants.subtext')}</p>
+          <h1 className="ds-page-title">{t('restaurants.heading')}</h1>
+          <p className="ds-page-sub">{t('restaurants.subtext')}</p>
         </div>
-        <div className="flex gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-[160px] sm:flex-none">
-            <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
+        <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+          <div className="relative flex-1 min-w-[160px] sm:flex-none sm:w-64">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
             <input type="text" placeholder={t('restaurants.search')} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none sm:w-auto" />
+              className="ds-input h-9 ps-9" />
           </div>
           <button
             onClick={() => { if (atLimit) return; setShowPanel(true); setFormError(''); setForm(emptyForm()); }}
             disabled={atLimit}
             title={atLimit ? t('restaurants.limitReached') : undefined}
-            className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-              atLimit
-                ? 'bg-surface-container text-on-surface-variant cursor-not-allowed opacity-60'
-                : 'btn-gradient text-white shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95'
-            }`}>
+            className="ds-btn ds-btn-primary ds-btn-sm">
             <Plus className="w-4 h-4" /> {t('restaurants.addRestaurant')}
           </button>
         </div>
@@ -148,22 +144,18 @@ export const RestaurantList = ({ onSelect }: Props) => {
         {!superAdmin && subscription && subscription.limit !== null && (
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className={`rounded-2xl border px-5 py-4 flex items-center gap-4 ${
-              atLimit
-                ? 'bg-error/5 border-error/20'
-                : 'bg-surface-container-low border-outline-variant/20'
-            }`}>
-            <AlertCircle className={`w-5 h-5 shrink-0 ${atLimit ? 'text-error' : 'text-on-surface-variant'}`} />
+            className={`ds-card px-4 py-3.5 flex items-center gap-3 ${atLimit ? 'bg-neg1 border-neg1' : ''}`}>
+            <AlertCircle className={`w-5 h-5 shrink-0 ${atLimit ? 'text-neg7' : 'text-on-surface-variant'}`} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">
+              <p className={`text-[13px] font-semibold ${atLimit ? 'text-neg7' : ''}`}>
                 {subscription.planName ?? subscription.plan} {t('restaurants.plan')}
                 {' · '}
-                <span className={atLimit ? 'text-error font-bold' : ''}>
+                <span className="tabular">
                   {t('restaurants.usageCount', { used: restaurants.length, total: subscription.limit })}
                 </span>
               </p>
               {/* progress bar */}
-              <div className="mt-1.5 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+              <div className="mt-1.5 h-1.5 bg-surface-container rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${atLimit ? 'bg-error' : 'bg-primary'}`}
                   style={{ width: `${Math.min(100, (restaurants.length / subscription.limit) * 100)}%` }}
@@ -171,8 +163,8 @@ export const RestaurantList = ({ onSelect }: Props) => {
               </div>
             </div>
             {atLimit && (
-              <span className="text-xs font-bold text-error bg-error/10 px-3 py-1.5 rounded-xl whitespace-nowrap flex items-center gap-1.5">
-                <ArrowUpRight className="w-3.5 h-3.5" /> {t('restaurants.upgradePlan')}
+              <span className="ds-chip bg-card text-neg7">
+                <ArrowUpRight className="w-3.5 h-3.5 rtl:-scale-x-100" /> {t('restaurants.upgradePlan')}
               </span>
             )}
           </motion.div>
@@ -180,68 +172,68 @@ export const RestaurantList = ({ onSelect }: Props) => {
       </AnimatePresence>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 sm:gap-6">
+      <div className="grid grid-cols-3 gap-4">
         {[
           { labelKey: 'restaurants.total', value: restaurants.length },
           { labelKey: 'restaurants.active', value: restaurants.filter(r => r.status === 'active').length },
           { labelKey: 'restaurants.inactive', value: restaurants.filter(r => r.status === 'inactive').length },
         ].map(s => (
-          <div key={s.labelKey} className="bg-surface-container-low p-4 sm:p-6 rounded-3xl border border-outline-variant/10 shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
-            <h4 className="text-xl sm:text-3xl font-headline font-extrabold">{s.value}</h4>
+          <div key={s.labelKey} className="ds-card p-4 sm:p-5 min-w-0">
+            <p className="ds-metric-lbl truncate">{t(s.labelKey)}</p>
+            <h4 className="ds-metric-val tabular mt-1">{s.value}</h4>
           </div>
         ))}
       </div>
 
       {/* Table */}
       {isLoading ? (
-        <div className="space-y-3 animate-pulse">{[1,2,3].map(i => <div key={i} className="h-16 bg-surface-container-low rounded-2xl" />)}</div>
+        <div className="ds-card p-0 overflow-hidden">{[1,2,3].map(i => <div key={i} className="h-16 border-b border-line last:border-0 px-4 flex items-center"><div className="h-4 w-1/2 bg-surface-container animate-pulse rounded-2xl" /></div>)}</div>
       ) : (
-        <div className="bg-surface-container-low rounded-3xl border border-outline-variant/10 overflow-x-auto">
-          <table className="w-full min-w-[720px]">
+        <div className="ds-card p-0 overflow-x-auto">
+          <table className="ds-table min-w-[720px]">
             <thead>
-              <tr className="border-b border-outline-variant/10">
-                {tableHeaders.map(h => (
-                  <th key={h} className="text-start p-5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{h}</th>
+              <tr>
+                {tableHeaders.map((h, idx) => (
+                  <th key={h} className={idx >= 2 && idx <= 4 ? 'text-end' : undefined}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               <AnimatePresence>
                 {filtered.map((r, i) => (
-                  <motion.tr key={r._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                    className="border-b border-outline-variant/5 hover:bg-surface-container-lowest transition-colors">
-                    <td className="p-5">
-                      <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelect(r)}>
-                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shrink-0">
+                  <motion.tr key={r._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
+                    <td>
+                      <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onSelect(r)}>
+                        <div className="w-8 h-8 rounded-full bg-acc-soft text-acc text-xs font-bold flex items-center justify-center overflow-hidden shrink-0">
                           {r.logo ? <img src={r.logo} className="w-full h-full object-cover" /> : r.name.slice(0, 1).toUpperCase()}
                         </div>
-                        <div>
-                          <p className="font-bold text-sm hover:text-primary transition-colors">{r.name}</p>
+                        <div className="min-w-0">
+                          <p className="font-semibold group-hover:text-primary transition-colors">{r.name}</p>
                           <p className="text-xs text-on-surface-variant">{r.contactEmail}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="p-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${r.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
+                    <td>
+                      <span className={`ds-chip ${r.status === 'active' ? 'ds-chip-pos' : 'ds-chip-neutral'}`}>
+                        <span className="ds-dot" />
                         {t(`common.${r.status}`)}
                       </span>
                     </td>
-                    <td className="p-5 text-sm font-bold">{r.totalCustomers}</td>
-                    <td className="p-5 text-sm font-bold">{r.totalOrders}</td>
-                    <td className="p-5 text-sm font-bold text-primary">${r.totalRevenue.toFixed(2)}</td>
-                    <td className="p-5 text-sm text-on-surface-variant">{new Date(r.createdAt).toLocaleDateString()}</td>
-                    <td className="p-5">
+                    <td className="tabular text-end">{r.totalCustomers}</td>
+                    <td className="tabular text-end">{r.totalOrders}</td>
+                    <td className="tabular text-end font-semibold">${r.totalRevenue.toFixed(2)}</td>
+                    <td className="tabular text-on-surface-variant whitespace-nowrap">{new Date(r.createdAt).toLocaleDateString()}</td>
+                    <td>
                       <div className="flex items-center gap-1">
-                        <button onClick={() => onSelect(r)} className="p-2 rounded-xl hover:bg-primary/10 text-primary transition-colors" title={t('restaurants.viewDetails')}>
+                        <button onClick={() => onSelect(r)} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm text-on-surface-variant" title={t('restaurants.viewDetails')}>
                           <Eye className="w-4 h-4" />
                         </button>
                         <button onClick={() => handleToggleStatus(r._id, r.status)}
-                          className={`p-2 rounded-xl transition-colors ${r.status === 'active' ? 'hover:bg-surface-container-high text-on-surface-variant' : 'hover:bg-primary/10 text-primary'}`}
+                          className={`ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm ${r.status === 'active' ? 'text-pos6' : 'text-on-surface-variant'}`}
                           title={r.status === 'active' ? t('restaurants.deactivate') : t('restaurants.activate')}>
                           {r.status === 'active' ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                         </button>
-                        <button onClick={() => handleDelete(r._id)} className="p-2 rounded-xl hover:bg-surface-container-high text-on-surface-variant transition-colors" title={t('common.delete')}>
+                        <button onClick={() => handleDelete(r._id)} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm text-on-surface-variant hover:text-error" title={t('common.delete')}>
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -252,11 +244,11 @@ export const RestaurantList = ({ onSelect }: Props) => {
             </tbody>
           </table>
           {filtered.length === 0 && (
-            <div className="text-center py-16 text-on-surface-variant/40">
-              <Building2 className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p className="font-bold">{restaurants.length === 0 ? t('restaurants.noRestaurants') : t('restaurants.noResults')}</p>
+            <div className="flex flex-col items-center justify-center text-center gap-2 py-14 px-6 text-on-surface-variant">
+              <Building2 className="w-8 h-8 opacity-40" />
+              <p className="text-sm">{restaurants.length === 0 ? t('restaurants.noRestaurants') : t('restaurants.noResults')}</p>
               {restaurants.length === 0 && (
-                <button onClick={() => setShowPanel(true)} className="mt-4 text-primary font-bold text-sm hover:underline">{t('restaurants.addFirst')}</button>
+                <button onClick={() => setShowPanel(true)} className="ds-btn ds-btn-outline ds-btn-sm mt-2">{t('restaurants.addFirst')}</button>
               )}
             </div>
           )}
@@ -268,59 +260,59 @@ export const RestaurantList = ({ onSelect }: Props) => {
         {showPanel && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={() => setShowPanel(false)} />
+              className="fixed inset-0 bg-black/45 z-40" onClick={() => setShowPanel(false)} />
             <motion.div
               initial={{ x: isRTL ? '-100%' : '100%' }} animate={{ x: 0 }} exit={{ x: isRTL ? '-100%' : '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className={`fixed ${isRTL ? 'left-0' : 'right-0'} top-0 h-full w-full max-w-lg bg-surface shadow-2xl z-50 flex flex-col`}>
-              <div className="flex items-center justify-between px-8 py-6 border-b border-surface-container">
-                <h3 className="text-xl font-headline font-extrabold">{t('restaurants.panel.title')}</h3>
-                <button onClick={() => setShowPanel(false)} className="p-2 hover:bg-surface-container rounded-full transition-colors">
-                  <X className="w-5 h-5" />
+              className={`fixed end-0 border-s top-0 h-full w-full max-w-lg bg-card border-line shadow-2xl z-50 flex flex-col`}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+                <h3 className="ds-section-title">{t('restaurants.panel.title')}</h3>
+                <button onClick={() => setShowPanel(false)} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleCreate} className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary mb-4">{t('restaurants.panel.restaurantInfo')}</p>
+              <form onSubmit={handleCreate} className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="space-y-4">
+                  <p className="ds-overline text-acc">{t('restaurants.panel.restaurantInfo')}</p>
                   {[
                     { labelKey: 'restaurants.panel.restaurantName', key: 'name', type: 'text', required: true, placeholder: 'The Artisan Kitchen' },
                     { labelKey: 'restaurants.panel.contactEmail', key: 'contactEmail', type: 'email', required: false, placeholder: 'contact@restaurant.com' },
                   ].map(({ labelKey, key, type, required, placeholder }) => (
-                    <div key={key} className="space-y-1.5 mb-4">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t(labelKey)}</label>
+                    <div key={key}>
+                      <label className="ds-label">{t(labelKey)}</label>
                       <input type={type} required={required} value={(form as any)[key]}
                         onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
-                        className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                        className="ds-input" />
                     </div>
                   ))}
-                  <div className="space-y-1.5 mb-4">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.phone')}</label>
+                  <div>
+                    <label className="ds-label">{t('restaurants.panel.phone')}</label>
                     <PhoneInput value={form.contactPhone} onChange={v => setForm(f => ({ ...f, contactPhone: v }))} placeholder="555 000 0000" />
                   </div>
                   {[
                     { labelKey: 'restaurants.panel.address', key: 'address', type: 'text', required: false, placeholder: '123 Main St, City' },
                     { labelKey: 'restaurants.panel.logoUrl', key: 'logo', type: 'url', required: false, placeholder: 'https://...' },
                   ].map(({ labelKey, key, type, required, placeholder }) => (
-                    <div key={key} className="space-y-1.5 mb-4">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t(labelKey)}</label>
+                    <div key={key}>
+                      <label className="ds-label">{t(labelKey)}</label>
                       <input type={type} required={required} value={(form as any)[key]}
                         onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
-                        className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                        className="ds-input" />
                     </div>
                   ))}
                 </div>
 
                 {/* Cuisine types */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.cuisineTypes')}</label>
+                <div>
+                  <label className="ds-label">{t('restaurants.panel.cuisineTypes')}</label>
                   <div className="flex flex-wrap gap-2 pt-1">
                     {CUISINE_OPTIONS.map(c => {
                       const active = form.cuisine.includes(c);
                       return (
                         <button key={c} type="button"
                           onClick={() => setForm(f => ({ ...f, cuisine: active ? f.cuisine.filter(x => x !== c) : [...f.cuisine, c] }))}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${active ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'}`}>
+                          className={`h-8 px-3 rounded-xl text-xs font-semibold border transition-colors ${active ? 'bg-primary text-on-primary border-primary' : 'bg-card text-on-surface-variant border-line hover:bg-accent'}`}>
                           {t(`restaurants.panel.cuisineLabels.${c}`, { defaultValue: c })}
                         </button>
                       );
@@ -328,43 +320,45 @@ export const RestaurantList = ({ onSelect }: Props) => {
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary mb-4">{t('restaurants.panel.adminAccount')}</p>
-                  <p className="text-xs text-on-surface-variant mb-4">{t('restaurants.panel.adminAccountNote')}</p>
+                <div className="space-y-4 pt-6 border-t border-line">
+                  <div>
+                    <p className="ds-overline text-acc">{t('restaurants.panel.adminAccount')}</p>
+                    <p className="ds-help">{t('restaurants.panel.adminAccountNote')}</p>
+                  </div>
                   {[
                     { labelKey: 'restaurants.panel.adminName', key: 'adminName', type: 'text', required: true, placeholder: 'John Smith' },
                     { labelKey: 'restaurants.panel.adminEmail', key: 'adminEmail', type: 'email', required: true, placeholder: 'admin@restaurant.com' },
                   ].map(({ labelKey, key, type, required, placeholder }) => (
-                    <div key={key} className="space-y-1.5 mb-4">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t(labelKey)}</label>
+                    <div key={key}>
+                      <label className="ds-label">{t(labelKey)}</label>
                       <input type={type} required={required} value={(form as any)[key]}
                         onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
-                        className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                        className="ds-input" />
                     </div>
                   ))}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('restaurants.panel.adminPassword')}</label>
+                  <div>
+                    <label className="ds-label">{t('restaurants.panel.adminPassword')}</label>
                     <div className="relative">
                       <input type={showPassword ? 'text' : 'password'} required value={form.adminPassword}
                         onChange={e => setForm(f => ({ ...f, adminPassword: e.target.value }))} placeholder={t('restaurants.panel.passwordPlaceholder')}
-                        className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 pe-12 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
-                      <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute end-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40">
+                        className="ds-input pe-10" />
+                      <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface">
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
                 </div>
 
-                {formError && <p className="text-sm text-on-surface-variant font-medium">{formError}</p>}
+                {formError && <p className="text-[13px] bg-neg1 text-neg7 rounded-xl px-3.5 py-2.5">{formError}</p>}
               </form>
 
-              <div className="px-8 py-6 border-t border-surface-container flex gap-3">
+              <div className="px-6 py-4 border-t border-line flex justify-end gap-2">
                 <button type="button" onClick={() => setShowPanel(false)}
-                  className="flex-1 py-4 rounded-2xl bg-surface-container-high font-bold text-sm hover:bg-surface-variant transition-all">
+                  className="ds-btn ds-btn-outline">
                   {t('restaurants.panel.cancel')}
                 </button>
                 <button onClick={handleCreate as any} disabled={formLoading}
-                  className="flex-1 py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+                  className="ds-btn ds-btn-primary">
                   {formLoading
                     ? <><Loader className="w-4 h-4 animate-spin" /> {t('restaurants.panel.creating')}</>
                     : t('restaurants.panel.create')}

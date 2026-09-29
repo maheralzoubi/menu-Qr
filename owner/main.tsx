@@ -1,6 +1,7 @@
 import { StrictMode, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../src/index.css';
+import { applyDashTheme, initialDashTheme } from '../src/dashboard/theme';
 import './i18n';
 import { useTranslation } from 'react-i18next';
 import { SuperAdminDashboard } from './SuperAdminDashboard';
@@ -96,6 +97,8 @@ function OwnerApp() {
 
   return <SuperAdminDashboard onLogout={handleLogout} />;
 }
+
+applyDashTheme(initialDashTheme());
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode><OwnerApp /></StrictMode>

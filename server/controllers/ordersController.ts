@@ -3,6 +3,7 @@ import * as ordersService from '../services/ordersService';
 import { AuthRequest } from '../middleware/auth';
 import { getIO } from '../socket/index';
 import { sendOrderStatusNotification } from '../services/notificationService';
+import { readAppUser } from '../middleware/appUserAuth';
 
 export const getOrders = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -21,7 +22,10 @@ export const getOrder = async (_req: Request, res: Response, next: NextFunction)
 
 export const postOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const order = await ordersService.createOrder(req.body);
+    // Signed-in app users get the order linked to their account; the email is
+    // taken from the token, never from the request body.
+    const appUser = readAppUser(req);
+    const order = await ordersService.createOrder({ ...req.body, customerEmail: appUser?.email });
     getIO().to('admin').emit('order:new', order);
     res.status(201).json(order);
   } catch (e) { next(e); }

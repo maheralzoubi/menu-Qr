@@ -3,8 +3,12 @@ import {createRoot} from 'react-dom/client';
 import {Capacitor} from '@capacitor/core';
 import {StatusBar} from '@capacitor/status-bar';
 import App from './App.tsx';
-import './index.css';
+import './styles/app.css';
 import './i18n';
+import {applyTheme, initialTheme} from './contexts/AppContext';
+
+// Apply light/dark before the first paint to avoid a flash.
+applyTheme(initialTheme());
 
 // Android 15+ (targetSdk 35+) enforces edge-to-edge rendering, which draws the
 // WebView behind the status bar and clips top content (e.g. the logo). Force

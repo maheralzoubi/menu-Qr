@@ -29,19 +29,19 @@ export const PlatformAnalytics = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-8 animate-pulse">
-        <div className="h-12 w-80 bg-surface-container-low rounded-2xl" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">{[1,2,3,4].map(i => <div key={i} className="h-32 bg-surface-container-low rounded-4xl" />)}</div>
-        <div className="h-72 bg-surface-container-low rounded-4xl" />
+      <div className="space-y-6 animate-pulse">
+        <div className="h-12 w-80 max-w-full bg-surface-container rounded-2xl" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3,4].map(i => <div key={i} className="h-[124px] bg-surface-container rounded-2xl" />)}</div>
+        <div className="h-[330px] bg-surface-container rounded-2xl" />
       </div>
     );
   }
 
   const kpis = [
-    { labelKey: 'analytics.kpis.totalRestaurants',  value: data?.totalRestaurants ?? 0,  icon: <Building2 className="w-6 h-6" /> },
-    { labelKey: 'analytics.kpis.activeRestaurants', value: data?.activeRestaurants ?? 0, icon: <TrendingUp className="w-6 h-6" /> },
-    { labelKey: 'analytics.kpis.totalCustomers',    value: data?.totalCustomers ?? 0,    icon: <Users className="w-6 h-6" /> },
-    { labelKey: 'analytics.kpis.totalRevenue',      value: `$${(data?.totalRevenue ?? 0).toFixed(2)}`, icon: <DollarSign className="w-6 h-6" /> },
+    { labelKey: 'analytics.kpis.totalRestaurants',  value: data?.totalRestaurants ?? 0,  icon: <Building2 className="w-5 h-5" /> },
+    { labelKey: 'analytics.kpis.activeRestaurants', value: data?.activeRestaurants ?? 0, icon: <TrendingUp className="w-5 h-5" /> },
+    { labelKey: 'analytics.kpis.totalCustomers',    value: data?.totalCustomers ?? 0,    icon: <Users className="w-5 h-5" /> },
+    { labelKey: 'analytics.kpis.totalRevenue',      value: `$${(data?.totalRevenue ?? 0).toFixed(2)}`, icon: <DollarSign className="w-5 h-5" /> },
   ];
 
   const tableHeaders = [
@@ -53,75 +53,83 @@ export const PlatformAnalytics = () => {
   ];
 
   return (
-    <div className="space-y-6 sm:space-y-10">
-      <div>
-        <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('analytics.heading')}</h2>
-        <p className="text-on-surface-variant font-medium">{t('analytics.subtext')}</p>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="ds-page-title">{t('analytics.heading')}</h1>
+          <p className="ds-page-sub">{t('analytics.subtext')}</p>
+        </div>
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((k, i) => (
-          <motion.div key={k.labelKey} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-            className="bg-surface-container-low p-4 sm:p-6 rounded-4xl border border-outline-variant/10 shadow-sm">
-            <div className="text-primary mb-2 sm:mb-4">{k.icon}</div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t(k.labelKey)}</p>
-            <h4 className="text-xl sm:text-2xl font-headline font-extrabold mt-1">{k.value}</h4>
+          <motion.div key={k.labelKey} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+            className="ds-card ds-card-pad flex flex-col gap-3 min-w-0">
+            <div className="ds-icon-tile">{k.icon}</div>
+            <div className="min-w-0">
+              <p className="ds-metric-lbl">{t(k.labelKey)}</p>
+              <h4 className="ds-metric-val tabular mt-1 truncate">{k.value}</h4>
+            </div>
           </motion.div>
         ))}
       </div>
 
       {/* New restaurants per month */}
-      <div className="bg-surface-container-low p-5 sm:p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
-        <h3 className="text-lg sm:text-xl font-headline font-extrabold mb-6 sm:mb-8">{t('analytics.newRestaurantsChart')}</h3>
+      <div className="ds-card ds-card-pad">
+        <h3 className="ds-section-title mb-4">{t('analytics.newRestaurantsChart')}</h3>
         <div className="h-[250px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data?.restaurantsPerMonth ?? []}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
-              <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-line)" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--color-on-surface-variant)' }} dy={10} />
+              <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--color-on-surface-variant)' }} />
               <Tooltip
                 formatter={(v: number) => [v, t('analytics.restaurantsLabel')]}
-                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                cursor={{ fill: 'var(--color-surface-container-low)' }}
+                contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-line)', borderRadius: 12, boxShadow: 'var(--shadow-lg)', color: 'var(--color-on-surface)', fontSize: 12 }}
               />
-              <Bar dataKey="value" fill="#9b3f25" radius={[6, 6, 0, 0]} barSize={36} />
+              <Bar dataKey="value" fill="var(--color-chart-1)" radius={[6, 6, 0, 0]} barSize={36} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Per-restaurant table */}
-      <div className="bg-surface-container-low rounded-3xl border border-outline-variant/10 overflow-x-auto">
-        <div className="p-6 border-b border-outline-variant/10">
-          <h3 className="text-lg font-headline font-extrabold">{t('analytics.perRestaurant')}</h3>
+      <div className="ds-card p-0 overflow-x-auto">
+        <div className="px-5 py-4 border-b border-line">
+          <h3 className="ds-section-title">{t('analytics.perRestaurant')}</h3>
         </div>
-        <table className="w-full min-w-[560px]">
+        <table className="ds-table min-w-[560px]">
           <thead>
-            <tr className="border-b border-outline-variant/10">
-              {tableHeaders.map(h => (
-                <th key={h} className="text-start p-5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{h}</th>
+            <tr>
+              {tableHeaders.map((h, idx) => (
+                <th key={h} className={idx >= 2 ? 'text-end' : undefined}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {(data?.restaurantStats ?? []).map((r, i) => (
-              <motion.tr key={r._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
-                className="border-b border-outline-variant/5 hover:bg-surface-container-lowest transition-colors">
-                <td className="p-5 font-bold text-sm">{r.name}</td>
-                <td className="p-5">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${r.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'}`}>
+              <motion.tr key={r._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
+                <td className="font-semibold">{r.name}</td>
+                <td>
+                  <span className={`ds-chip ${r.status === 'active' ? 'ds-chip-pos' : 'ds-chip-neutral'}`}>
+                    <span className="ds-dot" />
                     {t(`common.${r.status}`)}
                   </span>
                 </td>
-                <td className="p-5 text-sm">{r.totalCustomers}</td>
-                <td className="p-5 text-sm">{r.totalOrders}</td>
-                <td className="p-5 text-sm font-bold text-primary">${r.totalRevenue.toFixed(2)}</td>
+                <td className="tabular text-end">{r.totalCustomers}</td>
+                <td className="tabular text-end">{r.totalOrders}</td>
+                <td className="tabular text-end font-semibold">${r.totalRevenue.toFixed(2)}</td>
               </motion.tr>
             ))}
           </tbody>
         </table>
         {(data?.restaurantStats ?? []).length === 0 && (
-          <div className="text-center py-12 text-on-surface-variant/40 text-sm">{t('analytics.noRestaurants')}</div>
+          <div className="flex flex-col items-center justify-center gap-2 py-12 text-on-surface-variant text-sm">
+            <Building2 className="w-8 h-8 opacity-40" />
+            {t('analytics.noRestaurants')}
+          </div>
         )}
       </div>
     </div>

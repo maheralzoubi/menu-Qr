@@ -24,30 +24,38 @@ import { getIO } from '../socket/index';
 
 const router = Router();
 
+// Whether a restaurant is accepting orders right now, in its own timezone.
+function isRestaurantOpen(r: { status: string; openTime?: string; closeTime?: string; timezone?: string }): boolean {
+  if (r.status !== 'active') return false;
+  if (!r.openTime || !r.closeTime) return true;
+  const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const now = new Date();
+  let nowMins = now.getUTCHours() * 60 + now.getUTCMinutes();
+  try {
+    const localTime = new Intl.DateTimeFormat('en-GB', { timeZone: r.timezone || 'UTC', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+    nowMins = toMins(localTime);
+  } catch { /* invalid timezone — fall back to UTC */ }
+  const open = toMins(r.openTime), close = toMins(r.closeTime);
+  // Hours that cross midnight (e.g. 11:00 – 01:00)
+  return close < open ? nowMins >= open || nowMins <= close : nowMins >= open && nowMins <= close;
+}
+
+async function reviewStats(restaurantId: unknown) {
+  const reviews = await Review.find({ restaurantId }).select('rating');
+  const averageRating = reviews.length > 0
+    ? parseFloat((reviews.reduce((s, rv) => s + rv.rating, 0) / reviews.length).toFixed(1))
+    : 0;
+  return { averageRating, reviewCount: reviews.length };
+}
+
 // All restaurants — public (for restaurant discovery list)
 router.get('/restaurants/public', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const restaurants = await Restaurant.find().select('name logo address status cuisine currency openTime closeTime prepTime timezone').sort({ name: 1 });
-
-    const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-    const now = new Date();
+    const restaurants = await Restaurant.find().select('name logo address status cuisine currency openTime closeTime prepTime timezone primaryColor').sort({ name: 1 });
 
     const results = await Promise.all(restaurants.map(async (r) => {
-      const reviews = await Review.find({ restaurantId: r._id }).select('rating');
-      const averageRating = reviews.length > 0
-        ? parseFloat((reviews.reduce((s, rv) => s + rv.rating, 0) / reviews.length).toFixed(1))
-        : 0;
-      // Compute current time in the restaurant's own timezone
-      let nowMins = now.getUTCHours() * 60 + now.getUTCMinutes();
-      try {
-        const localTime = new Intl.DateTimeFormat('en-GB', { timeZone: r.timezone || 'UTC', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
-        nowMins = toMins(localTime);
-      } catch { /* invalid timezone — fall back to UTC */ }
-      const withinHours = r.openTime && r.closeTime
-        ? nowMins >= toMins(r.openTime) && nowMins <= toMins(r.closeTime)
-        : true;
-      const isOpen = r.status === 'active' && withinHours;
-      return { _id: r._id, name: r.name, logo: r.logo, address: r.address, status: r.status, cuisine: r.cuisine ?? [], currency: r.currency ?? 'USD', isOpen, prepTime: r.prepTime ?? null, openTime: r.openTime ?? null, closeTime: r.closeTime ?? null, timezone: r.timezone ?? 'UTC', averageRating };
+      const { averageRating, reviewCount } = await reviewStats(r._id);
+      return { _id: r._id, name: r.name, logo: r.logo, address: r.address, status: r.status, cuisine: r.cuisine ?? [], currency: r.currency ?? 'USD', isOpen: isRestaurantOpen(r), prepTime: r.prepTime ?? null, openTime: r.openTime ?? null, closeTime: r.closeTime ?? null, timezone: r.timezone ?? 'UTC', primaryColor: r.primaryColor ?? '#fe5722', averageRating, reviewCount };
     }));
 
     res.json(results);
@@ -57,10 +65,16 @@ router.get('/restaurants/public', async (_req: Request, res: Response, next: Nex
 // Restaurant info — public (for customer app)
 router.get('/restaurants/:id/info', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const r = await Restaurant.findById(req.params.id).select('name logo status primaryColor currency');
+    const r = await Restaurant.findById(req.params.id).select('name logo status primaryColor currency address contactPhone cuisine openTime closeTime prepTime timezone');
     if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
     if (r.status === 'inactive') { res.status(403).json({ message: 'Restaurant is currently unavailable.' }); return; }
-    res.json({ name: r.name, logo: r.logo, status: r.status, primaryColor: r.primaryColor ?? '#fe5722', currency: r.currency ?? 'USD' });
+    const { averageRating, reviewCount } = await reviewStats(r._id);
+    res.json({
+      name: r.name, logo: r.logo, status: r.status, primaryColor: r.primaryColor ?? '#fe5722', currency: r.currency ?? 'USD',
+      address: r.address ?? '', contactPhone: r.contactPhone ?? '', cuisine: r.cuisine ?? [],
+      openTime: r.openTime ?? null, closeTime: r.closeTime ?? null, prepTime: r.prepTime ?? null,
+      isOpen: isRestaurantOpen(r), averageRating, reviewCount,
+    });
   } catch (e) { next(e); }
 });
 
