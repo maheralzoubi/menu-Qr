@@ -105,7 +105,7 @@ const VENDORS: Vendor[] = [
   {
     slug: 'baitalshawarma', name: 'Bait Al Shawarma', admin: 'Rami Haddad',
     cuisine: ['Shawarma', 'Chicken'], address: 'Rainbow Street, Jabal Amman', phone: '+962 6 000 0101',
-    primaryColor: '#C2410C', openTime: '11:00', closeTime: '02:00', prepTime: '10–15', tables: 8,
+    primaryColor: '#C2410C', openTime: '00:00', closeTime: '23:59', prepTime: '10–15', tables: 8,
     menu: [
       { category: 'Shawarma', description: 'Slow-roasted on the spit, sliced to order', items: [
         it('Chicken Shawarma Sandwich', 2.25, 'Marinated chicken, toum, pickles and fries in saj bread', ['chicken', 'saj bread', 'garlic toum', 'pickles', 'fries'], ['gluten', 'eggs'], 'shawarma', true),
