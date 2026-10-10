@@ -568,6 +568,21 @@
     "close": "Close",
     "tooSoon": "Please wait a moment before requesting another code.",
     "codeExpired": "This code has expired. Request a new one.",
-    "emailFailed": "We couldn't send the email. Please try again in a moment."
+    "emailFailed": "We couldn't send the email. Please try again in a moment.",
+    "chatFab": "Ask & order",
+    "chatOpen": "Open chat assistant",
+    "chatTitle": "{{name}} assistant",
+    "chatSub": "AI assistant · can add dishes to your cart",
+    "chatGreeting": "Hi! I'm the {{name}} assistant. Ask me about the menu, or just tell me what you'd like and I'll add it to your cart.",
+    "chatSuggest1": "What do you recommend?",
+    "chatSuggest2": "Anything vegetarian?",
+    "chatSuggest3": "I'd like to order",
+    "chatPh": "Message…",
+    "chatSend": "Send",
+    "chatTyping": "Assistant is typing",
+    "chatAdded": "Added",
+    "chatRemoved": "Removed",
+    "chatCheckout": "Review & place order",
+    "chatError": "Sorry, something went wrong. Please try again."
   }
 }

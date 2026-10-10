@@ -6,6 +6,7 @@ import { useViewport } from '../hooks/useViewport';
 import type { Category, MenuItem } from '../types';
 import { IArrowLeft, IBag, IChevronRight, IClock, IMapPin, IPlus, ISearch, IStar, IUtensils } from '../components/mg/Icons';
 import { ItemSheet } from '../components/mg/ItemSheet';
+import { ChatAssistant } from '../components/mg/ChatAssistant';
 import { useCuisineLabel, closedLabel } from '../components/mg/RestaurantCard';
 import { Img, Sk, Stepper, money, monogram } from '../components/mg/ui';
 
@@ -22,6 +23,7 @@ interface Info {
   isOpen: boolean;
   averageRating: number;
   reviewCount: number;
+  chatEnabled?: boolean;
 }
 
 interface Props { restaurantId: string; qrTable: string }
@@ -102,6 +104,10 @@ export const RestaurantScreen = ({ restaurantId, qrTable }: Props) => {
     const el = document.getElementById(anchor);
     if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 150, behavior: 'smooth' });
   };
+
+  const chatEl = info?.chatEnabled && !loading && (
+    <ChatAssistant restaurantId={restaurantId} restaurantName={R.name} restaurantLogo={R.logo} items={items} web={mid} />
+  );
 
   const sheetEl = sheet && (
     <ItemSheet item={sheet} currency={R.currency} inCart={cart.qtyFor(sheet.id)} web={mid}
@@ -246,6 +252,7 @@ export const RestaurantScreen = ({ restaurantId, qrTable }: Props) => {
           {wide && <CartAside />}
         </div>
         {sheetEl}
+        {chatEl}
       </div>
     );
   }
@@ -387,6 +394,7 @@ export const RestaurantScreen = ({ restaurantId, qrTable }: Props) => {
         </div>
       )}
       {sheetEl}
+      {chatEl}
     </div>
   );
 };

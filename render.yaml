@@ -15,5 +15,7 @@ services:
         value: 7d
       - key: RESEND_API_KEY
         sync: false
+      - key: GEMINI_API_KEY
+        sync: false
       - key: EMAIL_FROM
         value: Menu Go <onboarding@resend.dev>

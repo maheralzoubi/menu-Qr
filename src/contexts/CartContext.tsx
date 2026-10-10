@@ -29,6 +29,8 @@ interface CartCtx extends CartState {
   addItem: (item: MenuItem, restaurantId: string, restaurantName: string, restaurantLogo?: string, opts?: { qty?: number; note?: string }) => boolean;
   removeItem: (key: string) => void;
   updateQty: (key: string, qty: number) => void;
+  /** Set the total quantity of a dish across all its lines; 0 removes it. */
+  setItemQty: (itemId: string, qty: number) => void;
   clearCart: () => void;
   qtyFor: (itemId: string) => number;
   itemCount: number;
@@ -88,6 +90,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState(prev => ({ ...prev, items: prev.items.map(i => i.key === key ? { ...i, quantity: qty } : i) }));
   }, [removeItem]);
 
+  const setItemQty = useCallback((itemId: string, qty: number) => {
+    setState(prev => {
+      const lines = prev.items.filter(i => i.id === itemId);
+      if (!lines.length) return prev;
+      const rest = prev.items.filter(i => i.id !== itemId);
+      const items = qty > 0 ? [...rest, { ...lines[0], quantity: qty }] : rest;
+      return items.length ? { ...prev, items } : EMPTY;
+    });
+  }, []);
+
   const clearCart = useCallback(() => setState(EMPTY), []);
 
   const qtyFor = useCallback((itemId: string) =>
@@ -97,7 +109,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const total = state.items.reduce((s, i) => s + i.price * i.quantity, 0);
 
   return (
-    <Ctx.Provider value={{ ...state, addItem, removeItem, updateQty, clearCart, qtyFor, itemCount, total }}>
+    <Ctx.Provider value={{ ...state, addItem, removeItem, updateQty, setItemQty, clearCart, qtyFor, itemCount, total }}>
       {children}
     </Ctx.Provider>
   );

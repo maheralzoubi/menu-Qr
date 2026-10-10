@@ -21,6 +21,10 @@ import { createPromoCodeSchema, validatePromoCodeSchema } from '../schemas/promo
 import { Restaurant } from '../models/Restaurant';
 import { Review } from '../models/Review';
 import { getIO } from '../socket/index';
+import Anthropic from '@anthropic-ai/sdk';
+import { ApiError as GeminiApiError } from '@google/genai';
+import { chatSchema } from '../schemas/chat.schema';
+import { runChat, chatEnabled } from '../services/chatService';
 
 const router = Router();
 
@@ -73,9 +77,51 @@ router.get('/restaurants/:id/info', async (req: Request, res: Response, next: Ne
       name: r.name, logo: r.logo, status: r.status, primaryColor: r.primaryColor ?? '#fe5722', currency: r.currency ?? 'USD',
       address: r.address ?? '', contactPhone: r.contactPhone ?? '', cuisine: r.cuisine ?? [],
       openTime: r.openTime ?? null, closeTime: r.closeTime ?? null, prepTime: r.prepTime ?? null,
-      isOpen: isRestaurantOpen(r), averageRating, reviewCount,
+      isOpen: isRestaurantOpen(r), averageRating, reviewCount, chatEnabled: chatEnabled(),
     });
   } catch (e) { next(e); }
+});
+
+// Chat assistant — public. Each message is a paid model call, so cap it per client.
+const chatHits = new Map<string, number[]>();
+function chatRateLimited(req: Request): boolean {
+  const key = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() || req.ip || 'unknown';
+  const now = Date.now();
+  const recent = (chatHits.get(key) ?? []).filter(t => now - t < 60_000);
+  recent.push(now);
+  chatHits.set(key, recent);
+  if (chatHits.size > 5000) for (const [k, v] of chatHits) if (v.every(t => now - t >= 60_000)) chatHits.delete(k);
+  return recent.length > 15;
+}
+
+router.post('/restaurants/:id/chat', validate(chatSchema), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!chatEnabled()) { res.status(503).json({ message: 'Chat is not available.' }); return; }
+    if (chatRateLimited(req)) { res.status(429).json({ message: 'Too many messages — please wait a moment.' }); return; }
+    const r = await Restaurant.findById(req.params.id).select('name status cuisine currency address openTime closeTime prepTime timezone');
+    if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
+    if (r.status === 'inactive') { res.status(403).json({ message: 'Restaurant is currently unavailable.' }); return; }
+    const result = await runChat({
+      restaurantId: r._id.toString(),
+      restaurant: { name: r.name, cuisine: r.cuisine ?? [], currency: r.currency ?? 'USD', address: r.address, openTime: r.openTime, closeTime: r.closeTime, prepTime: r.prepTime },
+      isOpen: isRestaurantOpen(r),
+      lang: req.body.lang,
+      table: req.body.table,
+      history: req.body.messages,
+      cart: req.body.cart,
+    });
+    res.json(result);
+  } catch (e) {
+    if (e instanceof GeminiApiError) {
+      console.error('Chat API error', e.status, e.message);
+      if (e.status === 429) { res.status(429).json({ message: 'The assistant is busy — please try again in a moment.' }); return; }
+      res.status(502).json({ message: 'The assistant is unavailable right now.' }); return;
+    }
+    if (e instanceof Error && e.name === 'AbortError') { console.error('Chat API timeout'); res.status(504).json({ message: 'The assistant took too long to answer — please try again.' }); return; }
+    if (e instanceof Anthropic.RateLimitError) { res.status(429).json({ message: 'The assistant is busy — please try again in a moment.' }); return; }
+    if (e instanceof Anthropic.APIError) { console.error('Chat API error', e.status, e.message); res.status(502).json({ message: 'The assistant is unavailable right now.' }); return; }
+    next(e);
+  }
 });
 
 // Restaurant branding — admin reads and updates their own restaurant
