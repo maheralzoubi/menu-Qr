@@ -1,152 +1,270 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Inter:wght@400;500;600&family=Cairo:wght@400;500;600;700;800&display=swap');
+/* Menu Go — dashboard design system (vendor admin + owner panel).
+   Structure from the ConnectedMotion / Fleet Manager kit (flat cards, 1px borders,
+   shadow-sm, dense type), palette + type from the Menu Go brand (Readex Pro,
+   Bricolage Grotesque, Go Orange on Paper). The customer app uses src/styles/app.css. */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Readex+Pro:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
-  --font-headline: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-label: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-arabic: "Cairo", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Readex Pro", system-ui, sans-serif;
+  --font-body: "Readex Pro", system-ui, sans-serif;
+  --font-label: "Readex Pro", system-ui, sans-serif;
+  --font-headline: "Bricolage Grotesque", "Readex Pro", sans-serif;
+  --font-display: "Bricolage Grotesque", "Readex Pro", sans-serif;
+  --font-arabic: "Readex Pro", system-ui, sans-serif;
 
   /* ── Brand ─────────────────────────────────── */
-  --color-primary: #134a08;
-  --color-primary-container: #103c06;
+  --color-primary: hsl(16 88% 50%);
+  --color-primary-container: hsl(16 88% 44%);
   --color-on-primary: #ffffff;
+  --color-acc: hsl(16 88% 46%);
+  --color-acc-soft: hsl(18 100% 94%);
+  --color-brand-amber: #FFA41B;
+  --color-brand-orange: #FF5E1A;
+  --color-brand-tomato: #E8342E;
+  --color-ink: #1A120D;
+  --color-paper: #FAF6F1;
 
-  /* ── Light-mode surfaces ────────────────────── */
-  --color-surface: #faf8f5;
-  --color-surface-dim: #e8e5e0;
+  /* ── Surfaces (light) ──────────────────────── */
+  --color-surface: hsl(36 33% 97%);
+  --color-surface-dim: hsl(30 16% 88%);
   --color-surface-bright: #ffffff;
+  --color-card: #ffffff;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f4f1ec;
-  --color-surface-container: #edeae5;
-  --color-surface-container-high: #e7e4de;
-  --color-surface-container-highest: #e0ddd7;
+  --color-surface-container-low: hsl(36 30% 95%);
+  --color-surface-container: hsl(30 22% 92%);
+  --color-surface-container-high: hsl(30 18% 89%);
+  --color-surface-container-highest: hsl(30 16% 86%);
+  --color-surface-variant: hsl(30 22% 92%);
+  --color-accent: hsl(30 25% 94%);
 
-  /* ── Light-mode text ────────────────────────── */
-  --color-on-surface: #18180f;
-  --color-on-surface-variant: #58534e;
+  /* ── Text & lines ──────────────────────────── */
+  --color-on-surface: hsl(20 14% 10%);
+  --color-on-surface-variant: hsl(20 6% 38%);
+  --color-outline: hsl(30 8% 58%);
+  --color-outline-variant: hsl(30 16% 88%);
+  --color-line: hsl(30 16% 88%);
+  --color-input: hsl(30 12% 82%);
 
-  /* ── Accents & semantic ─────────────────────── */
-  --color-tertiary: #006765;
-  --color-tertiary-container: #00827f;
-  --color-outline: #8c817b;
-  --color-outline-variant: #dfd8d2;
-  --color-error: #ba1a1a;
+  /* ── Semantic ──────────────────────────────── */
+  --color-tertiary: #13803B;
+  --color-tertiary-container: #17A34A;
+  --color-error: hsl(0 72% 46%);
+  --color-pos1: #DDF4E4;
+  --color-pos5: #17A34A;
+  --color-pos6: #13803B;
+  --color-pos7: #0D5C2B;
+  --color-warn1: #FFF0D9;
+  --color-warn5: #F2A20C;
+  --color-warn7: #7A4300;
+  --color-info1: #E4EDFF;
+  --color-info5: #2F6FE0;
+  --color-info7: #1D4A9E;
+  --color-neg1: #FDE6E6;
+  --color-neg5: #E5484D;
+  --color-neg7: #8A1C1C;
 
-  /* ── Radii ─────────────────────────────────── */
-  --radius-xl:  0.75rem;
-  --radius-2xl: 1rem;
-  --radius-3xl: 1.5rem;
-  --radius-4xl: 2rem;
+  /* ── Radii: Menu Go dashboard scale ────────── */
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 0.875rem;
+  --radius-4xl: 1rem;
+
+  /* ── Elevation: shadow-sm is the workhorse ─── */
+  --shadow-sm: 0 1px 2px rgb(60 30 10 / .05);
+  --shadow-md: 0 1px 3px rgb(60 30 10 / .10);
+  --shadow-lg: 0 6px 16px -4px rgb(60 30 10 / .16);
+  --shadow-xl: 0 6px 16px -4px rgb(60 30 10 / .16);
+  --shadow-2xl: 0 18px 40px -12px rgb(60 30 10 / .30);
+
+  /* ── Charts: warm ramp from the brand gradient ── */
+  --color-chart-1: hsl(16 88% 50%);
+  --color-chart-2: #FFA41B;
+  --color-chart-3: #E8342E;
+  --color-chart-4: #7A4300;
+  --color-chart-5: hsl(30 12% 64%);
 }
 
-/* ── Dark mode (system preference) ──────────────────────────────────────── */
+/* ── Dark (system preference when no explicit choice) ─────────────────── */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --color-surface:                   #100f0d;
-    --color-surface-dim:               #0c0b09;
-    --color-surface-bright:            #272420;
-    --color-surface-container-lowest:  #0c0b09;
-    --color-surface-container-low:     #181613;
-    --color-surface-container:         #1e1c19;
-    --color-surface-container-high:    #252320;
-    --color-surface-container-highest: #2d2b27;
-    --color-on-surface:                #ece8e2;
-    --color-on-surface-variant:        #b0a9a3;
-    --color-outline:                   #7a736d;
-    --color-outline-variant:           #3a3530;
-    --color-primary:                   #2e7a1c;
-    --color-primary-container:         #1f5c11;
-    --color-error:                     #ffb4ab;
+    --color-primary: hsl(18 95% 56%);
+    --color-primary-container: hsl(18 90% 48%);
+    --color-acc: hsl(20 100% 62%);
+    --color-acc-soft: hsl(18 60% 14%);
+    --color-surface: hsl(24 10% 6%);
+    --color-surface-dim: hsl(24 10% 4%);
+    --color-surface-bright: hsl(24 8% 12%);
+    --color-card: hsl(24 8% 10%);
+    --color-surface-container-lowest: hsl(24 8% 10%);
+    --color-surface-container-low: hsl(24 8% 12%);
+    --color-surface-container: hsl(24 7% 14%);
+    --color-surface-container-high: hsl(24 7% 17%);
+    --color-surface-container-highest: hsl(24 6% 20%);
+    --color-surface-variant: hsl(24 7% 14%);
+    --color-accent: hsl(24 7% 16%);
+    --color-on-surface: hsl(36 30% 95%);
+    --color-on-surface-variant: hsl(30 8% 66%);
+    --color-outline: hsl(30 6% 45%);
+    --color-outline-variant: hsl(24 6% 17%);
+    --color-line: hsl(24 6% 17%);
+    --color-input: hsl(24 6% 24%);
+    --color-tertiary: #6FD89A;
+    --color-error: hsl(0 80% 66%);
+    --color-pos1: #11301E; --color-pos6: #6FD89A; --color-pos7: #8BE6B0;
+    --color-warn1: #3A2810; --color-warn7: #FFC878;
+    --color-info1: #14223B; --color-info7: #A3C4FF;
+    --color-neg1: #3A1414; --color-neg7: #FFB3B3;
+    --shadow-2xl: 0 18px 40px -12px rgb(0 0 0 / .6);
   }
 }
 
-/* ── Manual dark override (data-theme="dark") ───────────────────────────── */
+/* ── Explicit dark (theme toggle in the dashboard header) ─────────────── */
 html[data-theme="dark"] {
   color-scheme: dark;
-  --color-surface:                   #100f0d;
-  --color-surface-dim:               #0c0b09;
-  --color-surface-bright:            #272420;
-  --color-surface-container-lowest:  #0c0b09;
-  --color-surface-container-low:     #181613;
-  --color-surface-container:         #1e1c19;
-  --color-surface-container-high:    #252320;
-  --color-surface-container-highest: #2d2b27;
-  --color-on-surface:                #ece8e2;
-  --color-on-surface-variant:        #b0a9a3;
-  --color-outline:                   #7a736d;
-  --color-outline-variant:           #3a3530;
-  --color-primary:                   #2e7a1c;
-  --color-primary-container:         #1f5c11;
-  --color-error:                     #ffb4ab;
+  --color-primary: hsl(18 95% 56%);
+  --color-primary-container: hsl(18 90% 48%);
+  --color-acc: hsl(20 100% 62%);
+  --color-acc-soft: hsl(18 60% 14%);
+  --color-surface: hsl(24 10% 6%);
+  --color-surface-dim: hsl(24 10% 4%);
+  --color-surface-bright: hsl(24 8% 12%);
+  --color-card: hsl(24 8% 10%);
+  --color-surface-container-lowest: hsl(24 8% 10%);
+  --color-surface-container-low: hsl(24 8% 12%);
+  --color-surface-container: hsl(24 7% 14%);
+  --color-surface-container-high: hsl(24 7% 17%);
+  --color-surface-container-highest: hsl(24 6% 20%);
+  --color-surface-variant: hsl(24 7% 14%);
+  --color-accent: hsl(24 7% 16%);
+  --color-on-surface: hsl(36 30% 95%);
+  --color-on-surface-variant: hsl(30 8% 66%);
+  --color-outline: hsl(30 6% 45%);
+  --color-outline-variant: hsl(24 6% 17%);
+  --color-line: hsl(24 6% 17%);
+  --color-input: hsl(24 6% 24%);
+  --color-tertiary: #6FD89A;
+  --color-error: hsl(0 80% 66%);
+  --color-pos1: #11301E; --color-pos6: #6FD89A; --color-pos7: #8BE6B0;
+  --color-warn1: #3A2810; --color-warn7: #FFC878;
+  --color-info1: #14223B; --color-info7: #A3C4FF;
+  --color-neg1: #3A1414; --color-neg7: #FFB3B3;
+  --shadow-2xl: 0 18px 40px -12px rgb(0 0 0 / .6);
 }
+html[data-theme="light"] { color-scheme: light; }
 
-/* ── Manual light override (data-theme="light") ─────────────────────────── */
-html[data-theme="light"] {
-  color-scheme: light;
-  --color-surface:                   #faf8f5;
-  --color-surface-dim:               #e8e5e0;
-  --color-surface-bright:            #ffffff;
-  --color-surface-container-lowest:  #ffffff;
-  --color-surface-container-low:     #f4f1ec;
-  --color-surface-container:         #edeae5;
-  --color-surface-container-high:    #e7e4de;
-  --color-surface-container-highest: #e0ddd7;
-  --color-on-surface:                #18180f;
-  --color-on-surface-variant:        #58534e;
-  --color-outline:                   #8c817b;
-  --color-outline-variant:           #dfd8d2;
-  --color-primary:                   #134a08;
-  --color-primary-container:         #103c06;
-  --color-error:                     #ba1a1a;
-}
-
-/* ── Base ────────────────────────────────────────────────────────────────── */
+/* ── Base ────────────────────────────────────────────────────────────── */
 @layer base {
   body {
     @apply bg-surface text-on-surface font-body antialiased;
+    font-size: 14px;
     -webkit-tap-highlight-color: transparent;
   }
-
   * { -webkit-font-smoothing: antialiased; }
+  *, ::before, ::after { border-color: var(--color-line); }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  input::placeholder, textarea::placeholder { color: var(--color-on-surface-variant); opacity: .8; }
+  :focus-visible { outline: 2px solid color-mix(in srgb, var(--color-primary) 55%, transparent); outline-offset: 2px; }
 
-  [dir="rtl"] body       { font-family: var(--font-arabic); letter-spacing: 0; }
-  [dir="rtl"] .font-headline { font-family: var(--font-arabic); }
+  [dir="rtl"] body { font-family: var(--font-arabic); letter-spacing: 0; }
 }
 
-/* ── Utilities ───────────────────────────────────────────────────────────── */
+/* ── Design-system primitives (Fleet Manager kit, Menu Go skin) ──────── */
+@layer components {
+  /* Page header */
+  .ds-page-title { @apply font-display font-bold text-2xl leading-8 tracking-[-0.02em] text-on-surface; }
+  .ds-page-sub { @apply text-sm leading-5 text-on-surface-variant mt-1; }
+  .ds-section-title { @apply font-display font-bold text-lg leading-6 tracking-[-0.01em] text-on-surface; }
+  .ds-overline { @apply text-[11px] leading-4 font-semibold uppercase tracking-[.06em] text-on-surface-variant; }
+
+  /* Card: white + 1px border + shadow-sm — the only card pattern */
+  .ds-card { @apply bg-card border border-line rounded-2xl shadow-sm; }
+  .ds-card-pad { @apply p-5; }
+  .ds-inset { @apply bg-surface-container-low border border-line rounded-xl; }
+
+  /* Buttons */
+  .ds-btn { @apply inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold leading-none whitespace-nowrap transition-colors disabled:opacity-50 disabled:pointer-events-none; }
+  .ds-btn-primary { @apply bg-primary text-on-primary hover:bg-primary/90; }
+  .ds-btn-secondary { @apply bg-surface-container text-on-surface hover:bg-surface-container-high; }
+  .ds-btn-outline { @apply bg-card text-on-surface border border-line hover:bg-accent; }
+  .ds-btn-ghost { @apply bg-transparent text-on-surface hover:bg-accent; }
+  .ds-btn-danger { @apply bg-error text-white hover:bg-error/90; }
+  .ds-btn-danger-soft { @apply bg-neg1 text-neg7 hover:bg-neg1/80; }
+  .ds-btn-sm { @apply h-9 px-3 text-[13px]; }
+  .ds-btn-lg { @apply h-11 px-6; }
+  .ds-btn-icon { @apply w-10 px-0; }
+  .ds-btn-icon.ds-btn-sm { @apply w-9; }
+
+  /* Form fields */
+  .ds-label { @apply block text-xs leading-4 font-semibold text-on-surface mb-1.5; }
+  .ds-help { @apply text-[11px] leading-4 text-on-surface-variant mt-1; }
+  .ds-input { @apply w-full h-10 px-3 rounded-xl border border-input bg-card text-sm text-on-surface outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60; }
+  .ds-textarea { @apply w-full px-3 py-2.5 rounded-xl border border-input bg-card text-sm text-on-surface outline-none resize-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20; }
+  .ds-select { @apply w-full h-10 px-3 rounded-xl border border-input bg-card text-sm text-on-surface outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20; }
+
+  /* Status chips: *1 background + *7 text */
+  .ds-chip { @apply inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11px] leading-4 font-semibold whitespace-nowrap; }
+  .ds-chip-pos { @apply bg-pos1 text-pos7; }
+  .ds-chip-warn { @apply bg-warn1 text-warn7; }
+  .ds-chip-info { @apply bg-info1 text-info7; }
+  .ds-chip-neg { @apply bg-neg1 text-neg7; }
+  .ds-chip-neutral { @apply bg-surface-container text-on-surface-variant; }
+  .ds-chip-brand { @apply bg-acc-soft text-acc; }
+  .ds-dot { @apply w-1.5 h-1.5 rounded-full bg-current; }
+
+  /* Tabs (underline) and segmented control */
+  .ds-tabs { @apply flex gap-0 border-b border-line overflow-x-auto; }
+  .ds-tab { @apply -mb-px px-4 py-2.5 border-b-2 border-transparent text-[13px] font-medium text-on-surface-variant whitespace-nowrap hover:text-on-surface; }
+  .ds-tab-active { @apply border-primary text-on-surface font-semibold; }
+  .ds-seg { @apply inline-flex gap-0.5 p-1 rounded-xl bg-surface-container; }
+  .ds-seg-item { @apply h-8 px-3 rounded-[9px] text-[13px] font-semibold leading-none text-on-surface-variant hover:text-on-surface transition-colors; }
+  .ds-seg-item-active { @apply bg-card text-on-surface shadow-md; }
+
+  /* Tables */
+  .ds-table { @apply w-full border-collapse text-[13px]; }
+  .ds-table thead th { @apply text-start font-semibold text-on-surface-variant text-[11px] uppercase tracking-[.04em] px-3.5 py-2.5 border-b border-line bg-surface-container-low whitespace-nowrap; }
+  .ds-table tbody td { @apply px-3.5 py-3 border-b border-line text-on-surface align-middle; }
+  .ds-table tbody tr:last-child td { @apply border-b-0; }
+  .ds-table tbody tr:hover { @apply bg-surface-container-low; }
+
+  /* Metrics */
+  .ds-metric-val { @apply font-display font-bold text-[28px] leading-[1.1] tracking-[-0.01em] text-on-surface; }
+  .ds-metric-lbl { @apply text-xs font-medium text-on-surface-variant; }
+  .ds-icon-tile { @apply w-10 h-10 rounded-xl bg-acc-soft text-acc flex items-center justify-center shrink-0; }
+
+  /* Overlays (no backdrop blur) */
+  .ds-backdrop { @apply fixed inset-0 z-50 bg-black/45 flex items-center justify-center p-4; }
+  .ds-modal { @apply bg-card border border-line rounded-3xl shadow-2xl w-full max-h-[90vh] overflow-y-auto; }
+
+  /* Empty state */
+  .ds-empty { @apply flex flex-col items-center justify-center text-center gap-2 py-14 px-6 border border-dashed border-input rounded-2xl text-on-surface-variant; }
+
+  /* Switch */
+  .ds-switch { @apply relative inline-flex w-9 h-5 rounded-full bg-input transition-colors shrink-0; }
+  .ds-switch::after { content: ''; @apply absolute top-0.5 start-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all; }
+  .ds-switch-on { @apply bg-primary; }
+  .ds-switch-on::after { @apply start-[18px]; }
+}
+
+/* ── Legacy helpers, mapped onto the design system ───────────────────── */
 @layer utilities {
-  .btn-gradient {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
-  }
-  .glass-card {
-    background: rgba(255,255,255,0.7);
-    backdrop-filter: blur(12px);
-  }
-  .glass-dark {
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(16px);
-  }
-  .card-shadow {
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
-  }
-  .card-shadow-lg {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.10);
-  }
-  .text-gradient {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-container));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+  /* The system has no gradients in product chrome: legacy gradient buttons render solid. */
+  .btn-gradient { background: var(--color-primary); }
+  .btn-gradient:hover { background: color-mix(in srgb, var(--color-primary) 90%, transparent); }
+  .glass-card { background: var(--color-card); border: 1px solid var(--color-line); }
+  .glass-dark { background: rgb(0 0 0 / .45); }
+  .card-shadow { box-shadow: var(--shadow-sm); }
+  .card-shadow-lg { box-shadow: var(--shadow-lg); }
+  .text-gradient { color: var(--color-primary); }
+  .brand-gradient { background: linear-gradient(135deg, #FFA41B 0%, #FF5E1A 55%, #E8342E 100%); }
+  .tabular { font-variant-numeric: tabular-nums; }
 }
 
-/* ── Scrollbar hide ──────────────────────────────────────────────────────── */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* ── Legacy helpers ──────────────────────────────────────────────────────── */
-.bg-signature-gradient {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
-}
+.bg-signature-gradient { background: var(--color-primary); }

@@ -225,63 +225,66 @@ export const QRManager = ({ restaurantId }: Props) => {
   const free = tables.filter(tb => tb.status === 'free').length;
 
   return (
-    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
+    <div className="flex flex-col lg:flex-row h-full gap-4 lg:gap-6">
       {/* Main content */}
-      <div className="flex-1 space-y-6 lg:space-y-8 overflow-y-auto no-scrollbar lg:pe-2 min-w-0">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+      <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar lg:pe-1 min-w-0">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('qr.heading')}</h2>
-            <p className="text-on-surface-variant font-medium">{t('qr.subtext')}</p>
+            <h1 className="ds-page-title">{t('qr.heading')}</h1>
+            <p className="ds-page-sub">{t('qr.subtext')}</p>
           </div>
           <button onClick={() => { setAdding(true); setTimeout(() => inputRef.current?.focus(), 50); }}
-            className="flex items-center gap-2 btn-gradient text-white px-6 py-3 rounded-xl font-bold text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-95 transition-all self-start">
+            className="ds-btn ds-btn-sm ds-btn-primary">
             <Plus className="w-4 h-4" /> {t('qr.addTable')}
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 sm:gap-6">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
           {[
-            { labelKey: 'qr.totalTables', value: tables.length },
-            { labelKey: 'qr.occupied',    value: occupied, color: 'text-primary' },
-            { labelKey: 'qr.free',        value: free,     color: 'text-primary' },
+            { labelKey: 'qr.totalTables', value: tables.length, icon: QrCode, tile: 'bg-acc-soft text-acc' },
+            { labelKey: 'qr.occupied',    value: occupied,      icon: ToggleRight, tile: 'bg-warn1 text-warn7' },
+            { labelKey: 'qr.free',        value: free,          icon: ToggleLeft,  tile: 'bg-pos1 text-pos7' },
           ].map(s => (
-            <div key={s.labelKey} className="bg-surface-container-low p-4 sm:p-6 rounded-3xl border border-outline-variant/10 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
-              <h4 className={`text-xl sm:text-3xl font-headline font-extrabold ${s.color ?? ''}`}>{s.value}</h4>
+            <div key={s.labelKey} className="ds-card p-3.5 sm:p-5 flex items-center gap-3">
+              <div className={`ds-icon-tile hidden sm:flex ${s.tile}`}><s.icon className="w-5 h-5" /></div>
+              <div className="min-w-0">
+                <p className="ds-metric-lbl truncate">{t(s.labelKey)}</p>
+                <p className="ds-metric-val tabular text-xl sm:text-[28px]">{s.value}</p>
+              </div>
             </div>
           ))}
         </div>
 
         <AnimatePresence>
           {adding && (
-            <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            <motion.form initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
               onSubmit={handleAdd}
-              className="flex flex-wrap items-center gap-3 bg-surface-container-low p-4 rounded-2xl border border-primary/20">
-              <QrCode className="w-5 h-5 text-primary shrink-0" />
+              className="ds-card border-primary/40 p-3 flex flex-wrap items-center gap-2">
+              <div className="ds-icon-tile w-9 h-9"><QrCode className="w-4 h-4" /></div>
               <input ref={inputRef} type="text" value={newTableName} onChange={e => setNewTableName(e.target.value)}
                 placeholder={t('qr.tablePlaceholder')}
-                className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm font-medium placeholder:text-on-surface-variant/40" />
-              <button type="submit" className="px-5 py-2 rounded-xl btn-gradient text-white font-bold text-sm">{t('qr.add')}</button>
+                className="ds-input h-9 flex-1 min-w-[120px]" />
+              <button type="submit" className="ds-btn ds-btn-sm ds-btn-primary">{t('qr.add')}</button>
               <button type="button" onClick={() => { setAdding(false); setNewTableName(''); }}
-                className="px-4 py-2 rounded-xl bg-surface-container-high font-bold text-sm">{t('qr.cancel')}</button>
+                className="ds-btn ds-btn-sm ds-btn-secondary">{t('qr.cancel')}</button>
             </motion.form>
           )}
         </AnimatePresence>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-            {[1,2,3,4].map(i => <div key={i} className="h-80 bg-surface-container-low rounded-3xl" />)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-80 bg-surface-container animate-pulse rounded-2xl" />)}
           </div>
         ) : tables.length === 0 ? (
-          <div className="text-center py-24 bg-surface-container-low rounded-4xl space-y-4">
-            <QrCode className="w-16 h-16 mx-auto text-on-surface-variant/20" />
-            <p className="font-bold text-on-surface-variant">{t('qr.noTables')}</p>
-            <p className="text-sm text-on-surface-variant/60">{t('qr.noTablesMsg')}</p>
+          <div className="ds-empty">
+            <QrCode className="w-8 h-8 opacity-40" />
+            <p className="text-sm font-semibold text-on-surface">{t('qr.noTables')}</p>
+            <p className="text-[13px]">{t('qr.noTablesMsg')}</p>
             <button onClick={() => { setAdding(true); setTimeout(() => inputRef.current?.focus(), 50); }}
-              className="mt-2 text-primary font-bold text-sm hover:underline">{t('qr.addFirstTable')}</button>
+              className="ds-btn ds-btn-sm ds-btn-outline mt-2"><Plus className="w-4 h-4" /> {t('qr.addFirstTable')}</button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <AnimatePresence>
               {tables.map((table, i) => {
                 const isOccupied = table.status === 'occupied';
@@ -289,54 +292,49 @@ export const QRManager = ({ restaurantId }: Props) => {
                 const isSelected = selectedTable?._id === table._id;
                 return (
                   <motion.div key={table._id} layout
-                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ delay: i * 0.04 }}
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    transition={{ delay: i * 0.03 }}
                     onClick={() => isSelected ? closeTable() : selectTable(table)}
-                    className={`bg-surface-container-low rounded-3xl overflow-hidden border shadow-sm flex flex-col cursor-pointer transition-all hover:shadow-xl ${
-                      isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-outline-variant/10 hover:border-primary/30'
+                    className={`ds-card p-4 flex flex-col gap-3 cursor-pointer transition-colors ${
+                      isSelected ? 'border-primary ring-2 ring-primary/25' : 'hover:border-input'
                     }`}>
-                    <div className={`h-1.5 w-full ${isOccupied ? 'bg-[#303942]/30' : 'bg-primary'}`} />
-                    <div className="p-5 flex flex-col flex-1 space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-headline font-bold text-lg leading-tight">{table.name}</h3>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <span className={`w-2 h-2 rounded-full ${isOccupied ? 'bg-[#303942]/30' : 'bg-primary'}`} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-                              {isOccupied ? t('qr.occupied') : t('qr.free')}
-                              {isManual && ` ${t('qr.manual')}`}
-                            </span>
-                          </div>
-                        </div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold leading-tight truncate">{table.name}</h3>
+                        <span className={`ds-chip mt-1.5 ${isOccupied ? 'ds-chip-warn' : 'ds-chip-pos'}`}>
+                          <span className="ds-dot" />
+                          {isOccupied ? t('qr.occupied') : t('qr.free')}
+                          {isManual && ` ${t('qr.manual')}`}
+                        </span>
                       </div>
-                      <div className="flex-1 flex items-center justify-center rounded-2xl p-3" style={{ background: qrStyle.light }}>
-                        {qrUrls[table._id] ? (
-                          <img src={qrUrls[table._id]} alt={t('qr.altQrFor', { table: table.name })} className="w-full max-w-[140px]" />
-                        ) : (
-                          <div className="w-32 h-32 bg-surface-container-low rounded-xl animate-pulse" />
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={(e) => { e.stopPropagation(); handleDownload(table._id, table.name); }}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-primary/10 text-primary font-bold text-xs hover:bg-primary/20 transition-colors">
-                          <Download className="w-3.5 h-3.5" /> {t('qr.download')}
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); handleStatusCycle(table); }}
-                          className={`p-2.5 rounded-xl font-bold text-xs transition-colors ${
-                            table.manualStatus === null ? 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
-                            : table.manualStatus === 'occupied' ? 'bg-[#303942]/10 text-[#303942]'
-                            : 'bg-primary/10 text-primary'
-                          }`}
-                          title={table.manualStatus === null ? t('qr.autoMode') : t(table.manualStatus === 'occupied' ? 'qr.manualOccupied' : 'qr.manualFree')}>
-                          {table.manualStatus === null ? <Minus className="w-3.5 h-3.5" /> :
-                           table.manualStatus === 'occupied' ? <ToggleRight className="w-3.5 h-3.5" /> :
-                           <ToggleLeft className="w-3.5 h-3.5" />}
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(table._id); }}
-                          className="p-2.5 rounded-xl bg-rose-50 text-primary hover:bg-rose-100 transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center rounded-xl border border-line p-3" style={{ background: qrStyle.light }}>
+                      {qrUrls[table._id] ? (
+                        <img src={qrUrls[table._id]} alt={t('qr.altQrFor', { table: table.name })} className="w-full max-w-[140px]" />
+                      ) : (
+                        <div className="w-32 h-32 bg-surface-container animate-pulse rounded-xl" />
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={(e) => { e.stopPropagation(); handleDownload(table._id, table.name); }}
+                        className="ds-btn ds-btn-sm ds-btn-secondary flex-1">
+                        <Download className="w-3.5 h-3.5" /> {t('qr.download')}
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); handleStatusCycle(table); }}
+                        className={`ds-btn ds-btn-sm ds-btn-icon ${
+                          table.manualStatus === null ? 'ds-btn-secondary text-on-surface-variant'
+                          : table.manualStatus === 'occupied' ? 'bg-warn1 text-warn7 hover:bg-warn1/80'
+                          : 'bg-pos1 text-pos7 hover:bg-pos1/80'
+                        }`}
+                        title={table.manualStatus === null ? t('qr.autoMode') : t(table.manualStatus === 'occupied' ? 'qr.manualOccupied' : 'qr.manualFree')}>
+                        {table.manualStatus === null ? <Minus className="w-3.5 h-3.5" /> :
+                         table.manualStatus === 'occupied' ? <ToggleRight className="w-3.5 h-3.5" /> :
+                         <ToggleLeft className="w-3.5 h-3.5" />}
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(table._id); }}
+                        className="ds-btn ds-btn-sm ds-btn-icon ds-btn-danger-soft">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </motion.div>
                 );
@@ -346,10 +344,10 @@ export const QRManager = ({ restaurantId }: Props) => {
         )}
 
         {tables.length > 0 && (
-          <div className="flex items-center gap-6 text-xs text-on-surface-variant/60 font-medium flex-wrap">
-            <div className="flex items-center gap-2"><Minus className="w-3 h-3" /> {t('qr.autoMode')}</div>
-            <div className="flex items-center gap-2"><ToggleRight className="w-3 h-3 text-primary" /> {t('qr.manualOccupied')}</div>
-            <div className="flex items-center gap-2"><ToggleLeft className="w-3 h-3 text-primary" /> {t('qr.manualFree')}</div>
+          <div className="flex items-center gap-5 text-xs text-on-surface-variant flex-wrap">
+            <div className="flex items-center gap-1.5"><Minus className="w-3.5 h-3.5" /> {t('qr.autoMode')}</div>
+            <div className="flex items-center gap-1.5"><ToggleRight className="w-3.5 h-3.5 text-warn7" /> {t('qr.manualOccupied')}</div>
+            <div className="flex items-center gap-1.5"><ToggleLeft className="w-3.5 h-3.5 text-pos6" /> {t('qr.manualFree')}</div>
           </div>
         )}
       </div>
@@ -359,48 +357,48 @@ export const QRManager = ({ restaurantId }: Props) => {
         <AnimatePresence mode="wait">
           {selectedTable ? (
             <motion.div key={selectedTable._id}
-              initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
-              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-surface-container-low lg:rounded-4xl p-5 sm:p-8 flex flex-col shadow-2xl shadow-primary/5 overflow-y-auto no-scrollbar">
+              initial={{ opacity: 0, x: isRTL ? -8 : 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -8 : 8 }}
+              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-card lg:border lg:border-line lg:rounded-2xl lg:shadow-sm flex flex-col overflow-y-auto no-scrollbar">
 
-              <div className="flex justify-between items-start mb-6 shrink-0">
-                <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('qr.styleHeading')}</h3>
-                <button onClick={closeTable} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
-                  <X className="w-5 h-5" />
+              <div className="flex justify-between items-center px-5 py-4 border-b border-line shrink-0">
+                <h3 className="ds-section-title">{t('qr.styleHeading')}</h3>
+                <button onClick={closeTable} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* QR preview */}
-              <div className="flex flex-col items-center mb-6 shrink-0">
-                <div className="w-48 h-48 rounded-3xl flex items-center justify-center shadow-lg" style={{ background: qrStyle.light }}>
+              <div className="flex flex-col items-center px-5 py-5 border-b border-line shrink-0">
+                <div className="w-48 h-48 rounded-2xl border border-line flex items-center justify-center overflow-hidden" style={{ background: qrStyle.light }}>
                   {qrUrls[selectedTable._id] ? (
-                    <img src={qrUrls[selectedTable._id]} alt={t('qr.altPreview')} className="w-full h-full object-contain rounded-3xl" />
+                    <img src={qrUrls[selectedTable._id]} alt={t('qr.altPreview')} className="w-full h-full object-contain" />
                   ) : (
-                    <div className="w-32 h-32 rounded-xl bg-surface-container-low animate-pulse" />
+                    <div className="w-32 h-32 rounded-xl bg-surface-container animate-pulse" />
                   )}
                 </div>
-                <p className="mt-3 font-bold text-lg">{selectedTable.name}</p>
+                <p className="mt-3 font-semibold text-sm">{selectedTable.name}</p>
                 <button onClick={() => handleDownload(selectedTable._id, selectedTable.name)}
-                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-xl btn-gradient text-white font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
+                  className="mt-3 ds-btn ds-btn-primary">
                   <Download className="w-4 h-4" /> {t('qr.download')}
                 </button>
               </div>
 
-              <div className="space-y-6 flex-1">
+              <div className="space-y-5 flex-1 px-5 py-5">
                 {/* Color presets */}
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-3">{t('qr.presets')}</p>
+                  <p className="ds-label">{t('qr.presets')}</p>
                   <div className="grid grid-cols-3 gap-2">
                     {PRESETS.map(preset => (
                       <button key={preset.name} onClick={() => applyStyle({ ...qrStyle, dark: preset.dark, light: preset.light })}
-                        className={`relative h-14 rounded-2xl overflow-hidden border-2 transition-all hover:scale-105 ${
+                        className={`relative h-12 rounded-xl overflow-hidden border transition-colors ${
                           qrStyle.dark === preset.dark && qrStyle.light === preset.light
-                            ? 'border-primary shadow-md' : 'border-transparent'
+                            ? 'border-primary ring-2 ring-primary/30' : 'border-line hover:border-input'
                         }`}
                         title={t(`qr.presetNames.${preset.name}`)}>
                         <div className="absolute inset-0" style={{ background: preset.light }} />
-                        <div className="absolute inset-0 flex items-center justify-center gap-1">
-                          <div className="w-4 h-4 rounded" style={{ background: preset.dark }} />
-                          <span className="text-[10px] font-bold" style={{ color: preset.dark }}>{t(`qr.presetNames.${preset.name}`)}</span>
+                        <div className="absolute inset-0 flex items-center justify-center gap-1.5">
+                          <div className="w-3.5 h-3.5 rounded" style={{ background: preset.dark }} />
+                          <span className="text-[11px] font-semibold" style={{ color: preset.dark }}>{t(`qr.presetNames.${preset.name}`)}</span>
                         </div>
                       </button>
                     ))}
@@ -408,22 +406,22 @@ export const QRManager = ({ restaurantId }: Props) => {
                 </div>
 
                 {/* Manual colors */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-2">{t('qr.fgColor')}</p>
-                    <label className="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-2xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                      <div className="w-8 h-8 rounded-lg border border-outline-variant/30 shrink-0" style={{ background: qrStyle.dark }} />
-                      <span className="font-mono text-sm font-bold">{qrStyle.dark}</span>
+                    <p className="ds-label">{t('qr.fgColor')}</p>
+                    <label className="ds-inset flex items-center gap-2.5 p-2.5 cursor-pointer hover:bg-surface-container transition-colors">
+                      <div className="w-7 h-7 rounded-lg border border-line shrink-0" style={{ background: qrStyle.dark }} />
+                      <span className="font-mono text-[13px] font-semibold truncate">{qrStyle.dark}</span>
                       <input type="color" value={qrStyle.dark}
                         onChange={e => applyStyle({ ...qrStyle, dark: e.target.value })}
                         className="sr-only" />
                     </label>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-2">{t('qr.bgColor')}</p>
-                    <label className="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-2xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                      <div className="w-8 h-8 rounded-lg border border-outline-variant/30 shrink-0" style={{ background: qrStyle.light }} />
-                      <span className="font-mono text-sm font-bold">{qrStyle.light}</span>
+                    <p className="ds-label">{t('qr.bgColor')}</p>
+                    <label className="ds-inset flex items-center gap-2.5 p-2.5 cursor-pointer hover:bg-surface-container transition-colors">
+                      <div className="w-7 h-7 rounded-lg border border-line shrink-0" style={{ background: qrStyle.light }} />
+                      <span className="font-mono text-[13px] font-semibold truncate">{qrStyle.light}</span>
                       <input type="color" value={qrStyle.light}
                         onChange={e => applyStyle({ ...qrStyle, light: e.target.value })}
                         className="sr-only" />
@@ -433,15 +431,15 @@ export const QRManager = ({ restaurantId }: Props) => {
 
                 {/* Center logo */}
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-3">{t('qr.centerLogo')}</p>
+                  <p className="ds-label">{t('qr.centerLogo')}</p>
                   {qrStyle.logo ? (
-                    <div className="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-2xl">
-                      <img src={qrStyle.logo} alt={t('qr.altLogo')} className="w-12 h-12 rounded-xl object-cover border border-outline-variant/20" />
+                    <div className="ds-inset flex items-center gap-3 p-2.5">
+                      <img src={qrStyle.logo} alt={t('qr.altLogo')} className="w-10 h-10 rounded-lg object-cover border border-line" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-on-surface-variant truncate">{t('qr.logoSet')}</p>
+                        <p className="text-[13px] font-semibold text-on-surface-variant truncate">{t('qr.logoSet')}</p>
                       </div>
                       <button onClick={() => applyStyle({ ...qrStyle, logo: null })}
-                        className="p-1.5 rounded-lg bg-rose-50 text-primary hover:bg-rose-100 transition-colors shrink-0">
+                        className="ds-btn ds-btn-sm ds-btn-icon ds-btn-danger-soft shrink-0">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -449,14 +447,14 @@ export const QRManager = ({ restaurantId }: Props) => {
                     <div className="space-y-2">
                       {brandLogo && (
                         <button onClick={() => applyStyle({ ...qrStyle, logo: brandLogo })}
-                          className="w-full flex items-center gap-3 p-3 bg-surface-container-lowest rounded-2xl hover:bg-surface-container-high transition-colors text-start">
-                          <img src={brandLogo} alt={t('qr.altBrandLogo')} className="w-10 h-10 rounded-xl object-cover shrink-0 border border-outline-variant/20" />
-                          <span className="text-sm font-bold">{t('qr.useBrandLogo')}</span>
+                          className="ds-inset w-full flex items-center gap-3 p-2.5 hover:bg-surface-container transition-colors text-start">
+                          <img src={brandLogo} alt={t('qr.altBrandLogo')} className="w-9 h-9 rounded-lg object-cover shrink-0 border border-line" />
+                          <span className="text-[13px] font-semibold">{t('qr.useBrandLogo')}</span>
                         </button>
                       )}
                       <button onClick={() => logoInputRef.current?.click()}
                         disabled={logoUploading}
-                        className="w-full flex items-center justify-center gap-2 p-3 bg-surface-container-lowest rounded-2xl border-2 border-dashed border-outline-variant/30 hover:border-primary/40 hover:bg-surface-container-high transition-all text-sm font-bold text-on-surface-variant disabled:opacity-50">
+                        className="w-full h-10 flex items-center justify-center gap-2 rounded-xl border border-dashed border-input text-[13px] font-semibold text-on-surface-variant hover:border-primary/50 hover:text-on-surface hover:bg-surface-container-low transition-colors disabled:opacity-50">
                         {logoUploading ? (
                           <span className="animate-pulse">{t('qr.uploading')}</span>
                         ) : (
@@ -471,10 +469,10 @@ export const QRManager = ({ restaurantId }: Props) => {
               </div>
             </motion.div>
           ) : (
-            <div className="hidden lg:flex h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
-              <QrCode className="w-16 h-16 mb-4 opacity-20" />
-              <p className="font-bold">{t('qr.noTableSelected')}</p>
-              <p className="text-sm">{t('qr.noTableSelectedMsg')}</p>
+            <div className="hidden lg:flex ds-empty h-full bg-card">
+              <QrCode className="w-8 h-8 opacity-40" />
+              <p className="text-sm font-semibold text-on-surface">{t('qr.noTableSelected')}</p>
+              <p className="text-[13px]">{t('qr.noTableSelectedMsg')}</p>
             </div>
           )}
         </AnimatePresence>

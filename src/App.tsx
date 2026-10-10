@@ -1,224 +1,166 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
-import { useTranslation } from 'react-i18next';
-import { CartProvider } from './contexts/CartContext';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppProvider, useApp } from './contexts/AppContext';
+import { CartProvider, useCart } from './contexts/CartContext';
+import { NavCtx, routeFromSearch, routeToSearch, TAB_ROUTES, type Nav, type Route, type Tab } from './navigation';
+import { useViewport } from './hooks/useViewport';
+import { applyPrimaryColor } from './lib/branding';
+import { BottomNav, CartBar, WebFooter, WebHeader } from './components/mg/Chrome';
+import { Toast } from './components/mg/ui';
 import { HomeScreen } from './screens/HomeScreen';
 import { RestaurantScreen } from './screens/RestaurantScreen';
 import { CartScreen } from './screens/CartScreen';
 import { OrderTrackingScreen } from './screens/OrderTrackingScreen';
 import { OrdersScreen } from './screens/OrdersScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
-import { BottomNav } from './components/BottomNav';
-import { useRestaurant } from './hooks/useRestaurant';
-import { restoreDefaultColor } from './lib/branding';
+import { NotificationsScreen } from './screens/NotificationsScreen';
+import { SignInScreen } from './screens/SignInScreen';
+import { getStoredUser } from './lib/appAuth';
 
-export type MainTab = 'home' | 'orders' | 'profile';
-export type Overlay =
-  | null
-  | { type: 'restaurant'; id: string; name: string; logo?: string }
-  | { type: 'cart' }
-  | { type: 'tracking'; orderId: string };
+interface QrContext { restaurantId: string; table: string; fromUrl: boolean }
 
-type NavState = { tab: MainTab; overlay: Overlay };
-
-const slideUp = {
-  initial: { y: '100%', opacity: 0 },
-  animate: { y: 0, opacity: 1, transition: { type: 'spring', damping: 28, stiffness: 300 } },
-  exit: { y: '100%', opacity: 0, transition: { duration: 0.2 } },
-};
-
-function buildSearch(state: NavState): string {
-  const params = new URLSearchParams();
-  params.set('tab', state.tab);
-  if (state.overlay?.type === 'restaurant') {
-    params.set('screen', 'restaurant');
-    params.set('rid', state.overlay.id);
-    params.set('rname', state.overlay.name);
-    if (state.overlay.logo) params.set('rlogo', state.overlay.logo);
-  } else if (state.overlay?.type === 'cart') {
-    params.set('screen', 'cart');
-  } else if (state.overlay?.type === 'tracking') {
-    params.set('screen', 'tracking');
-    params.set('orderId', state.overlay.orderId);
+/** Table QR links look like ?restaurant=ID&table=T. The table is kept for this session only. */
+function readQr(): QrContext | null {
+  const p = new URLSearchParams(window.location.search);
+  const restaurantId = p.get('restaurant');
+  if (restaurantId) {
+    const ctx = { restaurantId, table: p.get('table') ?? '' };
+    try { sessionStorage.setItem('mg_qr', JSON.stringify(ctx)); } catch { /* ignore */ }
+    return { ...ctx, fromUrl: true };
   }
-  return `?${params.toString()}`;
+  try {
+    const raw = sessionStorage.getItem('mg_qr');
+    if (raw) return { ...JSON.parse(raw), fromUrl: false };
+  } catch { /* ignore */ }
+  return null;
 }
 
-function parseSearch(search: string): NavState {
-  const params = new URLSearchParams(search);
-  const rawTab = params.get('tab');
-  const tab: MainTab = rawTab === 'orders' || rawTab === 'profile' ? rawTab : 'home';
-
-  const screen = params.get('screen');
-  let overlay: Overlay = null;
-  if (screen === 'restaurant') {
-    const id = params.get('rid');
-    const name = params.get('rname');
-    if (id && name) overlay = { type: 'restaurant', id, name, logo: params.get('rlogo') || undefined };
-  } else if (screen === 'cart') {
-    overlay = { type: 'cart' };
-  } else if (screen === 'tracking') {
-    const orderId = params.get('orderId');
-    if (orderId) overlay = { type: 'tracking', orderId };
-  }
-  return { tab, overlay };
-}
+type HistState = { route: Route; depth: number };
 
 export default function App() {
-  const { i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
-
-  const [splash, setSplash] = useState(true);
-  const [mainTab, setMainTab] = useState<MainTab>(() => parseSearch(window.location.search).tab);
-  const [overlay, setOverlay] = useState<Overlay>(() => parseSearch(window.location.search).overlay);
-  const mainTabRef = useRef(mainTab);
-  useEffect(() => { mainTabRef.current = mainTab; }, [mainTab]);
-
-  // Attach nav state to the current history entry without touching the URL,
-  // so QR-link params (?restaurant=&table=) below stay intact for useRestaurant to read.
-  useEffect(() => {
-    window.history.replaceState({ tab: mainTab, overlay } satisfies NavState, '', window.location.href);
-  }, []);
-
-  // Sync browser/hardware back & forward navigation with in-app screen state.
-  useEffect(() => {
-    const onPopState = (e: PopStateEvent) => {
-      const state = (e.state as NavState | null) ?? parseSearch(window.location.search);
-      setMainTab(state.tab);
-      setOverlay(state.overlay);
-    };
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, []);
-
-  const pushNav = useCallback((next: NavState, replace: boolean) => {
-    const url = buildSearch(next);
-    if (replace) window.history.replaceState(next, '', url);
-    else window.history.pushState(next, '', url);
-  }, []);
-
-  const changeTab = useCallback((tab: MainTab) => {
-    setMainTab(tab);
-    setOverlay(null);
-    pushNav({ tab, overlay: null }, true);
-  }, [pushNav]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setSplash(false), 1000);
-    return () => clearTimeout(t);
-  }, []);
-
-  const { context: qrContext, loading: qrLoading } = useRestaurant();
-
-  const openRestaurant = useCallback((id: string, name: string, logo?: string) => {
-    const next: Overlay = { type: 'restaurant', id, name, logo };
-    setOverlay(next);
-    pushNav({ tab: mainTabRef.current, overlay: next }, false);
-  }, [pushNav]);
-
-  // Auto-open restaurant when the page is loaded via a QR code URL (?restaurant=&table=)
-  useEffect(() => {
-    if (!qrLoading && qrContext) {
-      openRestaurant(qrContext.restaurantId, qrContext.restaurantName, qrContext.logo || undefined);
-    }
-  }, [qrLoading, qrContext, openRestaurant]);
-
-  const openCart = useCallback(() => {
-    const next: Overlay = { type: 'cart' };
-    setOverlay(next);
-    pushNav({ tab: mainTabRef.current, overlay: next }, false);
-  }, [pushNav]);
-
-  const openTracking = useCallback((orderId: string) => {
-    const next: Overlay = { type: 'tracking', orderId };
-    setOverlay(next);
-    pushNav({ tab: mainTabRef.current, overlay: next }, false);
-  }, [pushNav]);
-
-  const closeOverlay = useCallback(() => {
-    restoreDefaultColor();
-    window.history.back();
-  }, []);
-
-  const handleOrderPlaced = useCallback((orderId: string) => {
-    const next: Overlay = { type: 'tracking', orderId };
-    setOverlay(next);
-    // Replaces the cart's history entry so "back" from tracking skips the now-emptied cart.
-    pushNav({ tab: mainTabRef.current, overlay: next }, true);
-  }, [pushNav]);
-
+  const qr = useMemo(readQr, []);
   return (
-    <CartProvider>
-      <AnimatePresence>
-        {splash && (
-          <motion.div
-            key="splash"
-            className="fixed inset-0 z-[100] bg-surface flex items-center justify-center"
-            exit={{ opacity: 0, transition: { duration: 0.4 } }}
-          >
-            <motion.img
-              src="/logo-dark.svg"
-              alt="Menu Go"
-              className="h-14 w-auto"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1, transition: { duration: 0.35 } }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-surface flex flex-col select-none">
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto" style={{ paddingBottom: '5rem' }}>
-          <AnimatePresence mode="wait">
-            {mainTab === 'home' && (
-              <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <HomeScreen onOpenRestaurant={openRestaurant} onOpenTracking={openTracking} onViewAllOrders={() => changeTab('orders')} />
-              </motion.div>
-            )}
-            {mainTab === 'orders' && (
-              <motion.div key="orders" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <OrdersScreen onOpenTracking={openTracking} />
-              </motion.div>
-            )}
-            {mainTab === 'profile' && (
-              <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <ProfileScreen />
-              </motion.div>
-            )}
-          </AnimatePresence>
+    <AppProvider initialOrderType={qr?.table ? 'dinein' : undefined} initialTable={qr?.table || undefined}>
+      <CartProvider>
+        <Shell qr={qr} />
+      </CartProvider>
+    </AppProvider>
+  );
+}
+
+function initialRoute(qr: QrContext | null, small: boolean): Route {
+  if (qr?.fromUrl) return { name: 'rest', id: qr.restaurantId };
+  const fromUrl = routeFromSearch(window.location.search);
+  if (fromUrl) return fromUrl;
+  // The phone design opens on sign-in the first time (with "Skip for Now").
+  let onboarded = true;
+  try { onboarded = localStorage.getItem('mg_onboarded') === '1'; } catch { /* ignore */ }
+  if (small && !onboarded && !getStoredUser()) return { name: 'signin', after: 'home' };
+  return { name: 'home' };
+}
+
+function Shell({ qr }: { qr: QrContext | null }) {
+  const { small, mid, wide, narrow } = useViewport();
+  const { restaurantById, orders, toastMsg, lang } = useApp();
+  const cart = useCart();
+
+  const [route, setRoute] = useState<Route>(() => initialRoute(qr, small));
+  const depth = useRef(0);
+
+  // Seed history. A QR deep link sits on top of home so "back" lands on the restaurant list.
+  useEffect(() => {
+    if (qr?.fromUrl) {
+      window.history.replaceState({ route: { name: 'home' }, depth: 0 } satisfies HistState, '', routeToSearch({ name: 'home' }));
+      window.history.pushState({ route, depth: 1 } satisfies HistState, '', routeToSearch(route));
+      depth.current = 1;
+    } else {
+      window.history.replaceState({ route, depth: 0 } satisfies HistState, '', window.location.href);
+    }
+    const onPop = (e: PopStateEvent) => {
+      const st = e.state as HistState | null;
+      setRoute(st?.route ?? routeFromSearch(window.location.search) ?? { name: 'home' });
+      depth.current = st?.depth ?? 0;
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const go = useCallback<Nav['go']>((next, opts) => {
+    if (opts?.replace) {
+      window.history.replaceState({ route: next, depth: depth.current } satisfies HistState, '', routeToSearch(next));
+    } else {
+      depth.current += 1;
+      window.history.pushState({ route: next, depth: depth.current } satisfies HistState, '', routeToSearch(next));
+    }
+    setRoute(next);
+  }, []);
+
+  const tab = useCallback((t: Tab) => {
+    go({ name: t }, { replace: TAB_ROUTES.includes(route.name) });
+  }, [go, route.name]);
+
+  const back = useCallback(() => {
+    if (depth.current > 0) window.history.back();
+    else go({ name: 'home' }, { replace: true });
+  }, [go]);
+
+  const nav = useMemo<Nav>(() => ({ route, go, tab, back }), [route, go, tab, back]);
+
+  const routeKey = JSON.stringify(route);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }); }, [routeKey]);
+
+  // Restaurant screens take the restaurant's brand colour; everything else is Menu Go orange.
+  const brandRestaurantId =
+    route.name === 'rest' ? route.id
+    : route.name === 'cart' ? cart.restaurantId
+    : route.name === 'track' ? orders.find(o => o._id === route.orderId)?.restaurantId
+    : null;
+  const brandRestaurant = restaurantById(brandRestaurantId);
+  useEffect(() => { applyPrimaryColor(brandRestaurant?.primaryColor); }, [brandRestaurant?.primaryColor]);
+  useEffect(() => {
+    document.title = route.name === 'rest' && brandRestaurant ? `${brandRestaurant.name} · Menu Go` : 'Menu Go';
+  }, [route.name, brandRestaurant]);
+
+  const table = qr && route.name === 'rest' && route.id === qr.restaurantId ? qr.table : '';
+
+  let screen: React.ReactNode;
+  switch (route.name) {
+    case 'home': screen = <HomeScreen />; break;
+    case 'orders': screen = <OrdersScreen />; break;
+    case 'profile': screen = <ProfileScreen />; break;
+    case 'rest': screen = <RestaurantScreen restaurantId={route.id} qrTable={table} />; break;
+    case 'cart': screen = <CartScreen />; break;
+    case 'track': screen = <OrderTrackingScreen orderId={route.orderId} />; break;
+    case 'notifs': screen = <NotificationsScreen />; break;
+    case 'signin': screen = <SignInScreen after={route.after} />; break;
+  }
+
+  const hasCart = cart.items.length > 0;
+  const onCartScreens = route.name === 'home' || route.name === 'rest';
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+  if (mid) {
+    return (
+      <NavCtx.Provider value={nav}>
+        <div dir={dir} className="min-h-screen bg-bg text-fg font-sans">
+          <WebHeader wide={wide} />
+          <main key={routeKey}>{screen}</main>
+          <WebFooter />
+          {hasCart && narrow && onCartScreens && <CartBar web />}
+          <Toast msg={toastMsg} web />
         </div>
+      </NavCtx.Provider>
+    );
+  }
 
-        <BottomNav activeTab={mainTab} onTabChange={changeTab} onCartOpen={openCart} />
-
-        {/* Full-screen Overlays */}
-        <AnimatePresence>
-          {overlay?.type === 'restaurant' && (
-            <motion.div key="restaurant" className="fixed inset-0 z-40 bg-surface" {...slideUp}>
-              <RestaurantScreen
-                restaurantId={overlay.id}
-                restaurantName={overlay.name}
-                restaurantLogo={overlay.logo}
-                onBack={closeOverlay}
-                onCartOpen={openCart}
-              />
-            </motion.div>
-          )}
-          {overlay?.type === 'cart' && (
-            <motion.div key="cart" className="fixed inset-0 z-50 bg-surface" {...slideUp}>
-              <CartScreen onBack={closeOverlay} onOrderPlaced={handleOrderPlaced} />
-            </motion.div>
-          )}
-          {overlay?.type === 'tracking' && (
-            <motion.div key="tracking" className="fixed inset-0 z-50 bg-surface" {...slideUp}>
-              <OrderTrackingScreen
-                orderId={overlay.orderId}
-                onClose={closeOverlay}
-                onViewOrders={() => { restoreDefaultColor(); changeTab('orders'); }}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+  const showNav = TAB_ROUTES.includes(route.name);
+  return (
+    <NavCtx.Provider value={nav}>
+      <div dir={dir} className="min-h-screen bg-bg text-fg font-sans" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div key={routeKey}>{screen}</div>
+        {hasCart && onCartScreens && <CartBar aboveNav={showNav} />}
+        {showNav && <BottomNav />}
+        <Toast msg={toastMsg} web={false} />
       </div>
-    </CartProvider>
+    </NavCtx.Provider>
   );
 }

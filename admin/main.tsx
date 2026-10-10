@@ -2,6 +2,7 @@ import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../src/index.css';
 import './admin.css';
+import { applyDashTheme, initialDashTheme } from '../src/dashboard/theme';
 import './i18n';
 import { useTranslation } from 'react-i18next';
 import { Dashboard } from './Dashboard';
@@ -30,6 +31,8 @@ function DashboardApp() {
 
   return <Dashboard onLogout={handleLogout} />;
 }
+
+applyDashTheme(initialDashTheme());
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode><DashboardApp /></StrictMode>

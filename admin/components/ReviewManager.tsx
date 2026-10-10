@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Star, Trash2, Quote, ThumbsUp, ThumbsDown,
+  Star, Trash2, ThumbsUp, ThumbsDown,
   MessageSquare, Search, ChevronRight, TrendingUp, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -86,76 +86,78 @@ export const ReviewManager = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
-      <div className="flex-1 space-y-6 lg:space-y-10 overflow-y-auto no-scrollbar lg:pe-4 min-w-0">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+    <div className="flex flex-col lg:flex-row h-full gap-6">
+      <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar lg:pe-1 min-w-0">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('reviews.heading')}</h2>
-            <p className="text-on-surface-variant font-medium">{t('reviews.subtext')}</p>
+            <h1 className="ds-page-title">{t('reviews.heading')}</h1>
+            <p className="ds-page-sub">{t('reviews.subtext')}</p>
           </div>
-          <div className="relative">
-            <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
             <input type="text" placeholder={t('reviews.searchPlaceholder')}
-              className="w-full bg-surface-container-high border-none rounded-xl py-3 ps-12 pe-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+              className="ds-input ps-9"
               value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
         </div>
 
         {/* Stats */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-surface-container-low p-6 sm:p-8 rounded-4xl flex flex-col items-center justify-center text-center shadow-sm border border-outline-variant/10">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-2">{t('reviews.averageRating')}</p>
-            <h4 className="text-5xl font-headline font-extrabold text-primary mb-2">{averageRating}</h4>
-            <div className="flex items-center gap-1 mb-4">
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="ds-card ds-card-pad flex flex-col items-center justify-center text-center">
+            <p className="ds-metric-lbl mb-2">{t('reviews.averageRating')}</p>
+            <p className="ds-metric-val tabular mb-2">{averageRating}</p>
+            <div className="flex items-center gap-0.5 mb-2">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className={`w-4 h-4 ${i < Math.round(Number(averageRating)) ? 'text-primary fill-primary' : 'text-surface-variant'}`} />
+                <Star key={i} className={`w-4 h-4 ${i < Math.round(Number(averageRating)) ? 'text-warn5 fill-current' : 'text-surface-container-highest'}`} />
               ))}
             </div>
-            <p className="text-xs font-bold text-on-surface-variant">{t('reviews.basedOn', { count: reviews.length })}</p>
+            <p className="text-xs text-on-surface-variant">{t('reviews.basedOn', { count: reviews.length })}</p>
           </div>
 
-          <div className="bg-surface-container-low p-6 sm:p-8 rounded-4xl shadow-sm border border-outline-variant/10">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-6">{t('reviews.sentiment')}</p>
-            <div className="space-y-5">
+          <div className="ds-card ds-card-pad">
+            <p className="ds-metric-lbl mb-4">{t('reviews.sentiment')}</p>
+            <div className="space-y-4">
               {[
-                { labelKey: 'reviews.positive', value: sentiment.positive, color: 'bg-primary', icon: ThumbsUp },
-                { labelKey: 'reviews.neutral',  value: sentiment.neutral,  color: 'bg-[#303942]/30',  icon: MessageSquare },
-                { labelKey: 'reviews.negative', value: sentiment.negative, color: 'bg-rose-500',   icon: ThumbsDown },
+                { labelKey: 'reviews.positive', value: sentiment.positive, color: 'bg-pos5',  icon: ThumbsUp },
+                { labelKey: 'reviews.neutral',  value: sentiment.neutral,  color: 'bg-outline', icon: MessageSquare },
+                { labelKey: 'reviews.negative', value: sentiment.negative, color: 'bg-neg5',  icon: ThumbsDown },
               ].map(item => (
-                <div key={item.labelKey} className="space-y-2">
-                  <div className="flex justify-between items-center text-xs font-bold">
-                    <div className="flex items-center gap-2">
-                      <item.icon className="w-3 h-3 text-on-surface-variant" />
-                      <span>{t(item.labelKey)}</span>
+                <div key={item.labelKey} className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-2 text-on-surface">
+                      <item.icon className="w-3.5 h-3.5 text-on-surface-variant" />
+                      <span className="font-medium">{t(item.labelKey)}</span>
                     </div>
-                    <span>{item.value}%</span>
+                    <span className="font-semibold tabular">{item.value}%</span>
                   </div>
-                  <div className="h-2 bg-surface-container-highest rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${item.value}%` }} className={`h-full ${item.color}`} />
+                  <div className="h-2 bg-surface-container rounded-full overflow-hidden">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${item.value}%` }} className={`h-full rounded-full ${item.color}`} />
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-surface-container-low p-6 sm:p-8 rounded-4xl shadow-sm border border-outline-variant/10 flex flex-col justify-between">
+          <div className="ds-card ds-card-pad flex flex-col justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-4">{t('reviews.totalReviews')}</p>
-              <h4 className="text-4xl font-headline font-extrabold">{reviews.length}</h4>
-              <p className="text-xs font-bold text-primary flex items-center gap-1 mt-1">
-                <TrendingUp className="w-3 h-3" /> {t('reviews.positivePct', { percent: sentiment.positive })}
+              <p className="ds-metric-lbl">{t('reviews.totalReviews')}</p>
+              <p className="ds-metric-val tabular mt-1">{reviews.length}</p>
+              <p className="text-xs font-semibold text-pos6 flex items-center gap-1 mt-1">
+                <TrendingUp className="w-3.5 h-3.5" /> {t('reviews.positivePct', { percent: sentiment.positive })}
               </p>
             </div>
-            <div className="mt-6 space-y-2">
+            <div className="mt-4 space-y-1.5">
               {[1, 2, 3, 4, 5].map(star => {
                 const count = reviews.filter(r => r.rating === star).length;
                 return (
                   <div key={star} className="flex items-center gap-2 text-xs">
-                    <span className="w-4 text-end font-bold">{star}★</span>
-                    <div className="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                      <div className="h-full bg-[#303942]/30 rounded-full" style={{ width: `${(count / total) * 100}%` }} />
+                    <span className="flex items-center justify-end gap-0.5 w-7 font-semibold tabular">
+                      {star}<Star className="w-3 h-3 text-warn5 fill-current" />
+                    </span>
+                    <div className="flex-1 h-1.5 bg-surface-container rounded-full overflow-hidden">
+                      <div className="h-full bg-warn5 rounded-full" style={{ width: `${(count / total) * 100}%` }} />
                     </div>
-                    <span className="text-on-surface-variant w-4">{count}</span>
+                    <span className="text-on-surface-variant tabular w-5 text-end">{count}</span>
                   </div>
                 );
               })}
@@ -165,54 +167,50 @@ export const ReviewManager = () => {
 
         {/* Review grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-48 bg-surface-container-low rounded-4xl" />)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-44 bg-surface-container rounded-2xl" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <AnimatePresence mode="popLayout">
               {filteredReviews.map((review, i) => (
-                <motion.div key={reviewKey(review)} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
+                <motion.div key={reviewKey(review)} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                   onClick={() => selectReview(review)}
-                  className={`group p-5 sm:p-8 bg-surface-container-low rounded-4xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-xl transition-all cursor-pointer relative overflow-hidden ${
+                  className={`group ds-card ds-card-pad cursor-pointer transition-colors hover:border-input ${
                     selectedReview && reviewKey(selectedReview) === reviewKey(review) ? 'ring-2 ring-primary' : ''
                   }`}>
-                  <Quote className="absolute -end-4 -top-4 w-32 h-32 text-on-surface-variant/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative z-10 space-y-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center font-bold text-sm text-on-surface-variant">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-acc-soft text-acc text-xs font-bold flex items-center justify-center shrink-0">
                           {review.userInitials || review.userName?.slice(0, 2).toUpperCase() || '?'}
                         </div>
-                        <div>
-                          <h4 className="font-bold leading-tight">{review.userName || t('reviews.anonymous')}</h4>
+                        <div className="min-w-0">
+                          <h4 className="font-semibold text-sm text-on-surface leading-tight truncate">{review.userName || t('reviews.anonymous')}</h4>
                           <div className="flex items-center gap-0.5 mt-0.5">
                             {[...Array(5)].map((_, idx) => (
-                              <Star key={idx} className={`w-3 h-3 ${idx < review.rating ? 'text-primary fill-primary' : 'text-surface-variant'}`} />
+                              <Star key={idx} className={`w-3 h-3 ${idx < review.rating ? 'text-warn5 fill-current' : 'text-surface-container-highest'}`} />
                             ))}
                           </div>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold text-on-surface-variant opacity-40 uppercase tracking-widest">
+                      <span className="text-xs text-on-surface-variant whitespace-nowrap">
                         {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : review.date}
                       </span>
                     </div>
-                    <p className="text-on-surface-variant text-sm leading-relaxed line-clamp-3 italic">"{review.comment}"</p>
-                    <div className="flex items-center justify-between pt-3 border-t border-outline-variant/10">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('reviews.verifiedGuest')}</span>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
+                    <p className="text-on-surface-variant text-[13px] leading-relaxed line-clamp-3">"{review.comment}"</p>
+                    <div className="flex items-center justify-between pt-3 border-t border-line">
+                      <span className="ds-chip ds-chip-pos"><span className="ds-dot" />{t('reviews.verifiedGuest')}</span>
+                      <ChevronRight className="w-4 h-4 text-on-surface-variant group-hover:text-on-surface transition-colors rtl:-scale-x-100" />
                     </div>
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
             {filteredReviews.length === 0 && !isLoading && (
-              <div className="col-span-2 text-center py-20 text-on-surface-variant/40">
-                <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p className="font-bold">{reviews.length === 0 ? t('reviews.noReviews') : t('reviews.noResults')}</p>
+              <div className="md:col-span-2 ds-empty">
+                <MessageSquare className="w-8 h-8 opacity-40" />
+                <p className="text-sm">{reviews.length === 0 ? t('reviews.noReviews') : t('reviews.noResults')}</p>
               </div>
             )}
           </div>
@@ -224,46 +222,45 @@ export const ReviewManager = () => {
         <AnimatePresence mode="wait">
           {selectedReview ? (
             <motion.div key={reviewKey(selectedReview)}
-              initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
-              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-surface-container-low lg:rounded-4xl p-5 sm:p-8 flex flex-col shadow-2xl shadow-primary/5">
-              <div className="flex justify-between items-start mb-6 lg:mb-8">
-                <h3 className="text-2xl font-headline font-extrabold tracking-tight">{t('reviews.detailHeading')}</h3>
-                <button onClick={closeReview} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
-                  <X className="w-5 h-5" />
+              initial={{ opacity: 0, x: isRTL ? -8 : 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -8 : 8 }}
+              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full bg-card lg:border lg:border-line lg:rounded-2xl lg:shadow-sm p-5 flex flex-col">
+              <div className="flex justify-between items-center gap-3 pb-4 mb-4 border-b border-line">
+                <h3 className="ds-section-title">{t('reviews.detailHeading')}</h3>
+                <button onClick={closeReview} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar">
-                <div className="text-center pb-6 border-b border-outline-variant/10">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mx-auto mb-3 text-xl font-bold">
+              <div className="flex-1 space-y-4 overflow-y-auto no-scrollbar">
+                <div className="text-center pb-4 border-b border-line">
+                  <div className="w-14 h-14 rounded-full bg-acc-soft text-acc flex items-center justify-center mx-auto mb-3 text-lg font-bold">
                     {selectedReview.userInitials || selectedReview.userName?.slice(0, 2).toUpperCase() || '?'}
                   </div>
-                  <h4 className="text-lg font-bold">{selectedReview.userName || t('reviews.anonymous')}</h4>
-                  <div className="flex justify-center items-center gap-1 mt-2">
+                  <h4 className="text-base font-semibold text-on-surface">{selectedReview.userName || t('reviews.anonymous')}</h4>
+                  <div className="flex justify-center items-center gap-0.5 mt-2">
                     {[...Array(5)].map((_, idx) => (
-                      <Star key={idx} className={`w-5 h-5 ${idx < selectedReview.rating ? 'text-primary fill-primary' : 'text-surface-variant'}`} />
+                      <Star key={idx} className={`w-4 h-4 ${idx < selectedReview.rating ? 'text-warn5 fill-current' : 'text-surface-container-highest'}`} />
                     ))}
                   </div>
                   <p className="text-xs text-on-surface-variant mt-2">
                     {selectedReview.createdAt ? new Date(selectedReview.createdAt).toLocaleDateString() : selectedReview.date}
                   </p>
                 </div>
-                <div className="bg-surface-container-lowest p-5 rounded-2xl relative">
-                  <Quote className="absolute -start-1 -top-1 w-6 h-6 text-primary/10" />
-                  <p className="text-sm leading-relaxed italic text-on-surface-variant">"{selectedReview.comment}"</p>
+                <div className="ds-inset p-3.5">
+                  <p className="text-sm leading-relaxed text-on-surface-variant">"{selectedReview.comment}"</p>
                 </div>
               </div>
-              <div className="mt-6">
+              <div className="mt-4 pt-4 border-t border-line">
                 <button onClick={() => handleDelete(reviewKey(selectedReview))}
-                  className="w-full py-4 rounded-2xl bg-surface-container-high font-bold text-sm hover:bg-rose-50 hover:text-rose-600 transition-all flex items-center justify-center gap-2">
+                  className="ds-btn ds-btn-danger-soft w-full">
                   <Trash2 className="w-4 h-4" /> {t('reviews.deleteReview')}
                 </button>
               </div>
             </motion.div>
           ) : (
-            <div className="hidden lg:flex h-full bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex-col items-center justify-center p-12 text-center text-on-surface-variant/40">
-              <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
-              <p className="font-bold">{t('reviews.noSelected')}</p>
-              <p className="text-sm">{t('reviews.noSelectedMsg')}</p>
+            <div className="hidden lg:flex h-full ds-empty">
+              <MessageSquare className="w-8 h-8 opacity-40" />
+              <p className="text-sm font-semibold text-on-surface">{t('reviews.noSelected')}</p>
+              <p className="text-[13px]">{t('reviews.noSelectedMsg')}</p>
             </div>
           )}
         </AnimatePresence>

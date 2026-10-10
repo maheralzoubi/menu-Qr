@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Tag, ToggleLeft, ToggleRight, Calendar, Hash } from 'lucide-react';
+import { Plus, Trash2, Tag, Calendar, Hash } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../src/lib/auth';
@@ -86,68 +86,68 @@ export const PromoManager = () => {
     promo.expiryDate ? new Date() > new Date(promo.expiryDate) : false;
 
   return (
-    <div className="space-y-6 sm:space-y-10">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('promos.heading')}</h2>
-          <p className="text-on-surface-variant font-medium">{t('promos.subtext')}</p>
+          <h1 className="ds-page-title">{t('promos.heading')}</h1>
+          <p className="ds-page-sub">{t('promos.subtext')}</p>
         </div>
         <button onClick={() => { setShowForm(true); setError(''); }}
-          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-headline font-bold text-sm hover:bg-primary/90 transition-colors self-start">
+          className="ds-btn ds-btn-primary ds-btn-sm">
           <Plus className="w-4 h-4" /> {t('promos.newCode')}
         </button>
       </div>
 
       <AnimatePresence>
         {showForm && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className="bg-surface-container-low rounded-2xl p-4 sm:p-6 space-y-5">
-            <h3 className="font-headline font-bold text-lg">{t('promos.createHeading')}</h3>
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+            className="ds-card ds-card-pad space-y-4">
+            <h3 className="ds-section-title">{t('promos.createHeading')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">{t('promos.code')}</label>
+              <div>
+                <label className="ds-label">{t('promos.code')}</label>
                 <input type="text" placeholder={t('promos.codePlaceholder')} value={form.code}
                   onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                  className="w-full bg-surface rounded-xl px-4 py-2.5 text-sm border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  className="ds-input" />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">{t('promos.discountType')}</label>
+              <div>
+                <label className="ds-label">{t('promos.discountType')}</label>
                 <select value={form.discountType} onChange={e => setForm({ ...form, discountType: e.target.value as 'percentage' | 'fixed' })}
-                  className="w-full bg-surface rounded-xl px-4 py-2.5 text-sm border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/30">
+                  className="ds-select">
                   <option value="percentage">{t('promos.percentage')}</option>
                   <option value="fixed">{t('promos.fixed')}</option>
                 </select>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">
+              <div>
+                <label className="ds-label">
                   {form.discountType === 'percentage' ? t('promos.discountPct') : t('promos.discountFixed')}
                 </label>
                 <input type="number" placeholder={form.discountType === 'percentage' ? '0–100' : '0.00'}
                   min={0} max={form.discountType === 'percentage' ? 100 : undefined}
                   value={form.discountValue} onChange={e => setForm({ ...form, discountValue: e.target.value })}
-                  className="w-full bg-surface rounded-xl px-4 py-2.5 text-sm border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  className="ds-input" />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">{t('promos.maxUses')}</label>
+              <div>
+                <label className="ds-label">{t('promos.maxUses')}</label>
                 <input type="number" placeholder={t('promos.unlimited')} min={0} value={form.maxUses}
                   onChange={e => setForm({ ...form, maxUses: e.target.value })}
-                  className="w-full bg-surface rounded-xl px-4 py-2.5 text-sm border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  className="ds-input" />
               </div>
-              <div className="col-span-2 space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">{t('promos.expiryDate')}</label>
+              <div className="sm:col-span-2">
+                <label className="ds-label">{t('promos.expiryDate')}</label>
                 <input type="date" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })}
-                  className="w-full bg-surface rounded-xl px-4 py-2.5 text-sm border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  className="ds-input" />
               </div>
             </div>
             {error && <p className="text-error text-sm font-medium">{error}</p>}
-            <div className="flex gap-3">
-              <button onClick={handleCreate} disabled={saving}
-                className="bg-primary text-white px-6 py-2.5 rounded-xl font-headline font-bold text-sm hover:bg-primary/90 disabled:opacity-50 transition-colors">
-                {saving ? t('promos.creating') : t('promos.createCode')}
-              </button>
+            <div className="flex flex-wrap justify-end gap-2 pt-4 border-t border-line">
               <button onClick={() => { setShowForm(false); setForm(emptyForm()); setError(''); }}
-                className="px-6 py-2.5 rounded-xl font-headline font-bold text-sm bg-surface-container-highest text-on-surface hover:bg-surface-container transition-colors">
+                className="ds-btn ds-btn-secondary">
                 {t('promos.cancel')}
+              </button>
+              <button onClick={handleCreate} disabled={saving}
+                className="ds-btn ds-btn-primary">
+                {saving ? t('promos.creating') : t('promos.createCode')}
               </button>
             </div>
           </motion.div>
@@ -155,32 +155,32 @@ export const PromoManager = () => {
       </AnimatePresence>
 
       {isLoading ? (
-        <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 bg-surface-container-low rounded-2xl animate-pulse" />)}</div>
+        <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-[72px] bg-surface-container rounded-2xl animate-pulse" />)}</div>
       ) : promos.length === 0 ? (
-        <div className="text-center py-20 text-on-surface-variant space-y-3">
-          <Tag className="w-10 h-10 mx-auto opacity-30" />
-          <p className="font-medium">{t('promos.noCodes')}</p>
+        <div className="ds-empty">
+          <Tag className="w-8 h-8 opacity-40" />
+          <p className="text-sm">{t('promos.noCodes')}</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="ds-card p-0 overflow-hidden">
           <AnimatePresence>
             {promos.map(promo => {
               const expired = isExpired(promo);
               return (
-                <motion.div key={promo._id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
-                  className={`flex items-center gap-3 sm:gap-4 bg-surface-container-low rounded-2xl px-4 sm:px-6 py-4 ${expired ? 'opacity-50' : ''}`}>
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5" />
+                <motion.div key={promo._id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 border-b border-line last:border-0 ${expired ? 'opacity-50' : ''}`}>
+                  <div className="ds-icon-tile">
+                    <Tag className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-headline font-extrabold text-lg tracking-wider">{promo.code}</span>
-                      {expired && <span className="text-[10px] font-bold uppercase tracking-wider bg-error/10 text-error px-2 py-0.5 rounded-full">{t('promos.expired')}</span>}
-                      {!promo.isActive && !expired && <span className="text-[10px] font-bold uppercase tracking-wider bg-on-surface/10 text-on-surface-variant px-2 py-0.5 rounded-full">{t('promos.inactive')}</span>}
+                      <span className="font-display font-bold text-base tracking-wide text-on-surface">{promo.code}</span>
+                      {expired && <span className="ds-chip ds-chip-neg">{t('promos.expired')}</span>}
+                      {!promo.isActive && !expired && <span className="ds-chip ds-chip-neutral">{t('promos.inactive')}</span>}
                     </div>
-                    <div className="flex items-center gap-3 sm:gap-4 mt-0.5 text-xs text-on-surface-variant font-medium flex-wrap">
-                      <span className="text-primary font-bold">{t('promos.off', { discount: formatDiscount(promo) })}</span>
-                      <span className="flex items-center gap-1">
+                    <div className="flex items-center gap-3 sm:gap-4 mt-0.5 text-xs text-on-surface-variant flex-wrap">
+                      <span className="text-acc font-semibold">{t('promos.off', { discount: formatDiscount(promo) })}</span>
+                      <span className="flex items-center gap-1 tabular">
                         <Hash className="w-3 h-3" />
                         {promo.maxUses ? t('promos.usesWithMax', { count: promo.usedCount, max: promo.maxUses }) : t('promos.uses', { count: promo.usedCount })}
                       </span>
@@ -192,12 +192,12 @@ export const PromoManager = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button onClick={() => handleToggle(promo)} title={promo.isActive ? t('promos.deactivate') : t('promos.activate')}
-                      className="text-on-surface-variant hover:text-primary transition-colors">
-                      {promo.isActive ? <ToggleRight className="w-6 h-6 text-primary" /> : <ToggleLeft className="w-6 h-6" />}
+                      className="ds-btn ds-btn-ghost ds-btn-sm px-2">
+                      <span className={`ds-switch ${promo.isActive ? 'ds-switch-on' : ''}`} />
                     </button>
-                    <button onClick={() => handleDelete(promo._id)} className="text-on-surface-variant/40 hover:text-error transition-colors">
+                    <button onClick={() => handleDelete(promo._id)} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm text-on-surface-variant hover:text-error">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

@@ -1,6 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { KeyRound } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AuthLayout } from '../dashboard/AuthLayout';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
@@ -15,6 +14,7 @@ const ERROR_CODE_KEYS: Record<string, string> = {
   TOO_MANY_ATTEMPTS: 'forgotPassword.errors.tooManyAttempts',
   WEAK_PASSWORD: 'forgotPassword.errors.weakPassword',
   EMAIL_NOT_FOUND: 'forgotPassword.errors.emailNotFound',
+  EMAIL_FAILED: 'forgotPassword.errors.emailFailed',
 };
 
 export const ForgotPasswordScreen = ({ onBack }: Props) => {
@@ -96,88 +96,48 @@ export const ForgotPasswordScreen = ({ onBack }: Props) => {
     }
   };
 
+  const subtitle = step === 'request' ? t('forgotPassword.emailSubtext')
+    : step === 'reset' ? t('forgotPassword.codeSubtext', { email })
+    : t('forgotPassword.doneBody');
+  const errorBox = error && <p role="alert" className="rounded-xl bg-neg1 text-neg7 px-3.5 py-3 text-[13px] leading-5 font-medium">{error}</p>;
+
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-8">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm space-y-8">
-        <div className="text-center space-y-3">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/25 flex items-center justify-center">
-              <KeyRound className="w-8 h-8 text-primary" strokeWidth={2.5} />
-            </div>
+    <AuthLayout overline={t('login.signIn')} title={t('forgotPassword.heading')} subtitle={subtitle}>
+      {step === 'request' && (
+        <form onSubmit={requestCode} className="flex flex-col gap-3.5">
+          <input type="email" required dir="ltr" value={email} onChange={e => setEmail(e.target.value)} className="ds-input" placeholder="admin@restaurant.com" />
+          {errorBox}
+          <button type="submit" disabled={isSubmitting} className="ds-btn ds-btn-primary ds-btn-lg w-full">{t('forgotPassword.sendCodeButton')}</button>
+          <button type="button" onClick={onBack} className="ds-btn ds-btn-ghost w-full">{t('forgotPassword.backToSignIn')}</button>
+        </form>
+      )}
+
+      {step === 'reset' && (
+        <form onSubmit={submitReset} className="flex flex-col gap-3.5">
+          <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} required autoFocus dir="ltr"
+            value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} placeholder="000000"
+            className="ds-input h-14 text-center font-display text-2xl tracking-[0.5em] font-bold" />
+          <div>
+            <label className="ds-label">{t('forgotPassword.newPasswordLabel')}</label>
+            <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} className="ds-input" placeholder="••••••••" />
           </div>
-          <h1 className="text-2xl font-headline font-extrabold">{t('forgotPassword.heading')}</h1>
-          {step === 'request' && <p className="text-sm text-on-surface-variant">{t('forgotPassword.emailSubtext')}</p>}
-          {step === 'reset' && <p className="text-sm text-on-surface-variant">{t('forgotPassword.codeSubtext', { email })}</p>}
-          {step === 'done' && <p className="text-sm text-on-surface-variant">{t('forgotPassword.doneBody')}</p>}
+          <div>
+            <label className="ds-label">{t('forgotPassword.confirmPasswordLabel')}</label>
+            <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="ds-input" placeholder="••••••••" />
+          </div>
+          {errorBox}
+          {resendSent && !error && <p className="rounded-xl bg-pos1 text-pos7 px-3.5 py-3 text-[13px] font-medium">{t('forgotPassword.resendSent')}</p>}
+          <button type="submit" disabled={isSubmitting || code.length !== 6} className="ds-btn ds-btn-primary ds-btn-lg w-full">{t('forgotPassword.resetButton')}</button>
+          <button type="button" onClick={resendCode} disabled={isSubmitting} className="ds-btn ds-btn-ghost w-full text-acc">{t('forgotPassword.resendButton')}</button>
+        </form>
+      )}
+
+      {step === 'done' && (
+        <div className="flex flex-col gap-3.5">
+          <p className="rounded-xl bg-pos1 text-pos7 px-3.5 py-3 text-[13px] font-medium">{t('forgotPassword.doneHeading')}</p>
+          <button type="button" onClick={onBack} className="ds-btn ds-btn-primary ds-btn-lg w-full">{t('forgotPassword.backToSignIn')}</button>
         </div>
-
-        {step === 'request' && (
-          <form onSubmit={requestCode} className="space-y-4">
-            <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-              className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-              placeholder="admin@restaurant.com" />
-            {error && <p className="text-sm text-red-500 font-medium text-center">{error}</p>}
-            <button type="submit" disabled={isSubmitting}
-              className="w-full py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 disabled:opacity-60 transition-all">
-              {t('forgotPassword.sendCodeButton')}
-            </button>
-            <button type="button" onClick={onBack} className="w-full text-sm font-bold text-on-surface-variant">
-              {t('forgotPassword.backToSignIn')}
-            </button>
-          </form>
-        )}
-
-        {step === 'reset' && (
-          <form onSubmit={submitReset} className="space-y-4">
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
-              required
-              autoFocus
-              value={code}
-              onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-              placeholder="000000"
-              className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-center text-2xl tracking-[0.5em] font-bold outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('forgotPassword.newPasswordLabel')}</label>
-              <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="••••••••" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{t('forgotPassword.confirmPasswordLabel')}</label>
-              <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="••••••••" />
-            </div>
-
-            {error && <p className="text-sm text-red-500 font-medium text-center">{error}</p>}
-            {resendSent && !error && <p className="text-sm text-tertiary font-medium text-center">{t('forgotPassword.resendSent')}</p>}
-
-            <button type="submit" disabled={isSubmitting || code.length !== 6}
-              className="w-full py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 disabled:opacity-60 transition-all">
-              {t('forgotPassword.resetButton')}
-            </button>
-            <button type="button" onClick={resendCode} disabled={isSubmitting}
-              className="w-full text-sm font-bold text-primary underline disabled:opacity-60">
-              {t('forgotPassword.resendButton')}
-            </button>
-          </form>
-        )}
-
-        {step === 'done' && (
-          <div className="space-y-4">
-            <p className="text-sm text-tertiary font-medium text-center">{t('forgotPassword.doneHeading')}</p>
-            <button type="button" onClick={onBack}
-              className="w-full py-4 rounded-2xl btn-gradient text-white font-bold text-sm shadow-xl shadow-primary/20 transition-all">
-              {t('forgotPassword.backToSignIn')}
-            </button>
-          </div>
-        )}
-      </motion.div>
-    </div>
+      )}
+    </AuthLayout>
   );
 };

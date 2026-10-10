@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Zap, Star, Building2, Plus, Trash2, Check, Pencil, X } from 'lucide-react';
+import { Zap, Star, Building2, Plus, Trash2, Check, Pencil, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { ownerFetch } from '../../src/lib/ownerAuth';
@@ -107,70 +107,70 @@ const EditPlanModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="ds-backdrop">
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.96 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.15 }}
-        className="bg-surface rounded-3xl border border-surface-container w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col"
+        className="ds-modal max-w-lg flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-surface-container shrink-0">
+        <div className="px-6 py-4 border-b border-line flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+            <div className="ds-icon-tile w-9 h-9">
               {PLAN_ICONS[plan.key] ?? <Star className="w-5 h-5" />}
             </div>
-            <h3 className="font-extrabold text-lg">{t('plans.manager.editPlan', { name: plan.name })}</h3>
+            <h3 className="ds-section-title">{t('plans.manager.editPlan', { name: plan.name })}</h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-container transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+        <div className="overflow-y-auto flex-1 p-6 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
+            <label className="ds-label">
               {t('plans.manager.planName')}
             </label>
             <input
               value={form.name}
               onChange={e => set('name', e.target.value)}
-              className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+              className="ds-input"
             />
           </div>
 
           {/* Name (Arabic) */}
           <div>
-            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
+            <label className="ds-label">
               {t('plans.manager.planNameAr')}
             </label>
             <input
               dir="rtl"
               value={form.nameAr}
               onChange={e => set('nameAr', e.target.value)}
-              className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+              className="ds-input"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
+            <label className="ds-label">
               {t('plans.manager.description')}
             </label>
             <textarea
               value={form.description}
               onChange={e => set('description', e.target.value)}
               rows={2}
-              className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all resize-none"
+              className="ds-textarea"
             />
           </div>
 
           {/* Description (Arabic) */}
           <div>
-            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
+            <label className="ds-label">
               {t('plans.manager.descriptionAr')}
             </label>
             <textarea
@@ -178,40 +178,40 @@ const EditPlanModal = ({
               value={form.descriptionAr}
               onChange={e => set('descriptionAr', e.target.value)}
               rows={2}
-              className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all resize-none"
+              className="ds-textarea"
             />
           </div>
 
           {/* Prices */}
-          <p className="text-[11px] text-on-surface-variant bg-surface-container-low border border-outline-variant/40 rounded-xl px-3 py-2">
+          <p className="ds-inset px-3 py-2 text-[11px] leading-4 text-on-surface-variant">
             {t('plans.manager.priceNote')}
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
+              <label className="ds-label">
                 {t('plans.manager.monthlyPrice')}
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm font-medium">$</span>
+                <span className="absolute start-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none">$</span>
                 <input
                   type="number" min="0" step="1"
                   value={form.monthlyPrice}
                   onChange={e => set('monthlyPrice', Number(e.target.value))}
-                  className="w-full bg-surface-container border border-outline-variant rounded-2xl pl-8 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+                  className="ds-input ps-7 tabular"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
+              <label className="ds-label">
                 {t('plans.manager.annualPrice')}
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm font-medium">$</span>
+                <span className="absolute start-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none">$</span>
                 <input
                   type="number" min="0" step="1"
                   value={form.annualPrice}
                   onChange={e => set('annualPrice', Number(e.target.value))}
-                  className="w-full bg-surface-container border border-outline-variant rounded-2xl pl-8 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+                  className="ds-input ps-7 tabular"
                 />
               </div>
             </div>
@@ -219,51 +219,47 @@ const EditPlanModal = ({
 
           {/* Restaurant limit */}
           <div>
-            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-1.5">
+            <label className="ds-label">
               {t('plans.manager.restaurantLimit')}
             </label>
             <input
               type="number" min="-1" step="1"
               value={form.restaurantLimit}
               onChange={e => set('restaurantLimit', Number(e.target.value))}
-              className="w-full bg-surface-container border border-outline-variant rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+              className="ds-input"
             />
-            <p className="text-[11px] text-on-surface-variant mt-1">{t('plans.manager.limitHint')}</p>
+            <p className="ds-help">{t('plans.manager.limitHint')}</p>
           </div>
 
           {/* Toggles */}
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div
                 onClick={() => set('popular', !form.popular)}
-                className={`w-10 h-6 rounded-full transition-colors relative ${form.popular ? 'bg-primary' : 'bg-surface-container-high'}`}
-              >
-                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.popular ? 'left-5' : 'left-1'}`} />
-              </div>
+                className={`ds-switch ${form.popular ? 'ds-switch-on' : ''}`}
+              />
               <span className="text-sm font-medium">{t('plans.manager.mostPopular')}</span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div
                 onClick={() => set('active', !form.active)}
-                className={`w-10 h-6 rounded-full transition-colors relative ${form.active ? 'bg-tertiary' : 'bg-surface-container-high'}`}
-              >
-                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.active ? 'left-5' : 'left-1'}`} />
-              </div>
+                className={`ds-switch ${form.active ? 'ds-switch-on' : ''}`}
+              />
               <span className="text-sm font-medium">{t('plans.manager.active')}</span>
             </label>
           </div>
 
           {/* Features */}
           <div>
-            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">
+            <label className="ds-label mb-2">
               {t('plans.manager.features')}
             </label>
-            <ul className="space-y-2 mb-3">
+            <ul className="ds-inset overflow-hidden mb-2 empty:hidden">
               {form.features.map((f, i) => (
-                <li key={i} className="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2">
-                  <Check className="w-3.5 h-3.5 text-primary shrink-0" />
+                <li key={i} className="flex items-center gap-2 px-3 py-2 border-b border-line last:border-0">
+                  <Check className="w-3.5 h-3.5 text-pos6 shrink-0" />
                   <span className="text-sm flex-1">{f}</span>
-                  <button onClick={() => removeFeature(i)} className="text-on-surface-variant/50 hover:text-error transition-colors">
+                  <button onClick={() => removeFeature(i)} className="text-on-surface-variant hover:text-error transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </li>
@@ -275,11 +271,11 @@ const EditPlanModal = ({
                 onChange={e => setNewFeature(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addFeature())}
                 placeholder={t('plans.manager.addFeaturePlaceholder')}
-                className="flex-1 bg-surface-container border border-outline-variant rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+                className="ds-input flex-1 w-auto min-w-0"
               />
               <button
                 onClick={addFeature}
-                className="px-4 py-2.5 bg-primary/10 text-primary rounded-2xl hover:bg-primary/20 transition-colors"
+                className="ds-btn ds-btn-secondary ds-btn-icon"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -288,15 +284,15 @@ const EditPlanModal = ({
 
           {/* Features (Arabic) */}
           <div>
-            <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">
+            <label className="ds-label mb-2">
               {t('plans.manager.featuresAr')}
             </label>
-            <ul className="space-y-2 mb-3">
+            <ul className="ds-inset overflow-hidden mb-2 empty:hidden">
               {form.featuresAr.map((f, i) => (
-                <li key={i} dir="rtl" className="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2">
-                  <Check className="w-3.5 h-3.5 text-primary shrink-0" />
+                <li key={i} dir="rtl" className="flex items-center gap-2 px-3 py-2 border-b border-line last:border-0">
+                  <Check className="w-3.5 h-3.5 text-pos6 shrink-0" />
                   <span className="text-sm flex-1">{f}</span>
-                  <button onClick={() => removeFeatureAr(i)} className="text-on-surface-variant/50 hover:text-error transition-colors">
+                  <button onClick={() => removeFeatureAr(i)} className="text-on-surface-variant hover:text-error transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </li>
@@ -309,11 +305,11 @@ const EditPlanModal = ({
                 onChange={e => setNewFeatureAr(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addFeatureAr())}
                 placeholder={t('plans.manager.addFeaturePlaceholderAr')}
-                className="flex-1 bg-surface-container border border-outline-variant rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+                className="ds-input flex-1 w-auto min-w-0"
               />
               <button
                 onClick={addFeatureAr}
-                className="px-4 py-2.5 bg-primary/10 text-primary rounded-2xl hover:bg-primary/20 transition-colors"
+                className="ds-btn ds-btn-secondary ds-btn-icon"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -323,7 +319,7 @@ const EditPlanModal = ({
           <AnimatePresence>
             {error && (
               <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="text-sm text-error bg-error/5 border border-error/20 rounded-xl px-4 py-3">
+                className="text-[13px] bg-neg1 text-neg7 rounded-xl px-3.5 py-2.5">
                 {error}
               </motion.p>
             )}
@@ -331,14 +327,14 @@ const EditPlanModal = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-container shrink-0">
-          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-colors">
+        <div className="px-6 py-4 border-t border-line flex justify-end gap-2 shrink-0">
+          <button onClick={onClose} className="ds-btn ds-btn-outline">
             {t('common.cancel')}
           </button>
           <button
             onClick={handleSave}
             disabled={loading}
-            className="px-5 py-2.5 rounded-xl btn-gradient text-white text-sm font-bold hover:opacity-95 transition-all disabled:opacity-60 flex items-center gap-2"
+            className="ds-btn ds-btn-primary"
           >
             {loading
               ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{t('common.saving')}</>
@@ -369,68 +365,68 @@ const PlanCard = ({
   const displayFeatures = isAr && plan.featuresAr?.length ? plan.featuresAr : plan.features;
 
   return (
-    <div className={`relative flex flex-col rounded-3xl border p-6 transition-all ${
+    <div className={`ds-card ds-card-pad relative flex flex-col h-full transition-colors ${
       plan.popular
-        ? 'bg-primary text-on-primary border-primary shadow-2xl shadow-primary/25'
-        : 'bg-surface-container-low border-outline-variant hover:border-outline'
+        ? 'border-primary ring-1 ring-primary'
+        : 'hover:border-outline'
     } ${!plan.active ? 'opacity-50' : ''}`}>
 
       {plan.popular && (
-        <div className="absolute -top-3 start-1/2 -translate-x-1/2 bg-white text-primary text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md border border-primary/20 whitespace-nowrap">
-          {t('landing.mostPopular')}
+        <div className="absolute -top-2.5 inset-x-0 flex justify-center pointer-events-none">
+          <span className="ds-chip bg-primary text-on-primary">{t('landing.mostPopular')}</span>
         </div>
       )}
 
       {!plan.active && (
-        <div className="absolute -top-3 end-4 bg-error/10 text-error text-[10px] font-bold px-3 py-1 rounded-full border border-error/20">
-          {t('common.inactive')}
+        <div className="absolute -top-2.5 end-4">
+          <span className="ds-chip ds-chip-neutral border border-line">{t('common.inactive')}</span>
         </div>
       )}
 
       <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${plan.popular ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="ds-icon-tile">
             {PLAN_ICONS[plan.key] ?? <Star className="w-5 h-5" />}
           </div>
-          <div>
-            <h3 className={`font-extrabold ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>{displayName}</h3>
-            <p className={`text-[11px] font-mono ${plan.popular ? 'text-on-primary/60' : 'text-on-surface-variant'}`}>{plan.key}</p>
+          <div className="min-w-0">
+            <h3 className="ds-section-title truncate">{displayName}</h3>
+            <p className="text-[11px] font-mono text-on-surface-variant">{plan.key}</p>
           </div>
         </div>
         <button
           onClick={onEdit}
-          className={`p-2 rounded-xl transition-colors ${plan.popular ? 'hover:bg-white/20 text-on-primary' : 'hover:bg-surface-container text-on-surface-variant'}`}
+          className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm text-on-surface-variant"
         >
           <Pencil className="w-4 h-4" />
         </button>
       </div>
 
       {/* Billing toggle */}
-      <div className="inline-flex items-center self-start mb-4 bg-black/10 rounded-xl p-0.5 gap-0.5">
+      <div className="ds-seg self-start mb-4">
         {(['monthly', 'annual'] as Billing[]).map(b => (
           <button key={b} onClick={() => setBilling(b)}
-            className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${billing === b ? (plan.popular ? 'bg-white/25 text-on-primary' : 'bg-primary text-white') : (plan.popular ? 'text-on-primary/70' : 'text-on-surface-variant')}`}>
+            className={`ds-seg-item h-7 text-xs ${billing === b ? 'ds-seg-item-active' : ''}`}>
             {b === 'monthly' ? t('common.monthly') : t('common.annual')}
           </button>
         ))}
       </div>
 
-      <div className={`text-4xl font-extrabold leading-none mb-1 ${plan.popular ? 'text-on-primary' : 'text-on-surface'}`}>
+      <div className="font-display font-bold tabular text-4xl leading-none tracking-[-0.02em] text-on-surface mb-1">
         ${price}
-        <span className={`text-sm font-normal ms-1 ${plan.popular ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>{t('landing.perMonth')}</span>
+        <span className="font-sans text-sm font-normal tracking-normal ms-1 text-on-surface-variant">{t('landing.perMonth')}</span>
       </div>
 
-      <p className={`text-xs mb-4 mt-1 ${plan.popular ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>{displayDescription}</p>
+      <p className="text-xs mb-4 mt-1.5 text-on-surface-variant">{displayDescription}</p>
 
-      <div className={`text-xs font-semibold mb-4 px-3 py-2 rounded-xl ${plan.popular ? 'bg-white/15' : 'bg-primary/8 text-primary'}`}>
+      <div className="text-xs font-semibold mb-4 px-3 py-2 rounded-xl bg-acc-soft text-acc">
         {t('plans.manager.restaurantsAllowed', { count: limitLabel })}
       </div>
 
       <ul className="space-y-2 flex-1">
         {plan.features.map((f, i) => (
-          <li key={i} className={`flex items-center gap-2 text-xs ${plan.popular ? 'text-on-primary/90' : 'text-on-surface'}`}>
-            <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${plan.popular ? 'bg-white/25' : 'bg-primary/10'}`}>
-              <Check className={`w-2.5 h-2.5 ${plan.popular ? 'text-white' : 'text-primary'}`} />
+          <li key={i} className="flex items-center gap-2 text-xs text-on-surface">
+            <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 bg-pos1">
+              <Check className="w-2.5 h-2.5 text-pos7" />
             </div>
             {f}
           </li>
@@ -477,32 +473,35 @@ export const PlansManager = () => {
     setPlans(prev => prev.map(p => (p.key === updated.key ? updated : p)));
 
   return (
-    <div>
-      <div className="mb-8">
-        <h2 className="text-2xl font-extrabold font-headline">{t('plans.manager.heading')}</h2>
-        <p className="text-on-surface-variant text-sm mt-1">{t('plans.manager.subtext')}</p>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="ds-page-title">{t('plans.manager.heading')}</h1>
+          <p className="ds-page-sub">{t('plans.manager.subtext')}</p>
+        </div>
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center py-20 gap-3 text-on-surface-variant">
-          <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <div className="flex items-center justify-center py-20 gap-3 text-sm text-on-surface-variant">
+          <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
           <span>{t('plans.manager.loading')}</span>
         </div>
       )}
 
       {error && !loading && (
-        <div className="text-center py-20">
-          <p className="text-error mb-4">{error}</p>
-          <button onClick={loadPlans} className="px-5 py-2.5 rounded-xl btn-gradient text-white text-sm font-bold">
+        <div className="ds-empty">
+          <AlertCircle className="w-8 h-8 opacity-40" />
+          <p className="text-sm text-error">{error}</p>
+          <button onClick={loadPlans} className="ds-btn ds-btn-primary ds-btn-sm mt-2">
             {t('plans.manager.retry')}
           </button>
         </div>
       )}
 
       {!loading && !error && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
           {plans.map(plan => (
-            <motion.div key={plan.key} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+            <motion.div key={plan.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
               <PlanCard plan={plan} onEdit={() => setEditing(plan)} />
             </motion.div>
           ))}

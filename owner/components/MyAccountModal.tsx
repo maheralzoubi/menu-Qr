@@ -60,57 +60,57 @@ export const MyAccountModal = ({ onClose }: Props) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="ds-backdrop">
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
+        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.15 }}
-        className="bg-surface rounded-3xl border border-surface-container w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-surface-container shrink-0">
-          <h3 className="font-extrabold text-lg">{t('account.title')}</h3>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-container transition-colors">
-            <X className="w-5 h-5" />
+        className="ds-modal max-w-lg flex flex-col overflow-hidden">
+        <div className="px-6 py-4 border-b border-line flex items-center justify-between shrink-0">
+          <h3 className="ds-section-title">{t('account.title')}</h3>
+          <button onClick={onClose} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {loading ? (
-          <div className="px-6 py-10 text-center text-on-surface-variant text-sm">{t('account.loading')}</div>
+          <div className="p-6 py-10 text-center text-on-surface-variant text-sm">{t('account.loading')}</div>
         ) : (
-          <form onSubmit={handleSave} className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('account.fullName')}</label>
+          <form onSubmit={handleSave} className="overflow-y-auto flex-1 p-6 space-y-4">
+            <div>
+              <label className="ds-label">{t('account.fullName')}</label>
               <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                className="ds-input" />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('account.emailAddress')}</label>
+            <div>
+              <label className="ds-label">{t('account.emailAddress')}</label>
               <input type="email" dir="ltr" value={profile?.email ?? ''} disabled
-                className="w-full bg-surface-container-high border-none rounded-2xl px-5 py-4 text-sm text-on-surface-variant/60 cursor-not-allowed" />
+                className="ds-input bg-surface-container-low text-on-surface-variant cursor-not-allowed" />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('account.phoneNumber')}</label>
+            <div>
+              <label className="ds-label">{t('account.phoneNumber')}</label>
               <PhoneInput value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} placeholder="555 000 0000" />
             </div>
 
-            <div className="pt-3 border-t border-surface-container">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-1.5 mb-1.5">
+            <div className="pt-4 border-t border-line">
+              <label className="ds-label flex items-center gap-1.5">
                 <Lock className="w-3 h-3" /> {t('account.newPassword')}
               </label>
               <input type="password" value={form.newPassword} onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
                 placeholder={t('account.newPasswordPlaceholder')}
-                className="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+                className="ds-input" />
             </div>
 
-            {error && <p className="text-sm text-error bg-error/5 border border-error/20 rounded-xl px-4 py-3">{error}</p>}
-            {saved && <p className="text-sm text-primary bg-primary/5 border border-primary/20 rounded-xl px-4 py-3">{t('account.saved')}</p>}
+            {error && <p className="text-[13px] bg-neg1 text-neg7 rounded-xl px-3.5 py-2.5">{error}</p>}
+            {saved && <p className="text-[13px] bg-pos1 text-pos7 rounded-xl px-3.5 py-2.5">{t('account.saved')}</p>}
           </form>
         )}
 
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-container shrink-0">
-          <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl border border-outline-variant text-sm font-semibold hover:bg-surface-container transition-colors">
+        <div className="px-6 py-4 border-t border-line flex justify-end gap-2 shrink-0">
+          <button type="button" onClick={onClose} className="ds-btn ds-btn-outline">
             {t('common.cancel')}
           </button>
           <button onClick={handleSave as any} disabled={saving || loading}
-            className="px-5 py-2.5 rounded-xl btn-gradient text-white text-sm font-bold hover:opacity-95 transition-all disabled:opacity-60 flex items-center gap-2">
+            className="ds-btn ds-btn-primary">
             {saving
               ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{t('common.saving')}</>
               : <><Check className="w-4 h-4" />{t('account.save')}</>}

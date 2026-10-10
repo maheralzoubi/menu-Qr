@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search, Filter, Calendar, ChevronLeft, ChevronRight,
-  Package, User, X, Download, Inbox,
+  Package, User, X, Download, Inbox, ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
@@ -21,14 +21,14 @@ const STATUS_OPTIONS = ['', 'Pending', 'Preparing', 'Ready', 'Delivered'];
 const STATUS_LABEL_KEY: Record<string, string> = { Pending: 'pending', Preparing: 'preparing', Ready: 'ready', Delivered: 'delivered', Cancelled: 'cancelled' };
 const PAGE_SIZE = 50;
 
-const statusStyle = (s: string) => {
-  switch (s) {
-    case 'Delivered': return 'bg-primary/10 text-primary';
-    case 'Preparing': return 'bg-primary/10 text-primary';
-    case 'Ready':     return 'bg-primary/15 text-primary';
-    default:          return 'bg-[#303942]/10 text-[#303942]';
-  }
+const STATUS_CHIP: Record<string, string> = {
+  Pending:   'ds-chip-warn',
+  Preparing: 'ds-chip-info',
+  Ready:     'ds-chip-pos',
+  Delivered: 'ds-chip-neutral',
+  Cancelled: 'ds-chip-neg',
 };
+const statusStyle = (s: string) => STATUS_CHIP[s] ?? 'ds-chip-neutral';
 
 export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
   const { t, i18n } = useTranslation();
@@ -112,22 +112,20 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
   const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
 
   return (
-    <div className="flex flex-col lg:flex-row h-full gap-6 lg:gap-10">
-      <div className="flex-1 space-y-6 lg:space-y-8 overflow-y-auto no-scrollbar lg:pe-2 min-w-0">
+    <div className="flex flex-col lg:flex-row h-full gap-6">
+      <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar lg:pe-2 min-w-0">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <button onClick={onBack}
-              className="flex items-center gap-1 text-sm text-on-surface-variant hover:text-on-surface mb-3 transition-colors">
-              <ChevronLeft className="w-4 h-4 rtl:scale-x-[-1]" /> {t('orderArchive.backToOrders')}
+            <button onClick={onBack} className="ds-btn ds-btn-ghost ds-btn-sm -ms-3 mb-2 text-on-surface-variant hover:text-on-surface">
+              <ChevronLeft className="w-4 h-4 rtl:-scale-x-100" /> {t('orderArchive.backToOrders')}
             </button>
-            <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('orderArchive.heading')}</h2>
-            <p className="text-on-surface-variant font-medium">
+            <h1 className="ds-page-title">{t('orderArchive.heading')}</h1>
+            <p className="ds-page-sub">
               {result ? t('orderArchive.archivedCount', { total: result.total.toLocaleString() }) : t('orderArchive.loading')}
             </p>
           </div>
-          <button onClick={handleExportCSV} disabled={!orders.length}
-            className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high rounded-xl font-bold text-sm hover:bg-surface-variant disabled:opacity-40 transition-colors shrink-0">
+          <button onClick={handleExportCSV} disabled={!orders.length} className="ds-btn ds-btn-outline ds-btn-sm shrink-0">
             <Download className="w-4 h-4" /> {t('orderArchive.exportCsv')}
           </button>
         </div>
@@ -140,45 +138,45 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
               { labelKey: 'orderArchive.shown',       value: orders.length.toLocaleString() },
               { labelKey: 'orderArchive.revenuePage', value: formatCurrency(totalRevenue, currency) },
             ].map(s => (
-              <div key={s.labelKey} className="bg-surface-container-low rounded-2xl p-3 sm:p-5 shadow-sm border border-outline-variant/10">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-1">{t(s.labelKey)}</p>
-                <p className="text-lg sm:text-2xl font-headline font-extrabold">{s.value}</p>
+              <div key={s.labelKey} className="ds-card p-3.5 sm:p-5 min-w-0">
+                <p className="ds-metric-lbl truncate">{t(s.labelKey)}</p>
+                <p className="ds-metric-val tabular mt-1 text-lg sm:text-[28px] truncate">{s.value}</p>
               </div>
             ))}
           </div>
         )}
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-[160px] sm:flex-none">
-            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/40" />
+        <div className="ds-card p-3 flex flex-wrap gap-2 items-center">
+          <div className="relative flex-1 min-w-[160px] sm:flex-none sm:w-56">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
             <input type="text" placeholder={t('orderArchive.searchPlaceholder')} value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-surface-container-high border-none rounded-xl py-2.5 ps-10 pe-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none sm:w-56" />
+              className="ds-input h-9 ps-9 pe-8" />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 hover:text-on-surface">
+              <button onClick={() => setSearch('')} className="absolute end-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
-          <div className="relative flex items-center gap-1">
-            <Filter className="w-4 h-4 text-on-surface-variant/40 absolute start-3" />
+          <div className="relative flex items-center">
+            <Filter className="w-4 h-4 text-on-surface-variant absolute start-3 pointer-events-none" />
             <select value={status} onChange={e => setStatus(e.target.value)}
-              className="bg-surface-container-high border-none rounded-xl py-2.5 ps-9 pe-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none">
+              className="ds-select h-9 w-auto ps-9">
               <option value="">{t('orderArchive.allStatuses')}</option>
               {STATUS_OPTIONS.filter(Boolean).map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
             </select>
           </div>
           <input type="text" placeholder={t('orderArchive.tablePlaceholder')} value={tableNumber}
             onChange={e => setTableNumber(e.target.value)}
-            className="bg-surface-container-high border-none rounded-xl py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none w-28" />
+            className="ds-input h-9 w-28" />
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-on-surface-variant/40 shrink-0" />
+            <Calendar className="w-4 h-4 text-on-surface-variant shrink-0" />
             <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-              className="bg-surface-container-high border-none rounded-xl py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none" />
-            <span className="text-on-surface-variant text-sm">→</span>
+              className="ds-input h-9 w-auto" />
+            <ArrowRight className="w-4 h-4 text-on-surface-variant shrink-0 rtl:-scale-x-100" />
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-              className="bg-surface-container-high border-none rounded-xl py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none" />
+              className="ds-input h-9 w-auto" />
           </div>
           {[
             { labelKey: 'orderArchive.today', days: 0 },
@@ -189,13 +187,13 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
               const from = new Date(); from.setDate(from.getDate() - days);
               setDateFrom(from.toISOString().slice(0, 10));
               setDateTo(new Date().toISOString().slice(0, 10));
-            }} className="px-3 py-2.5 bg-surface-container-high rounded-xl text-xs font-bold hover:bg-surface-variant transition-colors">
+            }} className="ds-btn ds-btn-secondary ds-btn-sm">
               {t(labelKey)}
             </button>
           ))}
           {(search || status || dateFrom || dateTo || tableNumber) && (
             <button onClick={() => { setSearch(''); setStatus(''); setDateFrom(''); setDateTo(''); setTableNumber(''); }}
-              className="px-3 py-2.5 text-xs font-bold text-error hover:bg-error/10 rounded-xl transition-colors">
+              className="ds-btn ds-btn-ghost ds-btn-sm text-error">
               {t('orderArchive.clearAll')}
             </button>
           )}
@@ -203,80 +201,73 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
 
         {/* Orders list */}
         {isLoading ? (
-          <div className="space-y-3">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-16 bg-surface-container-low rounded-2xl animate-pulse" />)}</div>
+          <div className="space-y-2">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-12 bg-surface-container rounded-2xl animate-pulse" />)}</div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-24 text-on-surface-variant/40 space-y-3">
-            <Inbox className="w-12 h-12 mx-auto opacity-30" />
-            <p className="font-bold text-lg">{t('orderArchive.noArchived')}</p>
-            <p className="text-sm">{t('orderArchive.adjustFilters')}</p>
+          <div className="ds-empty">
+            <Inbox className="w-8 h-8 opacity-40" />
+            <p className="text-sm font-semibold text-on-surface">{t('orderArchive.noArchived')}</p>
+            <p className="text-[13px]">{t('orderArchive.adjustFilters')}</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            <AnimatePresence mode="popLayout">
-              {orders.map((order, i) => (
-                <motion.div key={order._id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-                  onClick={() => selectOrder(order)}
-                  className={`group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 p-4 sm:p-5 bg-surface-container-low rounded-2xl border border-outline-variant/10 hover:bg-surface-container-lowest hover:shadow-lg transition-all cursor-pointer ${
-                    selectedOrder?._id === order._id ? 'ring-2 ring-primary' : ''
-                  }`}>
-                  <div className="flex items-center gap-3 sm:contents">
-                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0 sm:me-5">
-                      <Package className="w-5 h-5 text-on-surface-variant/60" />
-                    </div>
-                    <div className="sm:hidden min-w-0 flex-1">
-                      <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
-                      <p className="text-xs text-on-surface-variant truncate">{order.customerName || t('orders.guest')}</p>
-                    </div>
-                    <span className={`sm:hidden shrink-0 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyle(order.status)}`}>{statusLabel(order.status)}</span>
-                  </div>
-                  <div className="flex-1 grid grid-cols-2 sm:grid-cols-6 gap-3 min-w-0">
-                    <div className="hidden sm:block">
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.orderId')}</p>
-                      <p className="font-mono font-bold text-sm">#{order._id.slice(-6).toUpperCase()}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.date')}</p>
-                      <p className="font-bold text-sm">{new Date(order.createdAt).toLocaleDateString()}</p>
-                      <p className="text-[10px] text-on-surface-variant">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.tableLabel')}</p>
-                      <p className="font-bold text-sm">{order.tableNumber || '—'}</p>
-                    </div>
-                    <div className="hidden sm:block">
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.customerLabel')}</p>
-                      <p className="font-bold text-sm truncate">{order.customerName || t('orders.guest')}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.itemsLabel')}</p>
-                      <p className="font-bold text-sm">{order.items.length} {t('orders.items')}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t('orderArchive.totalLabel')}</p>
-                      <p className="font-bold text-sm text-primary">{formatCurrency(order.total, currency)}</p>
-                    </div>
-                  </div>
-                  <div className="sm:ms-4 flex items-center gap-3 shrink-0">
-                    <span className={`hidden sm:inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyle(order.status)}`}>{statusLabel(order.status)}</span>
-                    <ChevronRight className="hidden sm:block w-4 h-4 text-on-surface-variant/30 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:scale-x-[-1]" />
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+          <div className="ds-card p-0 overflow-x-auto">
+            <table className="ds-table">
+              <thead>
+                <tr>
+                  <th>{t('orderArchive.orderId')}</th>
+                  <th>{t('orderArchive.date')}</th>
+                  <th>{t('orderArchive.tableLabel')}</th>
+                  <th>{t('orderArchive.customerLabel')}</th>
+                  <th>{t('orderArchive.itemsLabel')}</th>
+                  <th className="text-end">{t('orderArchive.totalLabel')}</th>
+                  <th>{t('orderArchive.statusLabel')}</th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {orders.map((order, i) => (
+                    <motion.tr key={order._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
+                      onClick={() => selectOrder(order)}
+                      className={`group cursor-pointer ${selectedOrder?._id === order._id ? 'bg-acc-soft' : ''}`}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center shrink-0">
+                            <Package className="w-4 h-4 text-on-surface-variant" />
+                          </div>
+                          <span className="font-mono font-semibold whitespace-nowrap">#{order._id.slice(-6).toUpperCase()}</span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap">
+                        <p className="font-medium">{new Date(order.createdAt).toLocaleDateString()}</p>
+                        <p className="text-[11px] text-on-surface-variant tabular">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                      </td>
+                      <td className="font-medium whitespace-nowrap">{order.tableNumber || '—'}</td>
+                      <td className="max-w-[180px] truncate">{order.customerName || t('orders.guest')}</td>
+                      <td className="whitespace-nowrap text-on-surface-variant">{order.items.length} {t('orders.items')}</td>
+                      <td className="tabular text-end font-semibold whitespace-nowrap">{formatCurrency(order.total, currency)}</td>
+                      <td><span className={`ds-chip ${statusStyle(order.status)}`}>{statusLabel(order.status)}</span></td>
+                      <td className="text-end">
+                        <ChevronRight className="inline-block w-4 h-4 text-on-surface-variant rtl:-scale-x-100" />
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
           </div>
         )}
 
         {/* Pagination */}
         {result && result.pages > 1 && (
-          <div className="flex items-center justify-center gap-3 py-4">
+          <div className="flex items-center justify-center gap-3 py-2">
             <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-              className="p-2 rounded-xl bg-surface-container-high disabled:opacity-30 hover:bg-surface-variant transition-colors">
-              <ChevronLeft className="w-4 h-4 rtl:scale-x-[-1]" />
+              className="ds-btn ds-btn-outline ds-btn-icon ds-btn-sm">
+              <ChevronLeft className="w-4 h-4 rtl:-scale-x-100" />
             </button>
-            <span className="text-sm font-bold">{t('orderArchive.pagination', { page: result.page, pages: result.pages })}</span>
+            <span className="text-[13px] font-medium text-on-surface-variant tabular">{t('orderArchive.pagination', { page: result.page, pages: result.pages })}</span>
             <button disabled={page >= result.pages} onClick={() => setPage(p => p + 1)}
-              className="p-2 rounded-xl bg-surface-container-high disabled:opacity-30 hover:bg-surface-variant transition-colors">
-              <ChevronRight className="w-4 h-4 rtl:scale-x-[-1]" />
+              className="ds-btn ds-btn-outline ds-btn-icon ds-btn-sm">
+              <ChevronRight className="w-4 h-4 rtl:-scale-x-100" />
             </button>
           </div>
         )}
@@ -287,79 +278,79 @@ export const OrderArchive = ({ onBack }: { onBack: () => void }) => {
         <AnimatePresence mode="wait">
           {selectedOrder ? (
             <motion.div key={selectedOrder._id}
-              initial={{ opacity: 0, x: isRTL ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
-              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full lg:h-auto bg-surface-container-low lg:rounded-4xl p-5 sm:p-8 flex flex-col shadow-2xl shadow-primary/5 lg:sticky lg:top-0 overflow-y-auto">
-              <div className="flex justify-between items-start mb-6 lg:mb-8">
-                <div>
-                  <h3 className="text-xl font-headline font-extrabold tracking-tight">{t('orderArchive.detailHeading')}</h3>
-                  <p className="font-mono text-xs text-on-surface-variant mt-0.5">#{selectedOrder._id.toUpperCase()}</p>
+              initial={{ opacity: 0, x: isRTL ? -8 : 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isRTL ? -8 : 8 }}
+              className="fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full lg:h-auto bg-card lg:border lg:border-line lg:rounded-2xl lg:shadow-sm flex flex-col lg:sticky lg:top-0 overflow-y-auto">
+              <div className="px-5 py-4 border-b border-line flex justify-between items-start gap-3 shrink-0">
+                <div className="min-w-0">
+                  <h3 className="ds-section-title">{t('orderArchive.detailHeading')}</h3>
+                  <p className="font-mono text-xs text-on-surface-variant mt-0.5 truncate">#{selectedOrder._id.toUpperCase()}</p>
                 </div>
-                <button onClick={closeOrder} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
-                  <X className="w-5 h-5" />
+                <button onClick={closeOrder} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm shrink-0">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="space-y-6 overflow-y-auto no-scrollbar">
-                <div className="flex items-center gap-3 bg-surface-container-lowest p-4 rounded-2xl">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <div className="p-5 space-y-6 overflow-y-auto no-scrollbar">
+                <div className="ds-inset p-3.5 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-acc-soft text-acc flex items-center justify-center shrink-0">
                     <User className="w-5 h-5" />
                   </div>
-                  <div>
-                    <p className="font-bold text-sm">{selectedOrder.customerName || t('orders.guest')}</p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm text-on-surface">{selectedOrder.customerName || t('orders.guest')}</p>
                     <p className="text-xs text-on-surface-variant">
                       {selectedOrder.tableNumber ? `${t('orders.table')} ${selectedOrder.tableNumber}` : selectedOrder.address || '—'}
                     </p>
                   </div>
-                  <span className={`ms-auto px-3 py-1 rounded-full text-[10px] font-bold uppercase ${statusStyle(selectedOrder.status)}`}>
+                  <span className={`ms-auto ds-chip ${statusStyle(selectedOrder.status)}`}>
                     {statusLabel(selectedOrder.status)}
                   </span>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">{t('orderArchive.items')}</p>
-                  <div className="space-y-2">
+                <div className="space-y-2">
+                  <p className="ds-overline">{t('orderArchive.items')}</p>
+                  <div className="ds-inset px-3.5">
                     {selectedOrder.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-surface-container-lowest p-3 rounded-xl">
-                        <div className="flex items-center gap-2">
-                          <span className="w-7 h-7 rounded-lg bg-surface-container-high flex items-center justify-center font-bold text-xs">{item.quantity}x</span>
-                          <span className="font-semibold text-sm">{item.name}</span>
+                      <div key={idx} className="flex justify-between items-center gap-3 py-3 border-b border-line last:border-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-7 h-7 rounded-lg bg-card border border-line flex items-center justify-center font-semibold text-xs tabular shrink-0">{item.quantity}x</span>
+                          <span className="font-medium text-sm text-on-surface">{item.name}</span>
                         </div>
-                        <span className="font-bold text-sm">{formatCurrency(item.price * item.quantity, currency)}</span>
+                        <span className="font-semibold text-sm tabular text-on-surface shrink-0">{formatCurrency(item.price * item.quantity, currency)}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="bg-primary/5 p-5 rounded-2xl space-y-3 text-sm">
+                <div className="ds-inset p-4 space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">{t('orderArchive.subtotal')}</span>
-                    <span className="font-bold">{formatCurrency(selectedOrder.total + (selectedOrder.discount ?? 0), currency)}</span>
+                    <span className="font-semibold tabular">{formatCurrency(selectedOrder.total + (selectedOrder.discount ?? 0), currency)}</span>
                   </div>
                   {selectedOrder.discount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-on-surface-variant">{t('orderArchive.discount')} {selectedOrder.promoCode ? `(${selectedOrder.promoCode})` : ''}</span>
-                      <span className="font-bold text-primary">-{formatCurrency(selectedOrder.discount, currency)}</span>
+                      <span className="font-semibold tabular text-pos6">-{formatCurrency(selectedOrder.discount, currency)}</span>
                     </div>
                   )}
-                  <div className="h-px bg-primary/10" />
+                  <div className="h-px bg-line" />
                   <div className="flex justify-between items-center">
-                    <span className="font-bold">{t('orderArchive.total')}</span>
-                    <span className="text-xl font-headline font-extrabold text-primary">{formatCurrency(selectedOrder.total, currency)}</span>
+                    <span className="font-semibold text-on-surface">{t('orderArchive.total')}</span>
+                    <span className="text-xl font-display font-bold tabular text-on-surface">{formatCurrency(selectedOrder.total, currency)}</span>
                   </div>
                 </div>
                 <div className="space-y-1.5 text-xs text-on-surface-variant">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-3">
                     <span>{t('orderArchive.orderedAt')}</span>
-                    <span className="font-medium">{new Date(selectedOrder.createdAt).toLocaleString()}</span>
+                    <span className="font-medium text-on-surface tabular">{new Date(selectedOrder.createdAt).toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-3">
                     <span>{t('orderArchive.archivedAt')}</span>
-                    <span className="font-medium">{new Date(selectedOrder.archivedAt).toLocaleString()}</span>
+                    <span className="font-medium text-on-surface tabular">{new Date(selectedOrder.archivedAt).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
             </motion.div>
           ) : (
-            <div className="hidden lg:flex bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-4xl flex-col items-center justify-center p-12 text-center text-on-surface-variant/40 h-64">
-              <Package className="w-12 h-12 mb-3 opacity-20" />
-              <p className="font-bold text-sm">{t('orderArchive.selectOrder')}</p>
+            <div className="hidden lg:flex ds-empty h-64">
+              <Package className="w-8 h-8 opacity-40" />
+              <p className="text-sm font-semibold text-on-surface">{t('orderArchive.selectOrder')}</p>
             </div>
           )}
         </AnimatePresence>

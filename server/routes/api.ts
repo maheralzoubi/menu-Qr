@@ -21,33 +21,45 @@ import { createPromoCodeSchema, validatePromoCodeSchema } from '../schemas/promo
 import { Restaurant } from '../models/Restaurant';
 import { Review } from '../models/Review';
 import { getIO } from '../socket/index';
+import Anthropic from '@anthropic-ai/sdk';
+import { ApiError as GeminiApiError } from '@google/genai';
+import { chatSchema } from '../schemas/chat.schema';
+import { runChat, chatEnabled } from '../services/chatService';
 
 const router = Router();
+
+// Whether a restaurant is accepting orders right now, in its own timezone.
+function isRestaurantOpen(r: { status: string; openTime?: string; closeTime?: string; timezone?: string }): boolean {
+  if (r.status !== 'active') return false;
+  if (!r.openTime || !r.closeTime) return true;
+  const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const now = new Date();
+  let nowMins = now.getUTCHours() * 60 + now.getUTCMinutes();
+  try {
+    const localTime = new Intl.DateTimeFormat('en-GB', { timeZone: r.timezone || 'UTC', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+    nowMins = toMins(localTime);
+  } catch { /* invalid timezone — fall back to UTC */ }
+  const open = toMins(r.openTime), close = toMins(r.closeTime);
+  // Hours that cross midnight (e.g. 11:00 – 01:00)
+  return close < open ? nowMins >= open || nowMins <= close : nowMins >= open && nowMins <= close;
+}
+
+async function reviewStats(restaurantId: unknown) {
+  const reviews = await Review.find({ restaurantId }).select('rating');
+  const averageRating = reviews.length > 0
+    ? parseFloat((reviews.reduce((s, rv) => s + rv.rating, 0) / reviews.length).toFixed(1))
+    : 0;
+  return { averageRating, reviewCount: reviews.length };
+}
 
 // All restaurants — public (for restaurant discovery list)
 router.get('/restaurants/public', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const restaurants = await Restaurant.find().select('name logo address status cuisine currency openTime closeTime prepTime timezone').sort({ name: 1 });
-
-    const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-    const now = new Date();
+    const restaurants = await Restaurant.find().select('name logo address status cuisine currency openTime closeTime prepTime timezone primaryColor').sort({ name: 1 });
 
     const results = await Promise.all(restaurants.map(async (r) => {
-      const reviews = await Review.find({ restaurantId: r._id }).select('rating');
-      const averageRating = reviews.length > 0
-        ? parseFloat((reviews.reduce((s, rv) => s + rv.rating, 0) / reviews.length).toFixed(1))
-        : 0;
-      // Compute current time in the restaurant's own timezone
-      let nowMins = now.getUTCHours() * 60 + now.getUTCMinutes();
-      try {
-        const localTime = new Intl.DateTimeFormat('en-GB', { timeZone: r.timezone || 'UTC', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
-        nowMins = toMins(localTime);
-      } catch { /* invalid timezone — fall back to UTC */ }
-      const withinHours = r.openTime && r.closeTime
-        ? nowMins >= toMins(r.openTime) && nowMins <= toMins(r.closeTime)
-        : true;
-      const isOpen = r.status === 'active' && withinHours;
-      return { _id: r._id, name: r.name, logo: r.logo, address: r.address, status: r.status, cuisine: r.cuisine ?? [], currency: r.currency ?? 'USD', isOpen, prepTime: r.prepTime ?? null, openTime: r.openTime ?? null, closeTime: r.closeTime ?? null, timezone: r.timezone ?? 'UTC', averageRating };
+      const { averageRating, reviewCount } = await reviewStats(r._id);
+      return { _id: r._id, name: r.name, logo: r.logo, address: r.address, status: r.status, cuisine: r.cuisine ?? [], currency: r.currency ?? 'USD', isOpen: isRestaurantOpen(r), prepTime: r.prepTime ?? null, openTime: r.openTime ?? null, closeTime: r.closeTime ?? null, timezone: r.timezone ?? 'UTC', primaryColor: r.primaryColor ?? '#fe5722', averageRating, reviewCount };
     }));
 
     res.json(results);
@@ -57,11 +69,59 @@ router.get('/restaurants/public', async (_req: Request, res: Response, next: Nex
 // Restaurant info — public (for customer app)
 router.get('/restaurants/:id/info', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const r = await Restaurant.findById(req.params.id).select('name logo status primaryColor currency');
+    const r = await Restaurant.findById(req.params.id).select('name logo status primaryColor currency address contactPhone cuisine openTime closeTime prepTime timezone');
     if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
     if (r.status === 'inactive') { res.status(403).json({ message: 'Restaurant is currently unavailable.' }); return; }
-    res.json({ name: r.name, logo: r.logo, status: r.status, primaryColor: r.primaryColor ?? '#fe5722', currency: r.currency ?? 'USD' });
+    const { averageRating, reviewCount } = await reviewStats(r._id);
+    res.json({
+      name: r.name, logo: r.logo, status: r.status, primaryColor: r.primaryColor ?? '#fe5722', currency: r.currency ?? 'USD',
+      address: r.address ?? '', contactPhone: r.contactPhone ?? '', cuisine: r.cuisine ?? [],
+      openTime: r.openTime ?? null, closeTime: r.closeTime ?? null, prepTime: r.prepTime ?? null,
+      isOpen: isRestaurantOpen(r), averageRating, reviewCount, chatEnabled: chatEnabled(),
+    });
   } catch (e) { next(e); }
+});
+
+// Chat assistant — public. Each message is a paid model call, so cap it per client.
+const chatHits = new Map<string, number[]>();
+function chatRateLimited(req: Request): boolean {
+  const key = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() || req.ip || 'unknown';
+  const now = Date.now();
+  const recent = (chatHits.get(key) ?? []).filter(t => now - t < 60_000);
+  recent.push(now);
+  chatHits.set(key, recent);
+  if (chatHits.size > 5000) for (const [k, v] of chatHits) if (v.every(t => now - t >= 60_000)) chatHits.delete(k);
+  return recent.length > 15;
+}
+
+router.post('/restaurants/:id/chat', validate(chatSchema), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!chatEnabled()) { res.status(503).json({ message: 'Chat is not available.' }); return; }
+    if (chatRateLimited(req)) { res.status(429).json({ message: 'Too many messages — please wait a moment.' }); return; }
+    const r = await Restaurant.findById(req.params.id).select('name status cuisine currency address openTime closeTime prepTime timezone');
+    if (!r) { res.status(404).json({ message: 'Restaurant not found' }); return; }
+    if (r.status === 'inactive') { res.status(403).json({ message: 'Restaurant is currently unavailable.' }); return; }
+    const result = await runChat({
+      restaurantId: r._id.toString(),
+      restaurant: { name: r.name, cuisine: r.cuisine ?? [], currency: r.currency ?? 'USD', address: r.address, openTime: r.openTime, closeTime: r.closeTime, prepTime: r.prepTime },
+      isOpen: isRestaurantOpen(r),
+      lang: req.body.lang,
+      table: req.body.table,
+      history: req.body.messages,
+      cart: req.body.cart,
+    });
+    res.json(result);
+  } catch (e) {
+    if (e instanceof GeminiApiError) {
+      console.error('Chat API error', e.status, e.message);
+      if (e.status === 429) { res.status(429).json({ message: 'The assistant is busy — please try again in a moment.' }); return; }
+      res.status(502).json({ message: 'The assistant is unavailable right now.' }); return;
+    }
+    if (e instanceof Error && e.name === 'AbortError') { console.error('Chat API timeout'); res.status(504).json({ message: 'The assistant took too long to answer — please try again.' }); return; }
+    if (e instanceof Anthropic.RateLimitError) { res.status(429).json({ message: 'The assistant is busy — please try again in a moment.' }); return; }
+    if (e instanceof Anthropic.APIError) { console.error('Chat API error', e.status, e.message); res.status(502).json({ message: 'The assistant is unavailable right now.' }); return; }
+    next(e);
+  }
 });
 
 // Restaurant branding — admin reads and updates their own restaurant

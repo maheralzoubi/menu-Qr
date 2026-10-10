@@ -15,6 +15,9 @@ export default defineConfig(({mode}) => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    optimizeDeps: {
+      include: ['@capacitor/core', '@capacitor/status-bar'],
+    },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
       proxy: {

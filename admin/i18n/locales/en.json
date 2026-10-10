@@ -1,5 +1,9 @@
 {
   "login": {
+    "brandContext": "Restaurant Admin",
+    "brandHeadline": "Run your restaurant from one screen.",
+    "brandBody": "Orders, menu, tables and payments — live, in one place. Arabic and English.",
+    "back": "Back",
     "title": "Admin Access",
     "subtitle": "Sign in to manage your restaurant",
     "emailLabel": "Email",
@@ -40,10 +44,14 @@
       "weakPassword": "Password must be at least 6 characters.",
       "passwordMismatch": "Passwords do not match.",
       "emailNotFound": "No account found with this email.",
+      "emailFailed": "We couldn't send the email. Please try again in a moment.",
       "generic": "Something went wrong. Please try again."
     }
   },
   "dashboard": {
+    "groups": { "operations": "Operations", "menuGrowth": "Menu & Growth", "insights": "Insights", "restaurant": "Restaurant" },
+    "shell": { "theme": "Toggle Light/Dark", "language": "Language", "collapse": "Collapse Sidebar", "menu": "Menu", "close": "Close" },
+    "viewMenu": "View Menu",
     "adminPanel": "Admin Panel",
     "restaurantManagement": "Restaurant Management",
     "tabs": {
@@ -89,6 +97,8 @@
     "totalReviews": "Total Reviews"
   },
   "orders": {
+    "pickupTime": "Pickup",
+    "types": { "DINE_IN": "Dine-in", "PICKUP": "Pickup", "TAKEAWAY": "Takeaway", "DELIVERY": "Delivery" },
     "heading": "Order Flow",
     "subtext": "Monitor and manage guest orders in real-time.",
     "searchPlaceholder": "Search Order ID or table...",

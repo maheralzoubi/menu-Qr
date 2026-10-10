@@ -18,6 +18,12 @@ export const env = {
   // Resend — all optional; server logs the verification link instead of sending if absent
   RESEND_API_KEY: process.env.RESEND_API_KEY ?? '',
   EMAIL_FROM: process.env.EMAIL_FROM ?? 'Menu Go <onboarding@resend.dev>',
+  // Restaurant chat assistant — optional; hidden unless one key is set.
+  // Claude (paid) wins if both are set; Gemini has a free tier.
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? '',
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? '',
+  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+  GEMINI_FALLBACK_MODEL: process.env.GEMINI_FALLBACK_MODEL ?? 'gemini-3.5-flash-lite',
   // Stripe — all optional; server skips Stripe if STRIPE_SECRET_KEY is absent
   STRIPE_SECRET_KEY:               process.env.STRIPE_SECRET_KEY ?? '',
   STRIPE_WEBHOOK_SECRET:           process.env.STRIPE_WEBHOOK_SECRET ?? '',

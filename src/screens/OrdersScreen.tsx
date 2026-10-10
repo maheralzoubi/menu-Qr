@@ -1,128 +1,167 @@
-import { useState, useEffect } from 'react';
-import { Package, ChevronRight, Clock } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useTranslation } from 'react-i18next';
-import { useFmt } from '../hooks/useCurrency';
-import { io } from 'socket.io-client';
+import { useEffect, useState } from 'react';
+import { ACTIVE_STATUSES, useApp, useMg, type Order } from '../contexts/AppContext';
+import { useNav } from '../navigation';
+import { useViewport } from '../hooks/useViewport';
+import { Sk, money } from '../components/mg/ui';
+import { describeOrder } from '../components/mg/orderView';
 
-interface Props {
-  onOpenTracking: (orderId: string) => void;
-}
+export const OrdersScreen = () => {
+  const tm = useMg();
+  const nav = useNav();
+  const { mid } = useViewport();
+  const { orders, ordersLoading, restaurantById, refreshOrders } = useApp();
+  const [tab, setTab] = useState<'active' | 'past'>('active');
 
-type Tab = 'current' | 'past';
+  // Statuses may have moved on while the app was in the background.
+  useEffect(() => { refreshOrders(); }, [refreshOrders]);
 
-const STATUS_COLORS: Record<string, string> = {
-  Pending:   'bg-surface-container-high text-on-surface-variant',
-  Preparing: 'bg-primary/20 text-primary',
-  Ready:     'bg-primary/30 text-primary',
-  Delivered: 'bg-primary/20 text-primary',
-  Cancelled: 'bg-surface-container-high text-on-surface-variant',
-};
+  const active = orders.filter(o => ACTIVE_STATUSES.includes(o.status));
+  const past = orders.filter(o => !ACTIVE_STATUSES.includes(o.status));
+  const view = (o: Order) => {
+    const r = restaurantById(o.restaurantId);
+    return { ...describeOrder(o, tm), rest: r?.name ?? '—', total: money(o.total, r?.currency) };
+  };
+  const track = (o: Order) => nav.go({ name: 'track', orderId: o._id });
+  const reorder = (o: Order) => nav.go({ name: 'rest', id: o.restaurantId });
 
-const ACTIVE_STATUSES = ['Pending', 'Preparing', 'Ready'];
+  const tabs = [
+    { k: 'active' as const, label: `${tm('active')} (${active.length})` },
+    { k: 'past' as const, label: `${tm('past')} (${past.length})` },
+  ];
 
-export const OrdersScreen = ({ onOpenTracking }: Props) => {
-  const { t, i18n } = useTranslation();
-  const fmt = useFmt();
-  const isRTL = i18n.language === 'ar';
-
-  const [tab, setTab] = useState<Tab>('current');
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    try {
-      const raw = JSON.parse(localStorage.getItem('order_history') || '[]');
-      const history = raw.map((e: any) => typeof e === 'string' ? e : (e._id ?? e.id)).filter(Boolean);
-      if (!history.length) { setLoading(false); return; }
-      Promise.all(history.slice(0, 20).map((id: string) => fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null)))
-        .then(results => { setOrders(results.filter(Boolean)); setLoading(false); })
-        .catch(() => setLoading(false));
-    } catch { setLoading(false); }
-  }, []);
-
-  // Live status updates
-  useEffect(() => {
-    const socketUrl = import.meta.env.VITE_API_URL || window.location.origin;
-    const socket = io(socketUrl, { path: '/socket.io' });
-    socket.on('order:status', ({ id, status }: { id: string; status: string }) => {
-      setOrders(prev => prev.map(o => o._id === id ? { ...o, status } : o));
-    });
-    return () => { socket.disconnect(); };
-  }, []);
-
-  const currentOrders = orders.filter(o => ACTIVE_STATUSES.includes(o.status));
-  const pastOrders = orders.filter(o => !ACTIVE_STATUSES.includes(o.status));
-  const displayOrders = tab === 'current' ? currentOrders : pastOrders;
-
-  return (
-    <div className="bg-surface min-h-screen">
-      <div className="bg-surface px-5 pt-12 pb-4 sticky top-0 z-10 shadow-sm">
-        <h1 className="text-xl font-extrabold font-headline mb-4">{t('ordersPage.title')}</h1>
-        <div className="flex gap-1 bg-surface-container rounded-2xl p-1">
-          {(['current', 'past'] as Tab[]).map(tt => (
-            <button key={tt} onClick={() => setTab(tt)}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                tab === tt ? 'bg-surface-container-high text-on-surface' : 'text-on-surface-variant'
-              }`}>
-              {tt === 'current'
-                ? `${t('ordersPage.active')} (${currentOrders.length})`
-                : `${t('ordersPage.past')} (${pastOrders.length})`}
+  // ── Web ───────────────────────────────────────────────────────────
+  if (mid) {
+    return (
+      <div data-screen-label="Orders" className="max-w-[880px] mx-auto px-[clamp(16px,4vw,32px)] pt-[clamp(20px,3vw,32px)] pb-24 flex flex-col gap-5 animate-mg-in-slow">
+        <h1 className="m-0 font-display font-extrabold text-[clamp(32px,4vw,48px)] leading-[1.05] tracking-[-0.035em]">{tm('orders')}</h1>
+        <div role="tablist" className="flex gap-1 p-1 rounded-full bg-muted self-start">
+          {tabs.map(x => (
+            <button key={x.k} role="tab" aria-selected={tab === x.k} onClick={() => setTab(x.k)}
+              className={`h-10 px-5 border-0 rounded-full text-[14px] leading-none ${tab === x.k ? 'bg-card shadow-mg text-fg font-semibold' : 'bg-transparent text-muted-fg font-medium'}`}>
+              {x.label}
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="px-5 py-4">
-        {loading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-surface-container rounded-2xl h-24 animate-pulse" />)}</div>
-        ) : displayOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant gap-3">
-            <Package className="w-12 h-12 opacity-20" />
-            <p className="text-sm font-medium">
-              {tab === 'current' ? t('ordersPage.noActive') : t('ordersPage.noPast')}
-            </p>
-          </div>
-        ) : (
-          <AnimatePresence>
-            <div className="space-y-3">
-              {displayOrders.map((order, idx) => (
-                <motion.button key={order._id}
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => onOpenTracking(order._id)}
-                  className="w-full bg-surface-container rounded-2xl p-4 text-start border border-surface-container-high">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div>
-                      <p className="font-extrabold text-sm">#{order._id?.slice(-6).toUpperCase()}</p>
-                      <div className="flex items-center gap-1 text-on-surface-variant mt-0.5">
-                        <Clock className="w-3 h-3" />
-                        <span className="text-xs">{new Date(order.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <motion.span key={order.status} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status] || 'bg-surface-container-high text-on-surface-variant'}`}>
-                        {t(`status.${order.status}`, { defaultValue: order.status })}
-                      </motion.span>
-                      <ChevronRight className={`w-4 h-4 text-on-surface-variant/40 ${isRTL ? 'rotate-180' : ''}`} />
-                    </div>
-                  </div>
-                  <p className="text-xs text-on-surface-variant truncate">
-                    {order.items?.slice(0,3).map((i: any) => `${i.quantity}× ${i.name}`).join(' · ')}
-                  </p>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-on-surface-variant">
-                      {order.items?.length} {order.items?.length !== 1 ? t('pickup.items') : t('pickup.item')}
-                    </span>
-                    <span className="font-extrabold text-sm text-primary">{fmt(order.total ?? 0)}</span>
-                  </div>
-                </motion.button>
-              ))}
+        {ordersLoading ? (
+          [0, 1].map(i => <Sk key={i} className="h-[92px] rounded-3xl" />)
+        ) : tab === 'active' ? (
+          active.length ? active.map(o => {
+            const v = view(o);
+            return (
+              <button key={o._id} onClick={() => track(o)}
+                className="text-start px-6 py-5 border border-line rounded-3xl bg-card shadow-mg-sm text-fg flex flex-wrap items-center gap-x-6 gap-y-4 hover:shadow-mg-md">
+                <span className="flex-[1_1_240px] flex flex-col gap-1 min-w-0">
+                  <span className="flex items-center gap-2.5 flex-wrap">
+                    <span className="font-display font-bold text-[19px] leading-6 tracking-[-0.02em]">{v.rest}</span>
+                    <span className={`px-2.5 py-[3px] rounded-full font-semibold text-[12px] leading-4 ${v.ready ? 'bg-pos1 text-pos7' : 'bg-acc-soft text-acc'}`}>{v.status}</span>
+                  </span>
+                  <span className="text-[14px] leading-5 text-muted-fg">{v.summary} · <span dir="ltr" className="bidi-isolate">{v.id}</span> · {v.typeLabel}</span>
+                </span>
+                <span className="flex-[0_1_200px] grid grid-cols-4 gap-[5px]">
+                  {v.steps.map((on, i) => <span key={i} className={`h-1.5 rounded-full ${on ? 'bg-primary' : 'bg-muted'}`} />)}
+                </span>
+                <span className="font-display font-bold text-[18px] leading-6">{v.total}</span>
+              </button>
+            );
+          }) : (
+            <div className="py-16 px-6 text-center flex flex-col gap-2 items-center border border-dashed border-input rounded-3xl">
+              <span className="font-display font-bold text-[22px] leading-7">{tm('noActive')}</span>
+              <span className="text-[15px] leading-[22px] text-muted-fg max-w-[340px]">{tm('noActiveSub')}</span>
+              <button onClick={() => nav.tab('home')} className="mt-3 h-[50px] px-[26px] border-0 rounded-full bg-primary text-white font-semibold text-[15px] leading-none">{tm('browse')}</button>
             </div>
-          </AnimatePresence>
+          )
+        ) : past.length ? past.map(o => {
+          const v = view(o);
+          return (
+            <div key={o._id} className="px-6 py-5 border border-line rounded-3xl bg-card flex flex-wrap items-center gap-x-6 gap-y-4">
+              <span className="flex-[1_1_240px] flex flex-col gap-1 min-w-0">
+                <span className="flex items-center gap-2.5">
+                  <span className="font-display font-bold text-[19px] leading-6 tracking-[-0.02em]">{v.rest}</span>
+                  <span className={`px-2.5 py-[3px] rounded-full font-semibold text-[12px] leading-4 bg-muted ${v.cancelled ? 'text-destructive' : 'text-muted-fg'}`}>{v.status}</span>
+                </span>
+                <span className="text-[14px] leading-5 text-muted-fg">{v.summary} · {v.date} · {v.total}</span>
+              </span>
+              <div className="flex gap-2">
+                <button onClick={() => track(o)} className="h-[42px] px-4 border-0 rounded-full bg-transparent text-fg font-semibold text-[14px] leading-none hover:bg-accent">{tm('summary')}</button>
+                <button onClick={() => reorder(o)} className="h-[42px] px-[18px] border-0 rounded-full bg-fg text-bg font-semibold text-[14px] leading-none hover:opacity-90">{tm('reorder')}</button>
+              </div>
+            </div>
+          );
+        }) : (
+          <div className="py-16 px-6 text-center flex flex-col gap-2 items-center border border-dashed border-input rounded-3xl">
+            <span className="font-display font-bold text-[22px] leading-7">{tm('noPast')}</span>
+            <span className="text-[15px] leading-[22px] text-muted-fg">{tm('noPastSub')}</span>
+          </div>
         )}
       </div>
+    );
+  }
+
+  // ── Phone ─────────────────────────────────────────────────────────
+  return (
+    <div className="pt-2 px-5 pb-[120px] flex flex-col gap-4 animate-mg-in">
+      <h1 className="m-0 font-display font-bold text-[28px] leading-9 tracking-[-0.02em]">{tm('orders')}</h1>
+      <div role="tablist" className="flex gap-6 border-b border-line">
+        {tabs.map(x => (
+          <button key={x.k} role="tab" aria-selected={tab === x.k} onClick={() => setTab(x.k)}
+            className={`h-11 p-0 border-0 border-b-2 -mb-px bg-transparent font-semibold text-[14px] leading-none ${tab === x.k ? 'border-primary text-fg' : 'border-transparent text-muted-fg'}`}>
+            {x.label}
+          </button>
+        ))}
+      </div>
+      {ordersLoading ? (
+        [0, 1].map(i => <Sk key={i} className="h-[132px] rounded-[14px]" />)
+      ) : tab === 'active' ? (
+        active.length ? active.map(o => {
+          const v = view(o);
+          return (
+            <button key={o._id} onClick={() => track(o)}
+              className="text-start p-4 border border-line rounded-[14px] bg-card shadow-mg-sm text-fg flex flex-col gap-2.5 hover:bg-accent">
+              <div className="flex justify-between items-center w-full gap-2">
+                <span className="font-semibold text-[16px] leading-[22px]">{v.rest}</span>
+                <span className={`px-2.5 py-0.5 rounded-full font-semibold text-[12px] leading-4 ${v.ready ? 'bg-pos1 text-pos7' : 'bg-info1 text-info7'}`}>{v.status}</span>
+              </div>
+              <span className="text-[14px] leading-5 text-muted-fg">{v.summary}</span>
+              <div className="grid grid-cols-4 gap-1 w-full">
+                {v.steps.map((on, i) => <span key={i} className={`h-1 rounded-full ${on ? 'bg-acc' : 'bg-muted'}`} />)}
+              </div>
+              <div className="flex justify-between w-full text-[12px] leading-4 text-muted-fg">
+                <span dir="ltr">{v.id} · {v.typeLabel}</span>
+                <span className="font-semibold text-[14px] leading-5 text-fg">{v.total}</span>
+              </div>
+            </button>
+          );
+        }) : (
+          <div className="py-16 px-6 text-center flex flex-col gap-2 items-center">
+            <span className="font-semibold text-[16px] leading-[22px]">{tm('noActive')}</span>
+            <span className="text-[14px] leading-5 text-muted-fg max-w-[260px]">{tm('noActiveSub')}</span>
+            <button onClick={() => nav.tab('home')} className="mt-3 h-12 px-6 border-0 rounded-[14px] bg-primary text-on-primary font-semibold text-[16px] leading-none">{tm('browse')}</button>
+          </div>
+        )
+      ) : past.length ? past.map(o => {
+        const v = view(o);
+        return (
+          <div key={o._id} className="p-4 border border-line rounded-[14px] bg-card shadow-mg-sm flex flex-col gap-2.5">
+            <div className="flex justify-between items-center gap-2">
+              <span className="font-semibold text-[16px] leading-[22px]">{v.rest}</span>
+              <span className={`px-2.5 py-0.5 rounded-full bg-muted font-semibold text-[12px] leading-4 ${v.cancelled ? 'text-destructive' : 'text-muted-fg'}`}>{v.status}</span>
+            </div>
+            <span className="text-[14px] leading-5 text-muted-fg">{v.summary}</span>
+            <div className="flex justify-between items-center text-[12px] leading-4 text-muted-fg">
+              <span><span dir="ltr" className="bidi-isolate">{v.id}</span> · {v.date} · {v.total}</span>
+              <div className="flex gap-2">
+                <button onClick={() => track(o)} className="h-9 px-3 border-0 rounded-[14px] bg-transparent text-fg font-semibold text-[14px] leading-none hover:bg-accent">{tm('summary')}</button>
+                <button onClick={() => reorder(o)} className="h-9 px-3 border border-line rounded-[14px] bg-bg text-fg font-semibold text-[14px] leading-none hover:bg-accent">{tm('reorder')}</button>
+              </div>
+            </div>
+          </div>
+        );
+      }) : (
+        <div className="py-16 px-6 text-center flex flex-col gap-2 items-center">
+          <span className="font-semibold text-[16px] leading-[22px]">{tm('noPast')}</span>
+          <span className="text-[14px] leading-5 text-muted-fg">{tm('noPastSub')}</span>
+        </div>
+      )}
     </div>
   );
 };

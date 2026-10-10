@@ -22,6 +22,8 @@ export const createOrderSchema = z.object({
   restaurantId: z.string().min(1),
   tableNumber: z.string().optional(),
   customerName: z.string().optional(),
+  address: z.string().max(300).optional(),
+  pickup_time: z.string().max(40).optional(),
   fcmToken: z.string().optional(),
   order_source: z.enum(['QR_CODE', 'CUSTOMER_APP', 'CASHIER_POS']).optional(),
   order_type: z.enum(['DINE_IN', 'TAKEAWAY', 'PICKUP', 'DELIVERY']).optional(),

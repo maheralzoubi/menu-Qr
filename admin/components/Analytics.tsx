@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, DollarSign, ShoppingBag, Calendar } from 'lucide-react';
+import { TrendingUp, DollarSign, ShoppingBag } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell,
@@ -7,6 +7,7 @@ import {
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../src/lib/auth';
+import { formatCurrency, getCurrencySymbol } from '../../src/lib/currency';
 
 interface AnalyticsData {
   summary: { totalRevenue: number; totalOrders: number; avgOrderValue: number };
@@ -16,11 +17,34 @@ interface AnalyticsData {
   topItems: { name: string; orders: number }[];
 }
 
+const CHART_COLORS = [
+  'var(--color-chart-1)',
+  'var(--color-chart-2)',
+  'var(--color-chart-3)',
+  'var(--color-chart-4)',
+  'var(--color-chart-5)',
+];
+
+const AXIS_TICK = { fontSize: 11, fontWeight: 500, fill: 'var(--color-on-surface-variant)' };
+
+const TOOLTIP_STYLE = {
+  background: 'var(--color-card)',
+  border: '1px solid var(--color-line)',
+  borderRadius: 12,
+  boxShadow: 'var(--shadow-lg)',
+  color: 'var(--color-on-surface)',
+};
+
 export const Analytics = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [days, setDays] = useState(7);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [currency, setCurrency] = useState('USD');
+  useEffect(() => {
+    authFetch('/api/settings/restaurant').then(r => r.ok ? r.json() : null).then(st => { if (st?.currency) setCurrency(st.currency); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -39,12 +63,12 @@ export const Analytics = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-8 animate-pulse">
-        <div className="h-12 w-80 bg-surface-container-low rounded-2xl" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-surface-container-low rounded-4xl" />)}
+      <div className="space-y-6 animate-pulse">
+        <div className="h-14 w-72 bg-surface-container rounded-2xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-[124px] bg-surface-container rounded-2xl" />)}
         </div>
-        <div className="h-96 bg-surface-container-low rounded-4xl" />
+        <div className="h-[420px] bg-surface-container rounded-2xl" />
       </div>
     );
   }
@@ -52,29 +76,26 @@ export const Analytics = () => {
   const summary = data?.summary ?? { totalRevenue: 0, totalOrders: 0, avgOrderValue: 0 };
 
   const kpis = [
-    { labelKey: 'analytics.totalRevenue', value: `$${summary.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, Icon: DollarSign },
+    { labelKey: 'analytics.totalRevenue', value: formatCurrency(summary.totalRevenue, currency), Icon: DollarSign },
     { labelKey: 'analytics.totalOrders',  value: summary.totalOrders.toLocaleString(), Icon: ShoppingBag },
-    { labelKey: 'analytics.avgOrderValue',value: `$${summary.avgOrderValue.toFixed(2)}`, Icon: TrendingUp },
+    { labelKey: 'analytics.avgOrderValue',value: formatCurrency(summary.avgOrderValue, currency), Icon: TrendingUp },
     { labelKey: 'analytics.uniqueItems',  value: (data?.topItems.length ?? 0).toString(), Icon: ShoppingBag },
   ];
 
   return (
-    <div className="space-y-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-4xl font-headline font-extrabold tracking-tight">{t('analytics.heading')}</h2>
-          <p className="text-on-surface-variant font-medium">{t('analytics.subtext')}</p>
+          <h1 className="ds-page-title">{t('analytics.heading')}</h1>
+          <p className="ds-page-sub">{t('analytics.subtext')}</p>
         </div>
-        <div className="flex gap-3">
+        <div className="ds-seg">
           {[7, 30].map(d => (
             <button
               key={d}
               onClick={() => setDays(d)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-                days === d ? 'btn-gradient text-white shadow-xl shadow-primary/20' : 'bg-surface-container-high hover:bg-surface-variant'
-              }`}
+              className={`ds-seg-item ${days === d ? 'ds-seg-item-active' : ''}`}
             >
-              <Calendar className="w-4 h-4" />
               {t('analytics.lastDays', { d })}
             </button>
           ))}
@@ -82,75 +103,71 @@ export const Analytics = () => {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((stat, i) => (
           <motion.div
             key={stat.labelKey}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-surface-container-low p-6 rounded-4xl border border-outline-variant/10 shadow-sm"
+            transition={{ delay: i * 0.05 }}
+            className="ds-card ds-card-pad flex flex-col gap-3"
           >
-            <div className="w-12 h-12 rounded-2xl bg-surface-container-high flex items-center justify-center text-primary mb-4">
-              <stat.Icon className="w-6 h-6" />
+            <div className="ds-icon-tile">
+              <stat.Icon className="w-5 h-5" />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">{t(stat.labelKey)}</p>
-            <h4 className="text-2xl font-headline font-extrabold mt-1">{stat.value}</h4>
+            <div>
+              <p className="ds-metric-lbl">{t(stat.labelKey)}</p>
+              <p className="ds-metric-val tabular mt-1">{stat.value}</p>
+            </div>
           </motion.div>
         ))}
       </div>
 
       {/* Revenue chart + Category breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-surface-container-low p-5 sm:p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
-          <h3 className="text-xl font-headline font-extrabold mb-8">{t('analytics.revenueGrowth')}</h3>
-          <div className="h-[350px] w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
+        <div className="ds-card ds-card-pad min-w-0">
+          <h3 className="ds-section-title mb-4">{t('analytics.revenueGrowth')}</h3>
+          <div className="h-[320px] w-full">
             {(data?.revenueByDay.length ?? 0) === 0 ? (
-              <div className="h-full flex items-center justify-center text-on-surface-variant/40 text-sm">{t('analytics.noData')}</div>
+              <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">{t('analytics.noData')}</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data!.revenueByDay}>
-                  <defs>
-                    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#fe5722" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#fe5722" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: 'rgba(0,0,0,0.4)' }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: 'rgba(0,0,0,0.4)' }} tickFormatter={v => `$${v}`} />
-                  <Tooltip formatter={(v: number) => [`$${v.toFixed(2)}`, t('analytics.revenue')]} contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }} />
-                  <Area type="monotone" dataKey="value" stroke="#fe5722" strokeWidth={4} fillOpacity={1} fill="url(#areaGrad)" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-line)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={AXIS_TICK} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK} tickFormatter={v => `${getCurrencySymbol(currency)} ${v}`} />
+                  <Tooltip formatter={(v: number) => [formatCurrency(v, currency), t('analytics.revenue')]} contentStyle={TOOLTIP_STYLE} />
+                  <Area type="monotone" dataKey="value" stroke="var(--color-chart-1)" strokeWidth={2.5} fill="var(--color-chart-1)" fillOpacity={0.12} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
         </div>
 
-        <div className="bg-surface-container-low p-5 sm:p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
-          <h3 className="text-xl font-headline font-extrabold mb-6">{t('analytics.salesByCategory')}</h3>
+        <div className="ds-card ds-card-pad min-w-0">
+          <h3 className="ds-section-title mb-4">{t('analytics.salesByCategory')}</h3>
           {(data?.categoryStats.length ?? 0) === 0 ? (
-            <div className="h-40 flex items-center justify-center text-on-surface-variant/40 text-sm">{t('analytics.noCategoryData')}</div>
+            <div className="h-40 flex items-center justify-center text-on-surface-variant text-sm">{t('analytics.noCategoryData')}</div>
           ) : (
             <>
-              <div className="h-[220px] w-full mb-6">
+              <div className="h-[200px] w-full mb-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={data!.categoryStats} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={6} dataKey="value">
-                      {data!.categoryStats.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
+                    <Pie data={data!.categoryStats} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value" stroke="var(--color-card)" strokeWidth={2}>
+                      {data!.categoryStats.map((_entry, idx) => <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />)}
                     </Pie>
-                    <Tooltip formatter={(v: number, _: any, props: any) => [`${v} ${t('analytics.items')}`, props.payload.name]} />
+                    <Tooltip formatter={(v: number, _: any, props: any) => [`${v} ${t('analytics.items')}`, props.payload.name]} contentStyle={TOOLTIP_STYLE} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="space-y-3">
-                {data!.categoryStats.map(item => (
-                  <div key={item.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-xs font-bold text-on-surface-variant truncate max-w-[120px]">{item.name}</span>
+              <div className="divide-y divide-line">
+                {data!.categoryStats.map((item, idx) => (
+                  <div key={item.name} className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }} />
+                      <span className="text-[13px] text-on-surface-variant truncate">{item.name}</span>
                     </div>
-                    <span className="text-xs font-extrabold">{item.percentage}%</span>
+                    <span className="text-[13px] font-semibold tabular text-on-surface">{item.percentage}%</span>
                   </div>
                 ))}
               </div>
@@ -160,26 +177,26 @@ export const Analytics = () => {
       </div>
 
       {/* Hourly orders + Insight card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-surface-container-low p-5 sm:p-8 rounded-4xl border border-outline-variant/10 shadow-sm">
-          <h3 className="text-xl font-headline font-extrabold mb-8">{t('analytics.popularTimes')}</h3>
-          <div className="h-[300px] w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="ds-card ds-card-pad min-w-0">
+          <h3 className="ds-section-title mb-4">{t('analytics.popularTimes')}</h3>
+          <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.hourlyOrders ?? []}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-line)" />
+                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={AXIS_TICK} dy={10} />
                 <YAxis hide />
-                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} formatter={(v: number) => [v, t('analytics.orders')]} />
-                <Bar dataKey="val" fill="#fe5722" radius={[6, 6, 0, 0]} barSize={32} />
+                <Tooltip cursor={{ fill: 'var(--color-surface-container-low)' }} formatter={(v: number) => [v, t('analytics.orders')]} contentStyle={TOOLTIP_STYLE} />
+                <Bar dataKey="val" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-primary p-5 sm:p-8 rounded-4xl shadow-2xl shadow-primary/20 text-on-primary flex flex-col justify-between">
+        <div className="ds-card ds-card-pad flex flex-col justify-between gap-6">
           <div>
-            <h3 className="text-2xl font-headline font-extrabold mb-2">{t('analytics.snapshot')}</h3>
-            <p className="text-on-primary/70 text-sm leading-relaxed">
+            <h3 className="ds-section-title mb-1.5">{t('analytics.snapshot')}</h3>
+            <p className="text-sm text-on-surface-variant leading-relaxed">
               {summary.totalOrders === 0
                 ? t('analytics.noOrdersMsg')
                 : t('analytics.snapshotMsg', {
@@ -190,15 +207,15 @@ export const Analytics = () => {
                   })}
             </p>
           </div>
-          <div className="pt-8 flex items-end justify-between">
+          <div className="flex items-end justify-between gap-4 pt-4 border-t border-line">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">{t('analytics.periodRevenue')}</p>
-              <h4 className="text-4xl font-headline font-extrabold mt-1">
-                ${summary.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h4>
+              <p className="ds-metric-lbl">{t('analytics.periodRevenue')}</p>
+              <p className="ds-metric-val tabular mt-1">
+                {formatCurrency(summary.totalRevenue, currency)}
+              </p>
             </div>
-            <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center">
-              <TrendingUp className="w-8 h-8" />
+            <div className="ds-icon-tile">
+              <TrendingUp className="w-5 h-5" />
             </div>
           </div>
         </div>

@@ -6,7 +6,9 @@ import {
   CreditCard, Banknote, Smartphone, Tag, Check,
   Printer, AlertCircle, Percent, DollarSign,
   MessageSquare, RefreshCw, Receipt, UtensilsCrossed,
-  Package, ChevronUp
+  Package, ChevronUp,
+  Salad, Soup, Hamburger, Pizza, CakeSlice, CupSoda, LayoutGrid, Utensils,
+  type LucideIcon,
 } from 'lucide-react';
 import { authFetch } from '../../src/lib/auth';
 import { formatCurrency } from '../../src/lib/currency';
@@ -47,10 +49,14 @@ const PAYMENT_METHODS: { value: PaymentMethod; key: string; icon: React.ReactNod
 ];
 
 // Category icons by name
-const CAT_ICONS: Record<string, string> = {
-  Starters: '🥗', Mains: '🍽️', Burgers: '🍔', Pizza: '🍕',
-  Pasta: '🍝', Salads: '🥙', Desserts: '🍰', Drinks: '🥤',
-  All: '⚡',
+const CAT_ICONS: Record<string, LucideIcon> = {
+  Starters: Salad, Mains: UtensilsCrossed, Burgers: Hamburger, Pizza: Pizza,
+  Pasta: Soup, Salads: Salad, Desserts: CakeSlice, Drinks: CupSoda,
+  All: LayoutGrid,
+};
+const CatIcon: React.FC<{ cat: string; className?: string }> = ({ cat, className }) => {
+  const Icon = CAT_ICONS[cat] || Utensils;
+  return <Icon className={className} />;
 };
 
 const ProductCard: React.FC<{
@@ -61,11 +67,11 @@ const ProductCard: React.FC<{
 }> = ({ item, cartQty, currency, onAdd }) => (
   <button
     onClick={() => onAdd(item)}
-    className="group relative bg-surface rounded-2xl overflow-hidden text-left hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-200 active:scale-95 border border-surface-container"
+    className="group relative bg-card rounded-2xl overflow-hidden text-start border border-line shadow-sm hover:border-input transition-colors"
   >
     {/* Cart badge */}
     {cartQty > 0 && (
-      <span className="absolute top-2 right-2 z-10 w-6 h-6 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+      <span className="absolute top-2 end-2 z-10 min-w-6 h-6 px-1 bg-primary text-on-primary text-xs font-semibold tabular rounded-full flex items-center justify-center">
         {cartQty}
       </span>
     )}
@@ -73,9 +79,9 @@ const ProductCard: React.FC<{
     {/* Image */}
     <div className="aspect-square overflow-hidden bg-surface-container">
       {item.image
-        ? <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400" />
-        : <div className="w-full h-full flex items-center justify-center text-4xl opacity-30">
-            {CAT_ICONS[item.category] || '🍴'}
+        ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+        : <div className="w-full h-full flex items-center justify-center text-on-surface-variant opacity-40">
+            <CatIcon cat={item.category} className="w-8 h-8" />
           </div>
       }
     </div>
@@ -84,8 +90,8 @@ const ProductCard: React.FC<{
     <div className="px-3 py-2.5">
       <p className="text-sm font-semibold text-on-surface leading-tight line-clamp-1">{item.name}</p>
       <div className="flex items-center justify-between mt-1.5">
-        <span className="text-base font-extrabold text-primary">{formatCurrency(item.price, currency)}</span>
-        <span className="w-7 h-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+        <span className="text-[15px] font-display font-bold tabular text-on-surface">{formatCurrency(item.price, currency)}</span>
+        <span className="w-7 h-7 rounded-lg bg-acc-soft text-acc flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors">
           <Plus className="w-4 h-4" />
         </span>
       </div>
@@ -111,27 +117,27 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, currency, onUpdateQty, 
       <div className="w-10 h-10 rounded-xl overflow-hidden bg-surface-container shrink-0">
         {item.image
           ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-          : <div className="w-full h-full flex items-center justify-center text-lg">{CAT_ICONS[item.category] || '🍴'}</div>
+          : <div className="w-full h-full flex items-center justify-center text-on-surface-variant"><CatIcon cat={item.category} className="w-4 h-4" /></div>
         }
       </div>
       {/* Name + price */}
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold text-on-surface truncate">{item.name}</p>
-        <p className="text-xs text-on-surface-variant">{formatCurrency(item.price * item.quantity, currency)}</p>
+        <p className="text-xs text-on-surface-variant tabular">{formatCurrency(item.price * item.quantity, currency)}</p>
       </div>
       {/* Controls */}
       <div className="flex items-center gap-1 shrink-0">
-        <button onClick={() => onUpdateQty(item.id, -1)} className="w-6 h-6 rounded-lg bg-surface-container flex items-center justify-center hover:bg-primary/10 transition-colors text-on-surface-variant">
+        <button onClick={() => onUpdateQty(item.id, -1)} className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center hover:bg-surface-container-high hover:text-on-surface transition-colors text-on-surface-variant">
           <Minus className="w-3 h-3" />
         </button>
-        <span className="text-xs font-bold w-4 text-center tabular-nums">{item.quantity}</span>
-        <button onClick={() => onUpdateQty(item.id, 1)} className="w-6 h-6 rounded-lg bg-surface-container flex items-center justify-center hover:bg-primary/10 transition-colors text-on-surface-variant">
+        <span className="text-xs font-semibold w-5 text-center tabular">{item.quantity}</span>
+        <button onClick={() => onUpdateQty(item.id, 1)} className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center hover:bg-surface-container-high hover:text-on-surface transition-colors text-on-surface-variant">
           <Plus className="w-3 h-3" />
         </button>
-        <button onClick={onToggleNote} className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${noteOpen || item.note ? 'bg-primary/10 text-primary' : 'bg-surface-container text-on-surface-variant hover:bg-primary/10'}`}>
+        <button onClick={onToggleNote} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${noteOpen || item.note ? 'bg-acc-soft text-acc' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'}`}>
           <MessageSquare className="w-3 h-3" />
         </button>
-        <button onClick={() => onRemove(item.id)} className="w-6 h-6 rounded-lg bg-surface-container flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors text-on-surface-variant">
+        <button onClick={() => onRemove(item.id)} className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center hover:bg-neg1 hover:text-neg7 transition-colors text-on-surface-variant">
           <Trash2 className="w-3 h-3" />
         </button>
       </div>
@@ -142,7 +148,7 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, currency, onUpdateQty, 
         value={item.note}
         onChange={e => onNote(item.id, e.target.value)}
         placeholder={t('pos.itemNotePlaceholder')}
-        className="w-full px-2.5 py-1.5 text-xs bg-surface-container rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ml-12"
+        className="ds-input h-8 px-2.5 text-xs ms-12 w-[calc(100%-3rem)]"
       />
     )}
   </div>
@@ -168,7 +174,7 @@ const InvoicePrint: React.FC<{ order: any; currency: string; branding: Restauran
             {branding?.contactEmail && <p className="text-xs" dir="ltr">{branding.contactEmail}</p>}
           </div>
         </div>
-        <div className="text-right">
+        <div className="text-end">
           <p className="text-lg font-extrabold tracking-wide">{t('pos.invoice.title')}</p>
           <p className="text-xs">#{orderRef}</p>
           <p className="text-xs">{createdAt.toLocaleDateString()} {createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
@@ -177,23 +183,23 @@ const InvoicePrint: React.FC<{ order: any; currency: string; branding: Restauran
 
       <table className="w-full text-sm mb-4">
         <thead>
-          <tr className="border-b border-black text-left">
-            <th className="py-1.5 font-bold">{t('pos.invoice.item')}</th>
+          <tr className="border-b border-black text-start">
+            <th className="py-1.5 font-bold text-start">{t('pos.invoice.item')}</th>
             <th className="py-1.5 font-bold text-center w-16">{t('pos.invoice.qty')}</th>
-            <th className="py-1.5 font-bold text-right w-24">{t('pos.invoice.price')}</th>
-            <th className="py-1.5 font-bold text-right w-24">{t('pos.invoice.total')}</th>
+            <th className="py-1.5 font-bold text-end w-24">{t('pos.invoice.price')}</th>
+            <th className="py-1.5 font-bold text-end w-24">{t('pos.invoice.total')}</th>
           </tr>
         </thead>
         <tbody>
           {(order.items ?? []).map((item: any, i: number) => (
-            <tr key={i} className="border-b border-outline-variant/40">
+            <tr key={i} className="border-b border-black/20">
               <td className="py-1.5">
                 {item.name}
                 {item.note && <span className="italic text-xs"> ({item.note})</span>}
               </td>
               <td className="py-1.5 text-center">{item.quantity}</td>
-              <td className="py-1.5 text-right">{formatCurrency(item.price, currency)}</td>
-              <td className="py-1.5 text-right">{formatCurrency(item.price * item.quantity, currency)}</td>
+              <td className="py-1.5 text-end">{formatCurrency(item.price, currency)}</td>
+              <td className="py-1.5 text-end">{formatCurrency(item.price * item.quantity, currency)}</td>
             </tr>
           ))}
         </tbody>
@@ -226,15 +232,15 @@ const InvoicePrint: React.FC<{ order: any; currency: string; branding: Restauran
 const ReceiptModal: React.FC<{ order: any; currency: string; onClose: () => void; onPrint: () => void }> = ({ order, currency, onClose, onPrint }) => {
   const { t } = useTranslation();
   return (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-    <div className="bg-surface rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
+  <div className="ds-backdrop">
+    <div className="ds-modal max-w-sm">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary to-primary/70 px-6 py-6 text-white text-center">
-        <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-          <Check className="w-7 h-7 text-white" />
+      <div className="px-6 pt-6 pb-4 border-b border-line text-center">
+        <div className="w-12 h-12 bg-pos1 text-pos7 rounded-full flex items-center justify-center mx-auto mb-3">
+          <Check className="w-6 h-6" />
         </div>
-        <h2 className="font-headline font-extrabold text-xl">{t('pos.receipt.orderCreated')}</h2>
-        <p className="text-white/70 text-sm mt-1">#{order._id?.slice(-6).toUpperCase()}</p>
+        <h2 className="ds-section-title">{t('pos.receipt.orderCreated')}</h2>
+        <p className="text-on-surface-variant font-mono text-xs mt-1">#{order._id?.slice(-6).toUpperCase()}</p>
       </div>
 
       {/* Items */}
@@ -243,36 +249,36 @@ const ReceiptModal: React.FC<{ order: any; currency: string; onClose: () => void
           <div key={i} className="flex justify-between text-sm">
             <span className="text-on-surface-variant">
               {item.quantity}× {item.name}
-              {item.note ? <span className="text-xs italic text-on-surface-variant/60 ml-1">({item.note})</span> : ''}
+              {item.note ? <span className="text-xs italic text-on-surface-variant/70 ms-1">({item.note})</span> : ''}
             </span>
-            <span className="font-semibold tabular-nums">{formatCurrency(item.price * item.quantity, currency)}</span>
+            <span className="font-semibold tabular text-on-surface">{formatCurrency(item.price * item.quantity, currency)}</span>
           </div>
         ))}
       </div>
 
       {/* Totals + meta */}
-      <div className="px-6 pb-2 border-t border-surface-container space-y-2 pt-3">
+      <div className="px-6 pb-4 border-t border-line space-y-2 pt-3">
         {order.discount > 0 && (
-          <div className="flex justify-between text-sm text-primary">
-            <span>{t('pos.discount')}</span><span>-{formatCurrency(order.discount, currency)}</span>
+          <div className="flex justify-between text-sm text-pos6">
+            <span>{t('pos.discount')}</span><span className="tabular">-{formatCurrency(order.discount, currency)}</span>
           </div>
         )}
-        <div className="flex justify-between font-extrabold text-lg">
-          <span>{t('pos.total')}</span><span>{formatCurrency(order.total, currency)}</span>
+        <div className="flex justify-between items-baseline">
+          <span className="text-sm font-semibold text-on-surface">{t('pos.total')}</span><span className="text-xl font-display font-bold tabular text-on-surface">{formatCurrency(order.total, currency)}</span>
         </div>
         <div className="flex flex-wrap gap-1.5 pt-1">
           {[order.payment_method, order.order_type, order.tableNumber && t('pos.receipt.tableTag', { number: order.tableNumber }), order.cashier_name && t('pos.receipt.byTag', { name: order.cashier_name })].filter(Boolean).map((tag, i) => (
-            <span key={i} className="bg-surface-container text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">{tag}</span>
+            <span key={i} className="ds-chip ds-chip-neutral">{tag}</span>
           ))}
         </div>
       </div>
 
       {/* Actions */}
-      <div className="px-6 pb-6 pt-3 flex gap-3">
-        <button onClick={onPrint} className="flex-1 flex items-center justify-center gap-2 border-2 border-surface-container rounded-2xl py-3 text-sm font-bold hover:bg-surface-container transition-colors">
+      <div className="px-6 py-4 border-t border-line flex gap-2">
+        <button onClick={onPrint} className="ds-btn ds-btn-outline flex-1">
           <Printer className="w-4 h-4" /> {t('pos.receipt.print')}
         </button>
-        <button onClick={onClose} className="flex-1 btn-gradient text-white rounded-2xl py-3 text-sm font-extrabold shadow-lg shadow-primary/20">
+        <button onClick={onClose} className="ds-btn ds-btn-primary flex-1">
           {t('pos.receipt.newOrder')}
         </button>
       </div>
@@ -435,18 +441,18 @@ export const CashierPOS = () => {
   const cartPanel = (
     <>
       {/* Cart Header */}
-      <div className="px-4 py-3 border-b border-surface-container flex items-center justify-between shrink-0">
+      <div className="px-4 py-3 border-b border-line flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
-          <ShoppingCart className="w-4 h-4 text-primary" />
-          <span className="font-bold text-sm">{t('pos.cart')}</span>
+          <ShoppingCart className="w-4 h-4 text-acc" />
+          <span className="font-semibold text-sm text-on-surface">{t('pos.cart')}</span>
           {cart.length > 0 && (
-            <span className="bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+            <span className="bg-primary text-on-primary text-[10px] font-semibold tabular min-w-5 h-5 px-1 rounded-full flex items-center justify-center">
               {cartCount}
             </span>
           )}
         </div>
         {cart.length > 0 && (
-          <button onClick={() => setCart([])} className="text-[11px] text-on-surface-variant hover:text-red-500 transition-colors font-medium">
+          <button onClick={() => setCart([])} className="text-xs text-on-surface-variant hover:text-error transition-colors font-medium">
             {t('pos.clear')}
           </button>
         )}
@@ -455,9 +461,9 @@ export const CashierPOS = () => {
       {/* Cart Items */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3 min-h-0">
         {cart.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-on-surface-variant gap-2">
-            <UtensilsCrossed className="w-8 h-8 opacity-20" />
-            <p className="text-xs text-center">{t('pos.emptyCartHint')}</p>
+          <div className="ds-empty py-8 mt-1">
+            <UtensilsCrossed className="w-8 h-8 opacity-40" />
+            <p className="text-xs">{t('pos.emptyCartHint')}</p>
           </div>
         ) : (
           cart.map(item => (
@@ -471,12 +477,12 @@ export const CashierPOS = () => {
       </div>
 
       {/* Order Settings */}
-      <div className="border-t border-surface-container px-3 py-3 space-y-2.5 shrink-0">
+      <div className="border-t border-line px-3 py-3 space-y-2.5 shrink-0">
         {/* Table */}
         {orderType === 'DINE_IN' && (
           <select value={tableId}
             onChange={e => { const tbl = tables.find(tb => tb._id === e.target.value); setTableId(e.target.value); setTableNumber(tbl?.name || ''); }}
-            className="w-full px-3 py-2 bg-surface-container rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20">
+            className="ds-select h-9 text-[13px]">
             <option value="">{t('pos.selectTableOption')}</option>
             {tables.map(tb => <option key={tb._id} value={tb._id}>{tb.name}</option>)}
           </select>
@@ -486,15 +492,15 @@ export const CashierPOS = () => {
         <input
           value={orderNote} onChange={e => setOrderNote(e.target.value)}
           placeholder={t('pos.orderNotePlaceholder')}
-          className="w-full px-3 py-2 bg-surface-container rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="ds-input h-9 text-[13px]"
         />
 
         {/* Discount */}
         <div className="space-y-1.5">
-          <div className="grid grid-cols-3 gap-1">
+          <div className="ds-seg grid grid-cols-3 w-full">
             {(['CODE', 'PERCENTAGE', 'FIXED'] as DiscountMode[]).map((mode, i) => (
               <button key={mode} onClick={() => { setDiscountMode(discountMode === mode ? null : mode); setDiscountInput(''); setPromoResult(null); setPromoError(''); }}
-                className={`flex items-center justify-center gap-1 py-1.5 rounded-xl text-[10px] font-bold transition-all ${discountMode === mode ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:text-on-surface'}`}>
+                className={`ds-seg-item h-7 px-1 text-[11px] flex items-center justify-center gap-1 ${discountMode === mode ? 'ds-seg-item-active' : ''}`}>
                 {i === 0 ? <Tag className="w-3 h-3" /> : i === 1 ? <Percent className="w-3 h-3" /> : <DollarSign className="w-3 h-3" />}
                 {i === 0 ? t('pos.discountModes.code') : i === 1 ? t('pos.discountModes.percentage') : t('pos.discountModes.fixed')}
               </button>
@@ -504,56 +510,56 @@ export const CashierPOS = () => {
             <div className="flex gap-1.5">
               <input value={discountInput} onChange={e => { setDiscountInput(e.target.value); setPromoResult(null); setPromoError(''); }}
                 placeholder={discountMode === 'CODE' ? t('pos.promoCodePlaceholder') : discountMode === 'PERCENTAGE' ? t('pos.percentagePlaceholder') : t('pos.fixedPlaceholder')}
-                className="flex-1 px-2.5 py-1.5 bg-surface-container rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="ds-input flex-1 h-8 px-2.5 text-xs"
               />
               {discountMode === 'CODE' && (
                 <button onClick={validatePromo} disabled={promoLoading || !discountInput.trim()}
-                  className="px-3 bg-primary text-white rounded-xl text-xs font-bold disabled:opacity-50">
+                  className="ds-btn ds-btn-primary ds-btn-sm h-8 text-xs">
                   {promoLoading ? '…' : t('pos.apply')}
                 </button>
               )}
             </div>
           )}
-          {promoResult && <p className="text-[10px] text-primary flex items-center gap-1"><Check className="w-3 h-3" /> {t('pos.applied', { amount: formatCurrency(discountAmount, currency) })}</p>}
-          {promoError && <p className="text-[10px] text-red-500">{promoError}</p>}
+          {promoResult && <p className="text-[11px] text-pos6 flex items-center gap-1"><Check className="w-3 h-3" /> {t('pos.applied', { amount: formatCurrency(discountAmount, currency) })}</p>}
+          {promoError && <p className="text-[11px] text-error">{promoError}</p>}
         </div>
 
         {/* Payment Methods */}
         <div className="grid grid-cols-5 gap-1">
           {PAYMENT_METHODS.map(pm => (
             <button key={pm.value} onClick={() => setPaymentMethod(pm.value)}
-              className={`flex flex-col items-center gap-0.5 py-2 rounded-xl transition-all ${paymentMethod === pm.value ? 'bg-primary text-white shadow-sm' : 'bg-surface-container text-on-surface-variant hover:text-on-surface'}`}>
+              className={`flex flex-col items-center gap-1 py-2 px-0.5 rounded-xl border transition-colors ${paymentMethod === pm.value ? 'border-primary bg-acc-soft text-acc' : 'border-line bg-card text-on-surface-variant hover:bg-accent hover:text-on-surface'}`}>
               {pm.icon}
-              <span style={{ fontSize: '9px' }} className="font-bold">{t(`pos.paymentMethods.${pm.key}`)}</span>
+              <span className="text-[10px] leading-3 font-semibold text-center">{t(`pos.paymentMethods.${pm.key}`)}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Totals + CTA */}
-      <div className="px-4 pb-4 pt-2 border-t border-surface-container space-y-2.5 shrink-0">
+      <div className="px-4 pb-4 pt-3 border-t border-line space-y-3 shrink-0">
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-on-surface-variant">
-            <span>{t('pos.subtotal')}</span><span className="tabular-nums">{formatCurrency(subtotal, currency)}</span>
+            <span>{t('pos.subtotal')}</span><span className="tabular">{formatCurrency(subtotal, currency)}</span>
           </div>
           {discountAmount > 0 && (
-            <div className="flex justify-between text-xs text-primary font-medium">
-              <span>{t('pos.discount')}</span><span className="tabular-nums">-{formatCurrency(discountAmount, currency)}</span>
+            <div className="flex justify-between text-xs text-pos6 font-medium">
+              <span>{t('pos.discount')}</span><span className="tabular">-{formatCurrency(discountAmount, currency)}</span>
             </div>
           )}
-          <div className="flex justify-between font-extrabold text-base pt-0.5">
-            <span>{t('pos.total')}</span><span className="tabular-nums">{formatCurrency(total, currency)}</span>
+          <div className="flex justify-between items-baseline pt-0.5">
+            <span className="text-sm font-semibold text-on-surface">{t('pos.total')}</span><span className="text-xl font-display font-bold tabular text-on-surface">{formatCurrency(total, currency)}</span>
           </div>
         </div>
 
         {error && (
-          <p className="text-red-500 text-[11px] flex items-start gap-1">
+          <p className="text-error text-xs flex items-start gap-1">
             <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />{error}
           </p>
         )}
 
         <button onClick={createOrder} disabled={creating || cart.length === 0}
-          className="w-full btn-gradient text-white py-3.5 rounded-2xl font-extrabold text-sm disabled:opacity-40 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-opacity">
+          className="ds-btn ds-btn-primary ds-btn-lg w-full">
           {creating
             ? <><RefreshCw className="w-4 h-4 animate-spin" /> {t('pos.creating')}</>
             : <><Receipt className="w-4 h-4" /> {t('pos.createOrder', { total: formatCurrency(total, currency) })}</>
@@ -564,33 +570,35 @@ export const CashierPOS = () => {
   );
 
   return (
-    <div className="flex flex-col gap-0 -mx-4 -mt-6 sm:-mx-6 lg:-mx-8 lg:-mt-10" style={{ height: 'calc(100vh - 5rem)' }}>
+    <div className="flex flex-col gap-0 -mx-4 -my-6 sm:-mx-6 lg:-mx-8" style={{ height: 'calc(100dvh - 4rem)' }}>
 
       {/* ── TOP BAR ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-6 py-3 border-b border-surface-container bg-surface z-10 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 sm:px-6 py-3 border-b border-line bg-card z-10 shrink-0">
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder={t('pos.searchPlaceholder')}
-              className="w-full pl-9 pr-8 py-2 bg-surface-container rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="ds-input h-9 ps-9 pe-8"
             />
-            {search && <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"><X className="w-3.5 h-3.5" /></button>}
+            {search && <button onClick={() => setSearch('')} className="absolute end-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"><X className="w-3.5 h-3.5" /></button>}
           </div>
 
-          <div className="hidden sm:block h-5 w-px bg-surface-container" />
+          <div className="hidden sm:block h-5 w-px bg-line" />
         </div>
 
         {/* Order Type */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          {ORDER_TYPES.map(ot => (
-            <button key={ot.value} onClick={() => { setOrderType(ot.value); setTableId(''); setTableNumber(''); }}
-              className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${orderType === ot.value ? 'bg-primary text-white shadow-sm' : 'bg-surface-container text-on-surface-variant hover:text-on-surface'}`}>
-              {t(`pos.orderTypes.${ot.key}`)}
-            </button>
-          ))}
+        <div className="overflow-x-auto no-scrollbar">
+          <div className="ds-seg">
+            {ORDER_TYPES.map(ot => (
+              <button key={ot.value} onClick={() => { setOrderType(ot.value); setTableId(''); setTableNumber(''); }}
+                className={`ds-seg-item shrink-0 ${orderType === ot.value ? 'ds-seg-item-active' : ''}`}>
+                {t(`pos.orderTypes.${ot.key}`)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -598,17 +606,17 @@ export const CashierPOS = () => {
       <div className="flex flex-1 min-h-0 flex-col lg:flex-row">
 
         {/* ── CATEGORY RAIL ── */}
-        <div className="shrink-0 border-b lg:border-b-0 lg:border-r border-surface-container bg-surface lg:w-48 lg:overflow-y-auto lg:py-3">
+        <div className="shrink-0 border-b lg:border-b-0 lg:border-e border-line bg-card lg:w-48 lg:overflow-y-auto lg:py-3">
           <div className="flex lg:flex-col overflow-x-auto lg:overflow-visible no-scrollbar">
             {allCategories.map(cat => {
               const active = selectedCategory === cat;
               return (
                 <button key={cat} onClick={() => setSelectedCategory(cat)}
-                  className={`shrink-0 lg:w-full flex items-center gap-2 lg:gap-2.5 px-3.5 sm:px-4 py-2.5 text-left transition-all ${active ? 'bg-primary/10 text-primary border-b-2 lg:border-b-0 lg:border-r-2 border-primary' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
-                  <span className="text-lg leading-none">{CAT_ICONS[cat] || '🍴'}</span>
+                  className={`shrink-0 lg:w-full flex items-center gap-2 lg:gap-2.5 px-3.5 sm:px-4 py-2.5 text-start transition-colors ${active ? 'bg-acc-soft text-acc border-b-2 lg:border-b-0 lg:border-e-2 border-primary' : 'text-on-surface-variant hover:bg-accent hover:text-on-surface'}`}>
+                  <CatIcon cat={cat} className="w-4 h-4 shrink-0" />
                   <div className="lg:flex-1 min-w-0">
-                    <p className={`text-xs font-bold truncate ${active ? 'text-primary' : ''}`}>{cat}</p>
-                    <p className="hidden lg:block text-[10px] text-on-surface-variant">{t('pos.categoryItemCount', { count: catCounts[cat] ?? 0 })}</p>
+                    <p className={`text-[13px] font-semibold truncate ${active ? 'text-acc' : ''}`}>{cat}</p>
+                    <p className="hidden lg:block text-[11px] text-on-surface-variant">{t('pos.categoryItemCount', { count: catCounts[cat] ?? 0 })}</p>
                   </div>
                 </button>
               );
@@ -619,9 +627,9 @@ export const CashierPOS = () => {
         {/* ── PRODUCT GRID ── */}
         <div className={`flex-1 overflow-y-auto p-4 ${cart.length > 0 ? 'pb-24 lg:pb-4' : ''}`}>
           {filteredItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-on-surface-variant gap-3">
-              <Package className="w-12 h-12 opacity-20" />
-              <p className="text-sm font-medium">{t('pos.noProducts')}</p>
+            <div className="ds-empty">
+              <Package className="w-8 h-8 opacity-40" />
+              <p className="text-sm">{t('pos.noProducts')}</p>
             </div>
           ) : (
             <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
@@ -633,7 +641,7 @@ export const CashierPOS = () => {
         </div>
 
         {/* ── CART PANEL (tablet-landscape/desktop) ── */}
-        <div className="hidden lg:flex lg:w-80 shrink-0 border-l border-surface-container flex-col bg-surface">
+        <div className="hidden lg:flex lg:w-80 shrink-0 border-s border-line flex-col bg-card">
           {cartPanel}
         </div>
       </div>
@@ -641,13 +649,13 @@ export const CashierPOS = () => {
       {/* ── MOBILE/TABLET FLOATING CART BAR ── */}
       {cart.length > 0 && !cartOpen && (
         <button onClick={() => setCartOpen(true)}
-          className="lg:hidden fixed bottom-4 inset-x-4 z-30 flex items-center gap-3 btn-gradient text-white rounded-2xl px-5 py-3.5 shadow-2xl shadow-primary/30 active:scale-[0.98] transition-transform">
+          className="lg:hidden fixed bottom-4 inset-x-4 z-30 flex items-center gap-3 bg-primary text-on-primary hover:bg-primary/90 rounded-2xl px-5 h-14 shadow-lg transition-colors">
           <span className="relative shrink-0">
             <ShoppingCart className="w-5 h-5" />
-            <span className="absolute -top-2 -right-2 bg-white text-primary text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center">{cartCount}</span>
+            <span className="absolute -top-2 -end-2 bg-on-primary text-primary text-[10px] font-semibold tabular min-w-5 h-5 px-1 rounded-full flex items-center justify-center">{cartCount}</span>
           </span>
-          <span className="flex-1 text-start font-bold text-sm">{t('pos.cart')}</span>
-          <span className="font-extrabold">{formatCurrency(total, currency)}</span>
+          <span className="flex-1 text-start font-semibold text-sm">{t('pos.cart')}</span>
+          <span className="font-display font-bold tabular">{formatCurrency(total, currency)}</span>
           <ChevronUp className="w-4 h-4 shrink-0" />
         </button>
       )}
@@ -657,13 +665,13 @@ export const CashierPOS = () => {
         {cartOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setCartOpen(false)} className="lg:hidden fixed inset-0 bg-black/40 z-40" />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-3xl shadow-2xl flex flex-col max-h-[88vh]">
+              onClick={() => setCartOpen(false)} className="lg:hidden fixed inset-0 bg-black/45 z-40" />
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'tween', duration: 0.22, ease: 'easeOut' }}
+              className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-card border-t border-line rounded-t-3xl shadow-2xl flex flex-col max-h-[88vh]">
               <div className="flex items-center justify-center pt-2.5 pb-1 shrink-0">
-                <div className="w-10 h-1.5 rounded-full bg-surface-container-highest" />
+                <div className="w-10 h-1 rounded-full bg-surface-container-highest" />
               </div>
-              <button onClick={() => setCartOpen(false)} className="absolute top-3 right-3 p-1.5 rounded-full bg-surface-container text-on-surface-variant">
+              <button onClick={() => setCartOpen(false)} className="ds-btn ds-btn-ghost ds-btn-icon ds-btn-sm absolute top-2 end-2 text-on-surface-variant">
                 <X className="w-4 h-4" />
               </button>
               {cartPanel}
